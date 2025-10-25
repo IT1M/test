@@ -10,6 +10,7 @@ import {
   Shield,
   HardDrive,
   Settings,
+  FileBarChart,
   X,
 } from "lucide-react";
 import { UserRole } from "@prisma/client";
@@ -51,6 +52,12 @@ const navItems: NavItem[] = [
     label: "Analytics",
     href: "/analytics",
     icon: BarChart3,
+    roles: ["ADMIN", "MANAGER"],
+  },
+  {
+    label: "Reports",
+    href: "/reports",
+    icon: FileBarChart,
     roles: ["ADMIN", "MANAGER"],
   },
   {

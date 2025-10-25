@@ -284,7 +284,7 @@
   - Include all filter criteria in export
   - _Requirements: 6.4_
 
-- [-] 12. Build backup and restore system
+- [x] 12. Build backup and restore system
 - [x] 12.1 Create backup API routes
   - Implement POST /api/backup/create endpoint
   - Support CSV, JSON, and SQL formats
@@ -313,8 +313,8 @@
   - Create audit log entry for restore
   - _Requirements: 7.4, 7.5_
 
-- [ ] 13. Build report generation system
-- [ ] 13.1 Create report API routes
+- [x] 13. Build report generation system
+- [x] 13.1 Create report API routes
   - Implement POST /api/reports/generate endpoint
   - Support MONTHLY, YEARLY, and CUSTOM report types
   - Fetch and aggregate inventory data for period
@@ -322,7 +322,7 @@
   - Optionally include AI insights from Gemini
   - _Requirements: 10.1, 10.2, 10.3_
 
-- [ ] 13.2 Build PDF report generator
+- [x] 13.2 Build PDF report generator
   - Create PDF template with company branding
   - Include summary statistics and KPIs
   - Embed charts as images
@@ -330,15 +330,15 @@
   - Generate table of inventory items
   - _Requirements: 10.2, 10.3_
 
-- [ ] 13.3 Create report management UI
+- [x] 13.3 Create report management UI
   - Build report generation form
   - Create reports list table
   - Add download functionality for generated reports
   - Show report status (generating, completed, failed)
   - _Requirements: 10.1, 10.4, 10.5_
 
-- [ ] 14. Implement settings and user management
-- [ ] 14.1 Create user management API routes
+- [x] 14. Implement settings and user management
+- [x] 14.1 Create user management API routes
   - Implement GET /api/users for listing users
   - Create POST /api/users for adding users
   - Build PATCH /api/users/[id] for updating users
@@ -346,7 +346,7 @@
   - Restrict to ADMIN role only
   - _Requirements: 8.3, 8.4_
 
-- [ ] 14.2 Build user management UI
+- [x] 14.2 Build user management UI
   - Create user list table with search and filters
   - Build add/edit user modal
   - Implement role selection dropdown
@@ -354,7 +354,7 @@
   - Show role permissions matrix
   - _Requirements: 8.3, 8.4, 8.5_
 
-- [ ] 14.3 Create system settings API routes
+- [x] 14.3 Create system settings API routes
   - Implement GET /api/settings endpoint
   - Create PATCH /api/settings endpoint
   - Support settings categories (theme, api, notifications)
@@ -362,7 +362,7 @@
   - Create audit log for setting changes
   - _Requirements: 8.4_
 
-- [ ] 14.4 Build settings UI pages
+- [x] 14.4 Build settings UI pages
   - Create profile settings section
   - Build security settings (password change)
   - Implement appearance settings (theme, font size)

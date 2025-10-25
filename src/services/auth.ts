@@ -2,7 +2,7 @@ import NextAuth, { DefaultSession, User as NextAuthUser } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
 import { prisma } from "./prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 
 // Extend the built-in session types

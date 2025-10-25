@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
 
 export async function POST(request: NextRequest) {
