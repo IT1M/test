@@ -18,7 +18,10 @@
     "test:ui-auth": "tsx scripts/test-ui-authentication.ts",
     "test:session": "tsx scripts/test-session-flow.ts",
     "test:browser-auth": "tsx scripts/test-browser-auth.ts",
-    "test:all-auth": "npm run test:auth && npm run test:ui-auth && npm run test:session && npm run test:browser-auth"
+    "test:all-auth": "npm run test:auth && npm run test:ui-auth && npm run test:session && npm run test:browser-auth",
+    "test:login-redirect": "tsx scripts/test-login-redirect.ts",
+    "test:complete-login": "tsx scripts/test-complete-login-flow.ts",
+    "test:ui-login": "tsx scripts/test-ui-login.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",

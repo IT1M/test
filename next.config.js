@@ -9,6 +9,9 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const nextConfig = {
   reactStrictMode: true,
   
+  // Production optimizations
+  output: 'standalone',
+  
   // Performance optimizations
   compiler: {
     // Remove console logs in production

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/services/prisma";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
+import { getDefaultDashboard } from "@/utils/rbac";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         action: "LOGIN",
         entityType: "User",
-        entityId: user.id,
+        // Don't pass entityId for User operations as it's linked to InventoryItem
         ipAddress,
         userAgent,
         newValue: { success: false, reason: "Invalid credentials" },
@@ -93,11 +94,14 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       action: "LOGIN",
       entityType: "User",
-      entityId: user.id,
+      // Don't pass entityId for User operations as it's linked to InventoryItem
       ipAddress,
       userAgent,
       newValue: { success: true },
     });
+
+    // Get the appropriate dashboard for the user's role
+    const defaultDashboard = getDefaultDashboard(fullUser.role);
 
     return NextResponse.json({
       success: true,
@@ -108,7 +112,8 @@ export async function POST(request: NextRequest) {
           email: fullUser.email,
           name: fullUser.name,
           role: fullUser.role,
-        }
+        },
+        redirectTo: defaultDashboard
       },
     });
   } catch (error) {

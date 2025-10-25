@@ -20,7 +20,11 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [locale, setLocale] = useState<"en" | "ar">("en");
+  
+  // Get current locale from URL
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const currentLocale = currentPath.startsWith('/ar') ? 'ar' : 'en';
+  const [locale, setLocale] = useState<"en" | "ar">(currentLocale);
 
   const {
     register,
@@ -53,12 +57,22 @@ function LoginForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Login failed");
+        throw new Error(result.error?.message || "Login failed");
       }
 
-      // Get callback URL or redirect to home
-      const callbackUrl = searchParams.get("callbackUrl") || `/${locale}`;
-      router.push(callbackUrl);
+      // Get callback URL or use the redirectTo from API response
+      let redirectUrl = searchParams.get("callbackUrl");
+      
+      if (!redirectUrl) {
+        // Use default redirect from API response
+        redirectUrl = `/${locale}${result.data.redirectTo}`;
+      } else {
+        // Callback URL already includes locale, use as-is
+        redirectUrl = redirectUrl;
+      }
+      
+      console.log('Login successful, redirecting to:', redirectUrl);
+      router.push(redirectUrl);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
