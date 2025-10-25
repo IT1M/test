@@ -1,4 +1,4 @@
-import type { Locale } from '@/i18n';
+import type { Locale } from '@/i18n/request';
 
 /**
  * Format a date according to the specified locale

@@ -1,5 +1,4 @@
 import { getRequestConfig } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 
 // Supported locales
 export const locales = ['en', 'ar'] as const;
@@ -21,13 +20,38 @@ export function isRTL(locale: Locale): boolean {
 }
 
 export default getRequestConfig(async ({ locale }) => {
-  // Validate that the incoming `locale` parameter is valid
+  // Validate that the incoming locale is valid
   if (!locale || !locales.includes(locale as Locale)) {
-    notFound();
+    console.warn(`[i18n] Invalid locale received: ${locale}, using default: ${defaultLocale}`);
+    locale = defaultLocale;
   }
 
-  return {
-    locale: locale as string,
-    messages: (await import(`../../messages/${locale}.json`)).default,
-  };
+  console.log(`[i18n] Loading messages for locale: ${locale}`);
+
+  try {
+    const messages = (await import(`../../messages/${locale}.json`)).default;
+    
+    console.log(`[i18n] Successfully loaded messages for: ${locale}`);
+    
+    return {
+      locale,
+      messages,
+    };
+  } catch (error) {
+    console.error(`[i18n] Failed to load messages for locale: ${locale}`, error);
+    
+    // Fallback to English
+    try {
+      const fallbackMessages = (await import(`../../messages/en.json`)).default;
+      console.log(`[i18n] Using fallback messages (en) for failed locale: ${locale}`);
+      
+      return {
+        locale: 'en',
+        messages: fallbackMessages,
+      };
+    } catch (fallbackError) {
+      console.error(`[i18n] Failed to load fallback messages:`, fallbackError);
+      throw new Error(`Failed to load messages for locale: ${locale}`);
+    }
+  }
 });

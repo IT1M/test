@@ -5,17 +5,19 @@ import { notFound } from 'next/navigation';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { Toaster } from '@/components/ui/Toast';
 import { QueryProvider } from '@/components/providers/QueryProvider';
-import { locales, isRTL, type Locale } from '@/i18n';
+import { routing } from '@/i18n/routing';
+import { locales, type Locale, isRTL } from '@/i18n/request';
 
 export const metadata: Metadata = {
   title: 'Saudi Mais Inventory System',
   description: 'Medical inventory management system for Saudi Mais Co.',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#020617' },
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export default async function LocaleLayout({
@@ -35,13 +37,23 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
+  console.log(`[Layout] Rendering layout for locale: ${locale}`);
+
   // Validate locale
-  if (!locales.includes(locale as Locale)) {
+  if (!routing.locales.includes(locale as any)) {
+    console.error(`[Layout] Invalid locale: ${locale}`);
     notFound();
   }
 
   // Get messages for the locale
-  const messages = await getMessages();
+  let messages;
+  try {
+    messages = await getMessages();
+    console.log(`[Layout] Successfully loaded messages for: ${locale}`);
+  } catch (error) {
+    console.error(`[Layout] Failed to load messages for locale: ${locale}`, error);
+    notFound();
+  }
 
   // Determine text direction
   const dir = isRTL(locale as Locale) ? 'rtl' : 'ltr';

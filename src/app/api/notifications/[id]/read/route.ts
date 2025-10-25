@@ -5,8 +5,9 @@ import { prisma } from '@/services/prisma';
 // PATCH /api/notifications/[id]/read - Mark notification as read
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
     
@@ -17,7 +18,7 @@ export async function PATCH(
       );
     }
 
-    const notificationId = params.id;
+    const notificationId = id;
 
     // Check if notification exists and belongs to user
     const notification = await prisma.notification.findUnique({

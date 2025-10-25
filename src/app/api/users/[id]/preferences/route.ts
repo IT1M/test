@@ -14,8 +14,9 @@ const PreferencesSchema = z.object({
 // PATCH /api/users/[id]/preferences - Update user preferences
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
 
@@ -26,7 +27,7 @@ export async function PATCH(
       );
     }
 
-    const userId = params.id;
+    const userId = id;
 
     // Users can only update their own preferences unless they're an admin
     if (session.user.id !== userId && session.user.role !== "ADMIN") {
@@ -115,8 +116,9 @@ export async function PATCH(
 // GET /api/users/[id]/preferences - Get user preferences
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
 
@@ -127,7 +129,7 @@ export async function GET(
       );
     }
 
-    const userId = params.id;
+    const userId = id;
 
     // Users can only view their own preferences unless they're an admin
     if (session.user.id !== userId && session.user.role !== "ADMIN") {

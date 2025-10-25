@@ -54,8 +54,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/en/login",
+    error: "/en/login",
   },
   providers: [
     Credentials({
