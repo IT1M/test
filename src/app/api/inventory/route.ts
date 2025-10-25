@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
+import { withSecurity } from "@/middleware/security";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 
@@ -20,7 +21,7 @@ const InventoryItemSchema = z.object({
 });
 
 // GET handler for listing inventory items with filtering, search, and pagination
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   try {
     // Check authentication
     const session = await auth();
@@ -144,7 +145,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     // Check authentication
     const session = await auth();
@@ -258,3 +259,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Export secured handlers with rate limiting and sanitization
+export const GET = withSecurity(getHandler);
+export const POST = withSecurity(postHandler);

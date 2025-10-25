@@ -110,9 +110,16 @@ export async function POST(request: NextRequest) {
       userAgent,
     });
 
+    // Note: NextAuth JWT sessions will automatically be invalidated on next request
+    // due to the session callback checking the database state
+    // Client should redirect to login page after password change
+
     return NextResponse.json({
       success: true,
-      data: { message: "Password changed successfully" },
+      data: { 
+        message: "Password changed successfully",
+        requiresReauth: true // Signal client to redirect to login
+      },
     });
   } catch (error) {
     console.error("Password change error:", error);
