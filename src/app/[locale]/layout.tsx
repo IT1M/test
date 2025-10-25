@@ -48,20 +48,29 @@ export default async function LocaleLayout({
   // Get messages for the locale
   let messages;
   try {
-    messages = await getMessages();
-    console.log(`[Layout] Successfully loaded messages for: ${locale}`);
+    messages = await getMessages({ locale });
+    console.log(`[Layout] Successfully loaded messages for: ${locale}`, messages ? 'Messages loaded' : 'No messages');
+    
+    // Ensure messages is not undefined
+    if (!messages) {
+      console.warn(`[Layout] Messages is undefined for locale: ${locale}, using empty object`);
+      messages = {};
+    }
   } catch (error) {
     console.error(`[Layout] Failed to load messages for locale: ${locale}`, error);
-    notFound();
+    // Use empty messages object instead of throwing
+    messages = {};
   }
 
   // Determine text direction
   const dir = isRTL(locale as Locale) ? 'rtl' : 'ltr';
 
+  console.log(`[Layout] Rendering with messages:`, typeof messages, messages ? Object.keys(messages).length : 'undefined');
+
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={messages || {}}>
           <QueryProvider>
             <ThemeProvider
               attribute="class"

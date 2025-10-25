@@ -31,11 +31,11 @@ export default getRequestConfig(async ({ locale }) => {
   try {
     const messages = (await import(`../../messages/${locale}.json`)).default;
     
-    console.log(`[i18n] Successfully loaded messages for: ${locale}`);
+    console.log(`[i18n] Successfully loaded messages for: ${locale}`, typeof messages, Object.keys(messages || {}).length);
     
     return {
       locale,
-      messages,
+      messages: messages || {},
     };
   } catch (error) {
     console.error(`[i18n] Failed to load messages for locale: ${locale}`, error);
@@ -47,11 +47,16 @@ export default getRequestConfig(async ({ locale }) => {
       
       return {
         locale: 'en',
-        messages: fallbackMessages,
+        messages: fallbackMessages || {},
       };
     } catch (fallbackError) {
       console.error(`[i18n] Failed to load fallback messages:`, fallbackError);
-      throw new Error(`Failed to load messages for locale: ${locale}`);
+      
+      // Return empty messages as last resort
+      return {
+        locale: 'en',
+        messages: {},
+      };
     }
   }
 });
