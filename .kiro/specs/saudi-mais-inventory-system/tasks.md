@@ -370,7 +370,7 @@
   - Create API configuration section (ADMIN only)
   - _Requirements: 8.4_
 
-- [ ] 15. Implement internationalization (i18n)
+- [-] 15. Implement internationalization (i18n)
 - [ ] 15.1 Set up next-intl
   - Install and configure next-intl
   - Create message files for English and Arabic

@@ -3,7 +3,6 @@ import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
 import { canPerformAction } from "@/utils/rbac";
-import { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
     const search = searchParams.get("search") || "";
-    const role = searchParams.get("role") as UserRole | null;
+    const role = searchParams.get("role");
     const isActive = searchParams.get("isActive");
 
     // Build where clause
@@ -145,7 +144,7 @@ export async function POST(request: NextRequest) {
           error: {
             code: "VALIDATION_ERROR",
             message: "Invalid input data",
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }

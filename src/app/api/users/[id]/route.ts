@@ -3,7 +3,6 @@ import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
 import { canPerformAction } from "@/utils/rbac";
-import { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -129,7 +128,7 @@ export async function PATCH(
           error: {
             code: "VALIDATION_ERROR",
             message: "Invalid input data",
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }

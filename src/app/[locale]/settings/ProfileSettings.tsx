@@ -51,7 +51,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
     }
   };
 
-  const getRoleBadgeVariant = (role: UserRole) => {
+  const getRoleBadgeVariant = (role: UserRole): "default" | "primary" | "success" | "warning" | "danger" | "secondary" => {
     switch (role) {
       case "ADMIN":
         return "danger";
@@ -60,7 +60,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       case "SUPERVISOR":
         return "warning";
       case "AUDITOR":
-        return "info";
+        return "primary";
       default:
         return "secondary";
     }

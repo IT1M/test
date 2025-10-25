@@ -120,7 +120,7 @@ export async function PATCH(
           error: {
             code: "VALIDATION_ERROR",
             message: "Invalid input data",
-            details: validation.error.errors,
+            details: validation.error.issues,
           },
         },
         { status: 400 }

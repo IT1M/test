@@ -60,7 +60,7 @@ export default function RolePermissionsModal({ isOpen, onClose }: RolePermission
 
   const roles = ["DATA_ENTRY", "SUPERVISOR", "AUDITOR", "MANAGER", "ADMIN"];
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: string): "default" | "primary" | "success" | "warning" | "danger" | "secondary" => {
     switch (role) {
       case "ADMIN":
         return "danger";
@@ -69,7 +69,7 @@ export default function RolePermissionsModal({ isOpen, onClose }: RolePermission
       case "SUPERVISOR":
         return "warning";
       case "AUDITOR":
-        return "info";
+        return "primary";
       default:
         return "secondary";
     }

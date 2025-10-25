@@ -11,7 +11,8 @@ import { formatDate } from "@/utils/formatters";
 import toast from "react-hot-toast";
 import UserModal from "./UserModal";
 import RolePermissionsModal from "./RolePermissionsModal";
-import { UserRole } from "@prisma/client";
+
+type UserRole = "ADMIN" | "DATA_ENTRY" | "SUPERVISOR" | "MANAGER" | "AUDITOR";
 
 interface User {
   id: string;
@@ -35,7 +36,7 @@ export default function UserManagementClient({ userRole }: UserManagementClientP
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit] = useState(50);
+  const [limit, setLimit] = useState(50);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
@@ -118,7 +119,7 @@ export default function UserManagementClient({ userRole }: UserManagementClientP
     fetchUsers();
   };
 
-  const getRoleBadgeVariant = (role: UserRole) => {
+  const getRoleBadgeVariant = (role: UserRole): "default" | "primary" | "success" | "warning" | "danger" | "secondary" => {
     switch (role) {
       case "ADMIN":
         return "danger";
@@ -127,7 +128,7 @@ export default function UserManagementClient({ userRole }: UserManagementClientP
       case "SUPERVISOR":
         return "warning";
       case "AUDITOR":
-        return "info";
+        return "primary";
       default:
         return "secondary";
     }
@@ -318,6 +319,10 @@ export default function UserManagementClient({ userRole }: UserManagementClientP
                 onPageChange={setPage}
                 totalItems={total}
                 itemsPerPage={limit}
+                onItemsPerPageChange={(newLimit) => {
+                  setLimit(newLimit);
+                  setPage(1);
+                }}
               />
             </div>
           </>

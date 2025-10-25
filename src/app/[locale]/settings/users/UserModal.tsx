@@ -5,9 +5,10 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { UserRole } from "@prisma/client";
 import toast from "react-hot-toast";
 import { z } from "zod";
+
+type UserRole = "ADMIN" | "DATA_ENTRY" | "SUPERVISOR" | "MANAGER" | "AUDITOR";
 
 interface User {
   id: string;
@@ -77,7 +78,7 @@ export default function UserModal({ isOpen, onClose, user, onSaved }: UserModalP
     const validation = UserSchema.safeParse(dataToValidate);
     if (!validation.success) {
       const newErrors: Record<string, string> = {};
-      validation.error.errors.forEach((error) => {
+      validation.error.issues.forEach((error) => {
         if (error.path[0]) {
           newErrors[error.path[0].toString()] = error.message;
         }

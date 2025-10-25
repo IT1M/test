@@ -1,41 +1,24 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { auth } from "@/services/auth";
-import { hasRouteAccess, getDefaultDashboard } from "@/utils/rbac";
+import createMiddleware from 'next-intl/middleware';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/services/auth';
+import { hasRouteAccess, getDefaultDashboard } from '@/utils/rbac';
+import { locales, defaultLocale } from '@/i18n';
 
 // Define public routes that don't require authentication
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = ['/login', '/register'];
 
 // Define auth routes (redirect to dashboard if already authenticated)
-const authRoutes = ["/login", "/register"];
-
-// Supported locales
-const locales = ["en", "ar"];
-const defaultLocale = "en";
-
-/**
- * Get locale from pathname or return default
- */
-function getLocale(pathname: string): string {
-  const segments = pathname.split("/");
-  const potentialLocale = segments[1];
-
-  if (locales.includes(potentialLocale)) {
-    return potentialLocale;
-  }
-
-  return defaultLocale;
-}
+const authRoutes = ['/login', '/register'];
 
 /**
  * Check if path is a public route
  */
 function isPublicRoute(pathname: string): boolean {
   // Remove locale prefix
-  const cleanPath = pathname.replace(/^\/(en|ar)/, "");
+  const cleanPath = pathname.replace(/^\/(en|ar)/, '');
 
-  return publicRoutes.some((route) =>
-    cleanPath === route || cleanPath.startsWith(`${route}/`)
+  return publicRoutes.some(
+    (route) => cleanPath === route || cleanPath.startsWith(`${route}/`)
   );
 }
 
@@ -44,33 +27,37 @@ function isPublicRoute(pathname: string): boolean {
  */
 function isAuthRoute(pathname: string): boolean {
   // Remove locale prefix
-  const cleanPath = pathname.replace(/^\/(en|ar)/, "");
+  const cleanPath = pathname.replace(/^\/(en|ar)/, '');
 
-  return authRoutes.some((route) =>
-    cleanPath === route || cleanPath.startsWith(`${route}/`)
+  return authRoutes.some(
+    (route) => cleanPath === route || cleanPath.startsWith(`${route}/`)
   );
 }
+
+// Create the next-intl middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'always',
+});
 
 export default auth(async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for static files, API routes, and Next.js internals
   if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.includes(".") // files with extensions
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.includes('.') // files with extensions
   ) {
     return NextResponse.next();
   }
 
-  // Get current locale
-  const locale = getLocale(pathname);
+  // Apply next-intl middleware first for locale handling
+  const intlResponse = intlMiddleware(request as NextRequest);
 
-  // Add locale to pathname if not present
-  if (!pathname.startsWith(`/${locale}`)) {
-    const newUrl = new URL(`/${locale}${pathname}`, request.url);
-    return NextResponse.redirect(newUrl);
-  }
+  // Get the locale from the pathname after intl middleware
+  const locale = pathname.split('/')[1] || defaultLocale;
 
   // Get session
   const session = request.auth;
@@ -79,12 +66,12 @@ export default auth(async function middleware(request) {
   if (!session) {
     // Allow access to public routes
     if (isPublicRoute(pathname)) {
-      return NextResponse.next();
+      return intlResponse;
     }
 
     // Redirect to login for protected routes
     const loginUrl = new URL(`/${locale}/login`, request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -119,7 +106,7 @@ export default auth(async function middleware(request) {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  return NextResponse.next();
+  return intlResponse;
 });
 
 export const config = {
@@ -131,6 +118,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files (public folder)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)",
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|api).*)',
   ],
 };

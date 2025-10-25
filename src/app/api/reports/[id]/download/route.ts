@@ -28,7 +28,7 @@ export async function GET(
     }
 
     const report = await prisma.report.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         generatedBy: {
           select: {
