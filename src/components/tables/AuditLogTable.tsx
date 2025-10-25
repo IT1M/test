@@ -37,6 +37,17 @@ export function AuditLogTable({
   sortOrder,
 }: AuditLogTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const checkMobile = () => setIsMobile(window.innerWidth < 768);
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
+  });
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -112,6 +123,141 @@ export function AuditLogTable({
       .slice(0, 2);
   };
 
+  // Mobile Card View
+  if (isMobile) {
+    return (
+      <div className="space-y-4 p-4">
+        {logs.length === 0 ? (
+          <div className="py-12 text-center text-secondary-500 dark:text-secondary-400">
+            No audit logs found
+          </div>
+        ) : (
+          logs.map((log) => (
+            <div
+              key={log.id}
+              className="bg-white dark:bg-secondary-900 border border-secondary-200 dark:border-secondary-800 rounded-lg p-4 space-y-3 shadow-sm"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                    <span className="text-sm font-medium text-primary-800 dark:text-primary-100">
+                      {getUserInitials(log.user.name)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-secondary-900 dark:text-secondary-100 truncate">
+                      {log.user.name}
+                    </h3>
+                    <Badge variant={getRoleBadgeVariant(log.user.role)} size="sm">
+                      {log.user.role}
+                    </Badge>
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleRow(log.id)}
+                  className="p-2 text-secondary-400 hover:text-secondary-600 dark:hover:text-secondary-300 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label={expandedRows.has(log.id) ? "Collapse details" : "Expand details"}
+                  aria-expanded={expandedRows.has(log.id)}
+                >
+                  {expandedRows.has(log.id) ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {/* Action and Timestamp */}
+              <div className="flex items-center justify-between">
+                <Badge variant={getActionBadgeVariant(log.action)} size="sm">
+                  {log.action}
+                </Badge>
+                <span className="text-sm text-secondary-600 dark:text-secondary-400">
+                  {formatDate(log.timestamp)}
+                </span>
+              </div>
+
+              {/* Entity Info */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-secondary-500 dark:text-secondary-400 block mb-1">Entity Type</span>
+                  <span className="font-medium text-secondary-900 dark:text-secondary-100">
+                    {log.entityType}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-secondary-500 dark:text-secondary-400 block mb-1">Entity ID</span>
+                  <span className="font-mono text-xs text-secondary-900 dark:text-secondary-100">
+                    {log.entityId ? log.entityId.slice(0, 8) + "..." : "-"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Expanded Details */}
+              {expandedRows.has(log.id) && (
+                <div className="pt-3 border-t border-secondary-200 dark:border-secondary-700 space-y-3">
+                  {log.ipAddress && (
+                    <div>
+                      <span className="text-xs font-medium text-secondary-500 dark:text-secondary-400 block mb-1">
+                        IP Address
+                      </span>
+                      <span className="text-sm text-secondary-900 dark:text-secondary-100">
+                        {log.ipAddress}
+                      </span>
+                    </div>
+                  )}
+                  {log.userAgent && (
+                    <div>
+                      <span className="text-xs font-medium text-secondary-500 dark:text-secondary-400 block mb-1">
+                        User Agent
+                      </span>
+                      <p className="text-xs text-secondary-700 dark:text-secondary-300 break-words">
+                        {log.userAgent}
+                      </p>
+                    </div>
+                  )}
+                  {(log.oldValue || log.newValue) && (
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-secondary-500 dark:text-secondary-400 block">
+                        Changes
+                      </span>
+                      {log.oldValue && (
+                        <div>
+                          <div className="text-xs font-medium text-danger-600 dark:text-danger-400 mb-1">
+                            Old Value
+                          </div>
+                          <pre className="text-xs bg-secondary-50 dark:bg-secondary-950 border border-secondary-200 dark:border-secondary-800 rounded p-2 overflow-x-auto">
+                            {JSON.stringify(log.oldValue, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                      {log.newValue && (
+                        <div>
+                          <div className="text-xs font-medium text-success-600 dark:text-success-400 mb-1">
+                            New Value
+                          </div>
+                          <pre className="text-xs bg-secondary-50 dark:bg-secondary-950 border border-secondary-200 dark:border-secondary-800 rounded p-2 overflow-x-auto">
+                            {JSON.stringify(log.newValue, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
+
+  // Desktop Table View
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-700">

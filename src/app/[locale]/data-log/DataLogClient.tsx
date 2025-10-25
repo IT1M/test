@@ -1,14 +1,24 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { InventoryTable } from "@/components/tables/InventoryTable";
 import { InventoryFilters } from "@/components/filters/InventoryFilters";
 import { Pagination } from "@/components/ui/Pagination";
-import { EditInventoryModal } from "@/components/modals/EditInventoryModal";
-import { DeleteConfirmModal } from "@/components/modals/DeleteConfirmModal";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { Toast } from "@/components/ui/Toast";
 import { ExportButton } from "@/components/ui/ExportButton";
+
+// Dynamically import modals (only loaded when needed)
+const EditInventoryModal = dynamic(
+  () => import("@/components/modals/EditInventoryModal").then((mod) => ({ default: mod.EditInventoryModal })),
+  { ssr: false }
+);
+
+const DeleteConfirmModal = dynamic(
+  () => import("@/components/modals/DeleteConfirmModal").then((mod) => ({ default: mod.DeleteConfirmModal })),
+  { ssr: false }
+);
 
 interface InventoryItem {
   id: string;
@@ -173,7 +183,7 @@ export function DataLogClient({ userRole }: DataLogClientProps) {
   };
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-4 md:mt-8 space-y-4 md:space-y-6">
       {/* Filters */}
       <InventoryFilters
         filters={filters}
@@ -182,7 +192,7 @@ export function DataLogClient({ userRole }: DataLogClientProps) {
       />
 
       {/* Export Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-end px-4 md:px-0">
         <ExportButton filters={filters} />
       </div>
 

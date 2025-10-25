@@ -107,6 +107,9 @@ model InventoryItem {
   @@index([batch])
   @@index([createdAt, destination])
   @@index([enteredById])
+  @@index([category])
+  @@index([destination, createdAt])
+  @@index([itemName, batch])
 }
 
 model AuditLog {
@@ -127,6 +130,8 @@ model AuditLog {
   @@index([userId, timestamp])
   @@index([entityType, entityId])
   @@index([timestamp])
+  @@index([action, timestamp])
+  @@index([userId, action])
 }
 
 model Report {
@@ -145,6 +150,8 @@ model Report {
   
   @@index([type, periodStart])
   @@index([generatedById])
+  @@index([status, createdAt])
+  @@index([generatedById, createdAt])
 }
 
 model Backup {
@@ -160,6 +167,8 @@ model Backup {
   createdBy   User         @relation(fields: [createdById], references: [id])
   
   @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([createdById, createdAt])
 }
 
 model SystemSettings {

@@ -375,8 +375,8 @@ export function InventoryEntryForm() {
       aria-label="Inventory entry form"
       noValidate
     >
-      {/* Keyboard Shortcuts Info */}
-      <div className="bg-secondary-50 dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-700">
+      {/* Keyboard Shortcuts Info - Hidden on mobile */}
+      <div className="hidden md:block bg-secondary-50 dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-700">
         <h3 className="text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-2">
           Keyboard Shortcuts
         </h3>
@@ -396,7 +396,7 @@ export function InventoryEntryForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Item Name with Autocomplete */}
         <div className="relative">
           <Input
@@ -591,8 +591,8 @@ export function InventoryEntryForm() {
       </div>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-between pt-4 border-t border-secondary-200 dark:border-secondary-800">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-4 border-t border-secondary-200 dark:border-secondary-800">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 order-2 sm:order-1">
           <Button
             type="button"
             variant="outline"
@@ -608,13 +608,14 @@ export function InventoryEntryForm() {
             }}
             disabled={isSubmitting}
             aria-label="Reset form to initial state"
+            className="w-full sm:w-auto"
           >
             Reset
           </Button>
           
           {lastSaved && (
             <span 
-              className="text-xs text-secondary-500 dark:text-secondary-400"
+              className="text-xs text-center sm:text-left text-secondary-500 dark:text-secondary-400"
               role="status"
               aria-live="polite"
             >
@@ -629,6 +630,7 @@ export function InventoryEntryForm() {
           isLoading={isSubmitting}
           disabled={isSubmitting}
           aria-label="Submit inventory entry form"
+          className="w-full sm:w-auto order-1 sm:order-2"
         >
           {isSubmitting ? "Saving..." : "Save Entry"}
         </Button>

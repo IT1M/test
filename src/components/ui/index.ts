@@ -26,3 +26,7 @@ export { ThemeProvider } from "./ThemeProvider";
 export { ThemeToggle } from "./ThemeToggle";
 
 export { ExportButton } from "./ExportButton";
+
+export { BottomSheet } from "./BottomSheet";
+export { SwipeContainer } from "./SwipeContainer";
+export { StickyActionButton } from "./StickyActionButton";

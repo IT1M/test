@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
+import { cache, generateCacheKey, TTL } from "@/utils/cache";
 
 // GET handler for analytics trends (time-series data)
 export async function GET(request: NextRequest) {
@@ -28,6 +29,20 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
     const groupBy = searchParams.get("groupBy") || "day"; // day, week, month
+
+    // Check cache first (5 minute TTL)
+    const cacheKey = generateCacheKey('analytics:trends', { dateFrom, dateTo, groupBy });
+    const cachedData = cache.get(cacheKey);
+    
+    if (cachedData) {
+      return NextResponse.json({
+        success: true,
+        data: cachedData,
+        meta: {
+          cached: true,
+        },
+      });
+    }
 
     // Build date filter
     const dateFilter: any = {};
@@ -160,13 +175,21 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    const responseData = {
+      trends,
+      destinationDistribution,
+      categoryDistribution,
+      rejectAnalysis: rejectRanges,
+    };
+
+    // Cache the response for 5 minutes
+    cache.set(cacheKey, responseData, TTL.FIVE_MINUTES);
+
     return NextResponse.json({
       success: true,
-      data: {
-        trends,
-        destinationDistribution,
-        categoryDistribution,
-        rejectAnalysis: rejectRanges,
+      data: responseData,
+      meta: {
+        cached: false,
       },
     });
   } catch (error) {

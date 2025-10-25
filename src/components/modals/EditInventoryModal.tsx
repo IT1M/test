@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
@@ -42,6 +43,15 @@ export function EditInventoryModal({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (item) {
@@ -111,9 +121,8 @@ export function EditInventoryModal({
     ? ((formData.reject / formData.quantity) * 100).toFixed(2)
     : "0.00";
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Inventory Item">
-      <form onSubmit={handleSubmit} className="space-y-4">
+  const FormContent = (
+    <form onSubmit={handleSubmit} className="space-y-4 p-6">
         {errors.general && (
           <div className="p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm">
             {errors.general}
@@ -194,15 +203,29 @@ export function EditInventoryModal({
           rows={3}
         />
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 bg-white dark:bg-secondary-900 pb-4 -mb-4">
           <Button type="submit" variant="primary" isLoading={isSubmitting} className="flex-1">
             Save Changes
           </Button>
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1 sm:flex-initial">
             Cancel
           </Button>
         </div>
       </form>
+  );
+
+  // Use BottomSheet on mobile, Modal on desktop
+  if (isMobile) {
+    return (
+      <BottomSheet isOpen={isOpen} onClose={onClose} title="Edit Inventory Item">
+        {FormContent}
+      </BottomSheet>
+    );
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Inventory Item">
+      {FormContent}
     </Modal>
   );
 }

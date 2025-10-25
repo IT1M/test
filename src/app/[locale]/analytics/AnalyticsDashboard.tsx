@@ -2,16 +2,51 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  KPICard,
-  InventoryTrendChart,
-  DestinationPieChart,
-  CategoryBarChart,
-  RejectAnalysisChart,
-  AIInsightsPanel,
-} from "@/components/charts";
+import dynamic from "next/dynamic";
+import { KPICard } from "@/components/charts";
 import { DashboardFilters, type DashboardFilterState } from "@/components/filters/DashboardFilters";
 import toast from "react-hot-toast";
+
+// Dynamically import heavy chart components
+const InventoryTrendChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.InventoryTrendChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const DestinationPieChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.DestinationPieChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const CategoryBarChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.CategoryBarChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const RejectAnalysisChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.RejectAnalysisChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const AIInsightsPanel = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.AIInsightsPanel })),
+  { 
+    loading: () => <div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
 
 interface KPIData {
   totalItems: { value: number; trend: number | null };
@@ -193,7 +228,7 @@ export function AnalyticsDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Filters */}
       <DashboardFilters
         filters={filters}
@@ -202,7 +237,7 @@ export function AnalyticsDashboard() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard
           title="Total Items"
           value={kpiData?.totalItems.value || 0}
@@ -272,13 +307,13 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <InventoryTrendChart data={trendsData?.trends || []} />
         <DestinationPieChart data={trendsData?.destinationDistribution || { MAIS: 0, FOZAN: 0 }} />
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <CategoryBarChart data={trendsData?.categoryDistribution || []} />
         <RejectAnalysisChart data={trendsData?.rejectAnalysis || { none: 0, low: 0, medium: 0, high: 0 }} />
       </div>

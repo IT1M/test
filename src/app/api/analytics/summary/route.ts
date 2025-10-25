@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
+import { cache, generateCacheKey, TTL } from "@/utils/cache";
 
 // GET handler for analytics summary with KPIs
 export async function GET(request: NextRequest) {
@@ -27,6 +28,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
+
+    // Check cache first (5 minute TTL)
+    const cacheKey = generateCacheKey('analytics:summary', { dateFrom, dateTo });
+    const cachedData = cache.get(cacheKey);
+    
+    if (cachedData) {
+      return NextResponse.json({
+        success: true,
+        data: cachedData,
+        meta: {
+          cached: true,
+        },
+      });
+    }
 
     // Build date filter
     const dateFilter: any = {};
@@ -60,16 +75,16 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Fetch current period data
+    // Fetch current period data using aggregation for better performance
     const [
       totalItems,
-      inventoryItems,
+      aggregations,
       activeUsers,
     ] = await Promise.all([
       prisma.inventoryItem.count({ where: dateFilter }),
-      prisma.inventoryItem.findMany({
+      prisma.inventoryItem.aggregate({
         where: dateFilter,
-        select: {
+        _sum: {
           quantity: true,
           reject: true,
         },
@@ -78,26 +93,26 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate KPIs for current period
-    const totalQuantity = inventoryItems.reduce((sum, item) => sum + item.quantity, 0);
-    const totalRejects = inventoryItems.reduce((sum, item) => sum + item.reject, 0);
+    const totalQuantity = aggregations._sum.quantity || 0;
+    const totalRejects = aggregations._sum.reject || 0;
     const rejectRate = totalQuantity > 0 ? (totalRejects / totalQuantity) * 100 : 0;
 
-    // Fetch previous period data for trends
+    // Fetch previous period data for trends using aggregation
     let previousPeriodData = null;
     if (Object.keys(previousPeriodFilter).length > 0) {
-      const [prevTotalItems, prevInventoryItems] = await Promise.all([
+      const [prevTotalItems, prevAggregations] = await Promise.all([
         prisma.inventoryItem.count({ where: previousPeriodFilter }),
-        prisma.inventoryItem.findMany({
+        prisma.inventoryItem.aggregate({
           where: previousPeriodFilter,
-          select: {
+          _sum: {
             quantity: true,
             reject: true,
           },
         }),
       ]);
 
-      const prevTotalQuantity = prevInventoryItems.reduce((sum, item) => sum + item.quantity, 0);
-      const prevTotalRejects = prevInventoryItems.reduce((sum, item) => sum + item.reject, 0);
+      const prevTotalQuantity = prevAggregations._sum.quantity || 0;
+      const prevTotalRejects = prevAggregations._sum.reject || 0;
       const prevRejectRate = prevTotalQuantity > 0 ? (prevTotalRejects / prevTotalQuantity) * 100 : 0;
 
       previousPeriodData = {
@@ -119,27 +134,35 @@ export async function GET(request: NextRequest) {
       rejectRate: calculateTrend(rejectRate, previousPeriodData.rejectRate),
     } : null;
 
+    const responseData = {
+      kpis: {
+        totalItems: {
+          value: totalItems,
+          trend: trends?.totalItems || null,
+        },
+        totalQuantity: {
+          value: totalQuantity,
+          trend: trends?.totalQuantity || null,
+        },
+        rejectRate: {
+          value: parseFloat(rejectRate.toFixed(2)),
+          trend: trends?.rejectRate || null,
+        },
+        activeUsers: {
+          value: activeUsers,
+          trend: null, // User count doesn't have a trend
+        },
+      },
+    };
+
+    // Cache the response for 5 minutes
+    cache.set(cacheKey, responseData, TTL.FIVE_MINUTES);
+
     return NextResponse.json({
       success: true,
-      data: {
-        kpis: {
-          totalItems: {
-            value: totalItems,
-            trend: trends?.totalItems || null,
-          },
-          totalQuantity: {
-            value: totalQuantity,
-            trend: trends?.totalQuantity || null,
-          },
-          rejectRate: {
-            value: parseFloat(rejectRate.toFixed(2)),
-            trend: trends?.rejectRate || null,
-          },
-          activeUsers: {
-            value: activeUsers,
-            trend: null, // User count doesn't have a trend
-          },
-        },
+      data: responseData,
+      meta: {
+        cached: false,
       },
     });
   } catch (error) {
