@@ -259,6 +259,13 @@ export async function POST(request: NextRequest) {
       userAgent,
     });
 
+    // Send notification to admins about backup completion
+    const { notifyBackupStatus } = await import("@/utils/notifications");
+    await notifyBackupStatus("success", backup.id, backup.fileName).catch((error) => {
+      console.error("Error sending backup notification:", error);
+      // Don't fail the request if notification fails
+    });
+
     return NextResponse.json(
       {
         success: true,
@@ -269,6 +276,15 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating backup:", error);
+
+    // Try to send failure notification
+    try {
+      const { notifyBackupStatus } = await import("@/utils/notifications");
+      await notifyBackupStatus("failure", "", "backup", error instanceof Error ? error.message : "Unknown error");
+    } catch (notifError) {
+      console.error("Error sending backup failure notification:", notifError);
+    }
+
     return NextResponse.json(
       {
         success: false,

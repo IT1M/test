@@ -31,15 +31,10 @@ export default function NotificationSettings({ user }: NotificationSettingsProps
     setIsSubmitting(true);
 
     try {
-      const updatedPreferences = {
-        ...user.preferences,
-        ...preferences,
-      };
-
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await fetch(`/api/users/${user.id}/preferences`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferences: updatedPreferences }),
+        body: JSON.stringify(preferences),
       });
 
       const data = await response.json();

@@ -107,6 +107,18 @@ export async function POST(request: NextRequest) {
       userAgent,
     });
 
+    // Notify admins about new user registration
+    const { notifyNewUserRegistration } = await import("@/utils/notifications");
+    await notifyNewUserRegistration({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    }).catch((error) => {
+      console.error("Error sending registration notification:", error);
+      // Don't fail the request if notification fails
+    });
+
     return NextResponse.json(
       {
         success: true,

@@ -370,43 +370,43 @@
   - Create API configuration section (ADMIN only)
   - _Requirements: 8.4_
 
-- [-] 15. Implement internationalization (i18n)
-- [ ] 15.1 Set up next-intl
+- [x] 15. Implement internationalization (i18n)
+- [x] 15.1 Set up next-intl
   - Install and configure next-intl
   - Create message files for English and Arabic
   - Set up locale routing with [locale] parameter
   - Configure locale detection and persistence
   - _Requirements: 9.1, 9.2_
 
-- [ ] 15.2 Create translation files
+- [x] 15.2 Create translation files
   - Translate all UI text to English
   - Translate all UI text to Arabic
   - Add translations for error messages
   - Include translations for email templates
   - _Requirements: 9.1, 9.2_
 
-- [ ] 15.3 Implement RTL support for Arabic
+- [x] 15.3 Implement RTL support for Arabic
   - Configure TailwindCSS for RTL
   - Test all components in RTL mode
   - Mirror directional icons and elements
   - Ensure proper text alignment
   - _Requirements: 9.2, 9.4_
 
-- [ ] 15.4 Add locale-aware formatting
+- [x] 15.4 Add locale-aware formatting
   - Implement date formatting based on locale
   - Add number formatting for different locales
   - Format currency if applicable
   - _Requirements: 9.4_
 
-- [ ] 16. Implement notifications system
-- [ ] 16.1 Create notifications API routes
+- [x] 16. Implement notifications system
+- [x] 16.1 Create notifications API routes
   - Implement POST /api/notifications endpoint
   - Create GET /api/notifications for user's notifications
   - Add PATCH /api/notifications/[id]/read endpoint
   - Support notification types (info, success, warning, error)
   - _Requirements: 11.1, 11.2_
 
-- [ ] 16.2 Build notification UI components
+- [x] 16.2 Build notification UI components
   - Create notification bell icon with unread count
   - Build notification dropdown panel
   - Implement "Mark as read" functionality
@@ -414,14 +414,14 @@
   - Show notification timestamp
   - _Requirements: 11.3, 11.4_
 
-- [ ] 16.3 Implement notification triggers
+- [x] 16.3 Implement notification triggers
   - Create notification for high reject rate (>15%)
   - Add notification for backup completion/failure
   - Send notification for new user registration (ADMIN)
   - Trigger notification for system updates
   - _Requirements: 11.1, 11.2_
 
-- [ ] 16.4 Add email notification system
+- [x] 16.4 Add email notification system
   - Configure email service (SMTP or service like SendGrid)
   - Create email templates for different notification types
   - Implement email sending utility

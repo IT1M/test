@@ -224,6 +224,19 @@ export async function POST(request: NextRequest) {
       userAgent,
     });
 
+    // Check for high reject rate and create notification if needed
+    const { checkHighRejectRate } = await import("@/utils/notifications");
+    await checkHighRejectRate({
+      id: inventoryItem.id,
+      itemName: inventoryItem.itemName,
+      batch: inventoryItem.batch,
+      quantity: inventoryItem.quantity,
+      reject: inventoryItem.reject,
+    }).catch((error) => {
+      console.error("Error checking reject rate:", error);
+      // Don't fail the request if notification fails
+    });
+
     return NextResponse.json(
       {
         success: true,

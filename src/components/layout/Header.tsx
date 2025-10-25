@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, User } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 import { useState } from "react";
 import { UserRole } from "@prisma/client";
 
@@ -42,13 +43,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           
-          <button
-            className="relative p-2 rounded-lg hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5 text-secondary-700 dark:text-secondary-300" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-danger-500 rounded-full" />
-          </button>
+          <NotificationBell />
 
           <div className="relative">
             <button
