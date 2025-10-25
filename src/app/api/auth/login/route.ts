@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signIn } from "@/services/auth";
 import { prisma } from "@/services/prisma";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
-import { AuthError } from "next-auth";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,59 +29,88 @@ export async function POST(request: NextRequest) {
 
     const { ipAddress, userAgent } = getClientInfo(request);
 
-    try {
-      // Attempt to sign in
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      // Create audit log for successful login
-      if (user) {
-        await createAuditLog({
-          userId: user.id,
-          action: "LOGIN",
-          entityType: "User",
-          entityId: user.id,
-          ipAddress,
-          userAgent,
-        });
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: { message: "Login successful" },
-      });
-    } catch (error) {
-      // Create audit log for failed login attempt
-      if (user) {
-        await createAuditLog({
-          userId: user.id,
-          action: "LOGIN",
-          entityType: "User",
-          entityId: user.id,
-          ipAddress,
-          userAgent,
-          newValue: { success: false, reason: "Invalid credentials" },
-        });
-      }
-
-      if (error instanceof AuthError) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: "AUTH_ERROR",
-              message: "Invalid email or password",
-            },
+    // Check if user exists and is active
+    if (!user || !user.isActive) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "AUTH_ERROR",
+            message: "Invalid email or password",
           },
-          { status: 401 }
-        );
-      }
-
-      throw error;
+        },
+        { status: 401 }
+      );
     }
+
+    // Get full user data for password verification
+    const fullUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!fullUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "AUTH_ERROR",
+            message: "Invalid email or password",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, fullUser.password);
+
+    if (!isPasswordValid) {
+      // Create audit log for failed login attempt
+      await createAuditLog({
+        userId: user.id,
+        action: "LOGIN",
+        entityType: "User",
+        entityId: user.id,
+        ipAddress,
+        userAgent,
+        newValue: { success: false, reason: "Invalid credentials" },
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "AUTH_ERROR",
+            message: "Invalid email or password",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    // Create audit log for successful login
+    await createAuditLog({
+      userId: user.id,
+      action: "LOGIN",
+      entityType: "User",
+      entityId: user.id,
+      ipAddress,
+      userAgent,
+      newValue: { success: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: { 
+        message: "Login successful",
+        user: {
+          id: fullUser.id,
+          email: fullUser.email,
+          name: fullUser.name,
+          role: fullUser.role,
+        }
+      },
+    });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

@@ -48,8 +48,10 @@ export default async function LocaleLayout({
   // Get messages for the locale
   let messages;
   try {
-    messages = await getMessages({ locale });
-    console.log(`[Layout] Successfully loaded messages for: ${locale}`, messages ? 'Messages loaded' : 'No messages');
+    // Try to load messages directly from the file system as a fallback
+    const messageModule = await import(`../../../messages/${locale}.json`);
+    messages = messageModule.default;
+    console.log(`[Layout] Successfully loaded messages for: ${locale}`, messages ? Object.keys(messages).length + ' keys' : 'No messages');
     
     // Ensure messages is not undefined
     if (!messages) {
@@ -58,8 +60,16 @@ export default async function LocaleLayout({
     }
   } catch (error) {
     console.error(`[Layout] Failed to load messages for locale: ${locale}`, error);
-    // Use empty messages object instead of throwing
-    messages = {};
+    
+    // Try fallback to English
+    try {
+      const fallbackModule = await import(`../../../messages/en.json`);
+      messages = fallbackModule.default || {};
+      console.log(`[Layout] Using fallback messages (en) for locale: ${locale}`);
+    } catch (fallbackError) {
+      console.error(`[Layout] Failed to load fallback messages:`, fallbackError);
+      messages = {};
+    }
   }
 
   // Determine text direction
