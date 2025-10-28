@@ -1,18 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    /* Toast variables */
     --toast-bg: #ffffff;
     --toast-color: #0f172a;
     --toast-border: #e2e8f0;
+    
+    /* Saudi cultural color variables */
+    --saudi-green: #006c35;
+    --saudi-gold: #ffd700;
+    --saudi-green-light: #f0fdf4;
+    --saudi-gold-light: #fffef7;
+    
+    /* Enhanced semantic colors */
+    --color-success: #22c55e;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+    
+    /* Typography variables */
+    --font-arabic: 'Noto Sans Arabic', 'Cairo', 'Tajawal', sans-serif;
+    --font-english: 'Inter', 'Roboto', system-ui, sans-serif;
+    --font-display: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   }
 
   .dark {
     --toast-bg: #1e293b;
     --toast-color: #f1f5f9;
     --toast-border: #334155;
+    
+    /* Dark mode Saudi colors */
+    --saudi-green-light: #052e16;
+    --saudi-gold-light: #451a03;
+  }
+
+  /* Enhanced font loading and fallbacks */
+  html {
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Arabic text optimization */
+  [dir="rtl"] {
+    font-family: var(--font-arabic);
+  }
+
+  [lang="ar"] {
+    font-family: var(--font-arabic);
+  }
+
+  /* English text optimization */
+  [dir="ltr"] {
+    font-family: var(--font-english);
+  }
+
+  [lang="en"] {
+    font-family: var(--font-english);
   }
 
   /* Prevent zoom on input focus for mobile devices */

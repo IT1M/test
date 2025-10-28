@@ -2,7 +2,7 @@ import { auth } from "@/services/auth";
 import { redirect } from "next/navigation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
-import { DataLogClient } from "./DataLogClient";
+import { EnhancedDataLogClient } from "./EnhancedDataLogClient";
 
 export default async function DataLogPage() {
   const session = await auth();
@@ -25,7 +25,7 @@ export default async function DataLogPage() {
           </p>
         </div>
 
-        <DataLogClient userRole={session.user.role} />
+        <EnhancedDataLogClient userRole={session.user.role} />
       </div>
     </AppLayout>
   );

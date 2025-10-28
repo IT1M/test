@@ -5,45 +5,41 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { KPICard } from "@/components/charts";
 import { DashboardFilters, type DashboardFilterState } from "@/components/filters/DashboardFilters";
+import { AIAnalyticsDashboard } from "@/components/ai/AIAnalyticsDashboard";
+import { ReportTemplatesManager } from "@/components/reports/ReportTemplatesManager";
+import { ReportBuilder, ReportTemplate } from "@/components/reports/ReportBuilder";
+import { cn } from "@/utils/cn";
 import toast from "react-hot-toast";
 
 // Dynamically import heavy chart components
-const InventoryTrendChart = dynamic(
-  () => import("@/components/charts").then((mod) => ({ default: mod.InventoryTrendChart })),
-  { 
-    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
-    ssr: false 
-  }
-);
-
-const DestinationPieChart = dynamic(
-  () => import("@/components/charts").then((mod) => ({ default: mod.DestinationPieChart })),
-  { 
-    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
-    ssr: false 
-  }
-);
-
-const CategoryBarChart = dynamic(
-  () => import("@/components/charts").then((mod) => ({ default: mod.CategoryBarChart })),
-  { 
-    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
-    ssr: false 
-  }
-);
-
-const RejectAnalysisChart = dynamic(
-  () => import("@/components/charts").then((mod) => ({ default: mod.RejectAnalysisChart })),
-  { 
-    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
-    ssr: false 
-  }
-);
-
-const AIInsightsPanel = dynamic(
-  () => import("@/components/charts").then((mod) => ({ default: mod.AIInsightsPanel })),
+const AnalyticsDashboardCharts = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.AnalyticsDashboard })),
   { 
     loading: () => <div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const EnhancedInventoryTrendChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.EnhancedInventoryTrendChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const EnhancedCategoryChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.EnhancedCategoryChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
+    ssr: false 
+  }
+);
+
+const InteractiveChart = dynamic(
+  () => import("@/components/charts").then((mod) => ({ default: mod.InteractiveChart })),
+  { 
+    loading: () => <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
     ssr: false 
   }
 );
@@ -107,6 +103,11 @@ export function AnalyticsDashboard() {
   const [loadingTrends, setLoadingTrends] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // New state for enhanced features
+  const [activeTab, setActiveTab] = useState<"dashboard" | "ai-analytics" | "reports" | "builder">("dashboard");
+  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
+  const [realTimeUpdates, setRealTimeUpdates] = useState(false);
 
   // Update URL params when filters change
   const updateURLParams = useCallback((newFilters: DashboardFilterState) => {
@@ -227,105 +228,144 @@ export function AnalyticsDashboard() {
     router.push(`/data-log?${new URLSearchParams(filters as any).toString()}`);
   };
 
+  // Handle report template actions
+  const handleTemplateSelect = useCallback((template: ReportTemplate) => {
+    setSelectedTemplate(template);
+    setActiveTab("builder");
+  }, []);
+
+  const handleCreateNewTemplate = useCallback(() => {
+    setSelectedTemplate(null);
+    setActiveTab("builder");
+  }, []);
+
+  const handleExportReport = useCallback((chartType: string, format: "png" | "svg" | "pdf") => {
+    toast.success(`Exporting ${chartType} as ${format.toUpperCase()}...`);
+    // Implement actual export logic here
+  }, []);
+
+  if (selectedTemplate !== null || activeTab === "builder") {
+    return (
+      <ReportBuilder
+        initialTemplate={selectedTemplate || undefined}
+        onSave={(template) => {
+          toast.success("Report template saved successfully");
+          setActiveTab("reports");
+          setSelectedTemplate(null);
+        }}
+        onPreview={(template) => {
+          toast.success("Report preview generated");
+        }}
+        onExport={(template, format) => {
+          toast.success(`Exporting report as ${format.toUpperCase()}...`);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Filters */}
-      <DashboardFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        availableCategories={availableCategories}
-      />
+    <div className="space-y-6">
+      {/* Enhanced Header with Navigation */}
+      <div className="bg-white dark:bg-secondary-800 rounded-lg border border-secondary-200 dark:border-secondary-700 p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-secondary-900 dark:text-secondary-100">
+              Advanced Analytics
+            </h2>
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
+              Comprehensive insights with AI-powered analytics and interactive reporting
+            </p>
+          </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <KPICard
-          title="Total Items"
-          value={kpiData?.totalItems.value || 0}
-          trend={
-            kpiData?.totalItems.trend !== null && kpiData?.totalItems.trend !== undefined
-              ? {
-                  direction: kpiData.totalItems.trend > 0 ? "up" : kpiData.totalItems.trend < 0 ? "down" : "neutral",
-                  percentage: Math.abs(kpiData.totalItems.trend),
-                }
-              : undefined
-          }
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          }
-          onClick={() => handleKPIClick("items")}
-        />
+          <div className="flex items-center gap-3">
+            {/* Real-time Toggle */}
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={realTimeUpdates}
+                onChange={(e) => setRealTimeUpdates(e.target.checked)}
+                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-secondary-700 dark:text-secondary-300">Real-time</span>
+            </label>
 
-        <KPICard
-          title="Total Quantity"
-          value={kpiData?.totalQuantity.value || 0}
-          trend={
-            kpiData?.totalQuantity.trend !== null && kpiData?.totalQuantity.trend !== undefined
-              ? {
-                  direction: kpiData.totalQuantity.trend > 0 ? "up" : kpiData.totalQuantity.trend < 0 ? "down" : "neutral",
-                  percentage: Math.abs(kpiData.totalQuantity.trend),
-                }
-              : undefined
-          }
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-            </svg>
-          }
-          onClick={() => handleKPIClick("quantity")}
-        />
+            {/* Export All Button */}
+            <button
+              onClick={() => handleExportReport("all", "pdf")}
+              className="px-4 py-2 text-sm font-medium text-secondary-600 dark:text-secondary-400 hover:text-secondary-800 dark:hover:text-secondary-200 border border-secondary-300 dark:border-secondary-600 rounded-md hover:bg-secondary-50 dark:hover:bg-secondary-700"
+            >
+              Export All
+            </button>
+          </div>
+        </div>
 
-        <KPICard
-          title="Reject Rate"
-          value={kpiData?.rejectRate.value ? `${kpiData.rejectRate.value}%` : "0%"}
-          trend={
-            kpiData?.rejectRate.trend !== null && kpiData?.rejectRate.trend !== undefined
-              ? {
-                  direction: kpiData.rejectRate.trend > 0 ? "up" : kpiData.rejectRate.trend < 0 ? "down" : "neutral",
-                  percentage: Math.abs(kpiData.rejectRate.trend),
-                }
-              : undefined
-          }
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-          onClick={() => handleKPIClick("rejects")}
-        />
-
-        <KPICard
-          title="Active Users"
-          value={kpiData?.activeUsers.value || 0}
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          }
-        />
+        {/* Navigation Tabs */}
+        <div className="mt-6 border-b border-secondary-200 dark:border-secondary-700">
+          <nav className="flex space-x-8" aria-label="Tabs">
+            {[
+              { key: "dashboard", label: "Dashboard", icon: "📊" },
+              { key: "ai-analytics", label: "AI Analytics", icon: "🤖" },
+              { key: "reports", label: "Reports", icon: "📋" },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={cn(
+                  "py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2",
+                  activeTab === tab.key
+                    ? "border-primary-500 text-primary-600 dark:text-primary-400"
+                    : "border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300 dark:text-secondary-400 dark:hover:text-secondary-300"
+                )}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <InventoryTrendChart data={trendsData?.trends || []} />
-        <DestinationPieChart data={trendsData?.destinationDistribution || { MAIS: 0, FOZAN: 0 }} />
-      </div>
+      {/* Tab Content */}
+      {activeTab === "dashboard" && (
+        <div className="space-y-6">
+          {/* Filters */}
+          <DashboardFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            availableCategories={availableCategories}
+          />
 
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <CategoryBarChart data={trendsData?.categoryDistribution || []} />
-        <RejectAnalysisChart data={trendsData?.rejectAnalysis || { none: 0, low: 0, medium: 0, high: 0 }} />
-      </div>
+          {/* Enhanced Analytics Dashboard */}
+          <AnalyticsDashboardCharts
+            realTimeUpdates={realTimeUpdates}
+            onExport={handleExportReport}
+          />
+        </div>
+      )}
 
-      {/* AI Insights */}
-      <AIInsightsPanel
-        insights={aiInsights}
-        loading={loadingAI}
-        error={aiError}
-        onRefresh={() => fetchAIInsights()}
-        onAskQuestion={(question) => fetchAIInsights(question)}
-      />
+      {activeTab === "ai-analytics" && (
+        <AIAnalyticsDashboard
+          data={trendsData?.trends || []}
+          onInsightAction={(insight, action) => {
+            toast.success(`Executing action: ${action.label}`);
+            action.onClick();
+          }}
+        />
+      )}
+
+      {activeTab === "reports" && (
+        <ReportTemplatesManager
+          onSelectTemplate={handleTemplateSelect}
+          onCreateNew={handleCreateNewTemplate}
+          onEditTemplate={handleTemplateSelect}
+          onDeleteTemplate={(templateId) => {
+            toast.success("Template deleted successfully");
+          }}
+          onDuplicateTemplate={(template) => {
+            toast.success("Template duplicated successfully");
+          }}
+        />
+      )}
     </div>
   );
 }

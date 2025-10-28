@@ -41,17 +41,21 @@ async function getHandler(request: NextRequest) {
     const dateTo = searchParams.get("dateTo");
     const destinations = searchParams.get("destinations")?.split(",").filter(Boolean) || [];
     const categories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
+    const minQuantity = searchParams.get("minQuantity");
+    const maxQuantity = searchParams.get("maxQuantity");
+    const hasRejects = searchParams.get("hasRejects");
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
     // Build where clause for filtering
     const where: Prisma.InventoryItemWhereInput = {};
 
-    // Search filter (item name or batch)
+    // Search filter (item name, batch, or notes)
     if (search) {
       where.OR = [
         { itemName: { contains: search, mode: "insensitive" } },
         { batch: { contains: search, mode: "insensitive" } },
+        { notes: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -77,6 +81,26 @@ async function getHandler(request: NextRequest) {
     // Category filter
     if (categories.length > 0) {
       where.category = { in: categories };
+    }
+
+    // Quantity range filters
+    if (minQuantity || maxQuantity) {
+      where.quantity = {};
+      if (minQuantity) {
+        where.quantity.gte = parseInt(minQuantity);
+      }
+      if (maxQuantity) {
+        where.quantity.lte = parseInt(maxQuantity);
+      }
+    }
+
+    // Has rejects filter
+    if (hasRejects !== null && hasRejects !== undefined) {
+      if (hasRejects === 'true') {
+        where.reject = { gt: 0 };
+      } else if (hasRejects === 'false') {
+        where.reject = { equals: 0 };
+      }
     }
 
     // Build orderBy clause
@@ -237,6 +261,15 @@ async function postHandler(request: NextRequest) {
       console.error("Error checking reject rate:", error);
       // Don't fail the request if notification fails
     });
+
+    // Trigger real-time updates
+    try {
+      const { triggerInventoryUpdate } = await import("@/app/api/realtime/events/route");
+      await triggerInventoryUpdate(inventoryItem);
+    } catch (error) {
+      console.error("Error triggering real-time update:", error);
+      // Don't fail the request if real-time update fails
+    }
 
     return NextResponse.json(
       {

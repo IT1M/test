@@ -5,6 +5,21 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { SmartFormField } from "@/components/forms/SmartFormField";
+import { ValidatedInput } from "@/components/forms/ValidatedInput";
+import { DataRecoveryModal } from "@/components/forms/DataRecoveryModal";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import {
+  itemNameValidator,
+  batchValidator,
+  quantityValidator,
+  rejectValidator,
+  destinationValidator,
+  categoryValidator,
+  notesValidator,
+  validateInventoryForm,
+  type ValidationResult,
+} from "@/services/validation";
 import { cn } from "@/utils/cn";
 
 interface InventoryFormData {
@@ -27,6 +42,23 @@ interface FormErrors {
   notes?: string;
 }
 
+interface FormWarnings {
+  itemName?: string;
+  batch?: string;
+  quantity?: string;
+  reject?: string;
+  destination?: string;
+  category?: string;
+  notes?: string;
+}
+
+interface Suggestion {
+  value: string;
+  label: string;
+  frequency?: number;
+  lastUsed?: Date;
+}
+
 const INITIAL_FORM_DATA: InventoryFormData = {
   itemName: "",
   batch: "",
@@ -37,10 +69,10 @@ const INITIAL_FORM_DATA: InventoryFormData = {
   notes: "",
 };
 
-// Common item names for autocomplete
+// Common item names for autocomplete (fallback)
 const COMMON_ITEMS = [
   "Surgical Mask",
-  "N95 Respirator",
+  "N95 Respirator", 
   "Surgical Gloves",
   "Nitrile Gloves",
   "Face Shield",
@@ -51,7 +83,7 @@ const COMMON_ITEMS = [
   "Alcohol Swabs",
 ];
 
-// Common categories for autocomplete
+// Common categories for autocomplete (fallback)
 const COMMON_CATEGORIES = [
   "PPE",
   "Surgical Supplies",
@@ -63,76 +95,130 @@ const COMMON_CATEGORIES = [
 
 const DRAFT_KEY = "inventory-form-draft";
 
-export function InventoryEntryForm() {
+interface InventoryEntryFormProps {
+  onSuccess?: () => void;
+}
+
+export function InventoryEntryForm({ onSuccess }: InventoryEntryFormProps = {}) {
   const [formData, setFormData] = useState<InventoryFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [warnings, setWarnings] = useState<FormWarnings>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  const [itemSuggestions, setItemSuggestions] = useState<string[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
-  const [showItemSuggestions, setShowItemSuggestions] = useState(false);
-  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showDraftIndicator, setShowDraftIndicator] = useState(false);
+  const [validationInProgress, setValidationInProgress] = useState<Record<string, boolean>>({});
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryData, setRecoveryData] = useState<any>(null);
 
-  // Load draft from localStorage on mount
-  useEffect(() => {
-    const savedDraft = localStorage.getItem(DRAFT_KEY);
-    if (savedDraft) {
-      try {
-        const draft = JSON.parse(savedDraft);
-        if (confirm("A draft was found. Would you like to restore it?")) {
-          setFormData(draft.data);
-          setIsDirty(true);
-          setLastSaved(new Date(draft.timestamp));
-        } else {
-          localStorage.removeItem(DRAFT_KEY);
-        }
-      } catch (error) {
-        console.error("Error loading draft:", error);
-        localStorage.removeItem(DRAFT_KEY);
+  // Auto-save functionality with recovery
+  const autoSave = useAutoSave({
+    key: DRAFT_KEY,
+    data: formData,
+    enabled: true,
+    interval: 60000, // Save every minute
+    enableRecovery: true,
+    maxVersions: 10,
+    onRestore: (data) => {
+      // Show recovery modal instead of simple confirm
+      setRecoveryData(data);
+      setShowRecoveryModal(true);
+    },
+    onError: (error) => {
+      console.error("Auto-save error:", error);
+    },
+    onConflict: (localData, remoteData) => {
+      // Simple conflict resolution: prefer local changes but show warning
+      console.warn("Auto-save conflict detected. Local changes preserved.");
+      return localData;
+    },
+  });
+
+  // Fetch suggestions from API
+  const fetchSuggestions = useCallback(async (field: string, query: string): Promise<Suggestion[]> => {
+    try {
+      const response = await fetch(`/api/inventory/suggestions?field=${field}&query=${encodeURIComponent(query)}&limit=10`);
+      if (response.ok) {
+        const result = await response.json();
+        return result.data || [];
       }
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
     }
+    
+    // Fallback to static suggestions
+    if (field === "itemName") {
+      return COMMON_ITEMS
+        .filter(item => item.toLowerCase().includes(query.toLowerCase()))
+        .map(item => ({ value: item, label: item }));
+    } else if (field === "category") {
+      return COMMON_CATEGORIES
+        .filter(cat => cat.toLowerCase().includes(query.toLowerCase()))
+        .map(cat => ({ value: cat, label: cat }));
+    }
+    
+    return [];
   }, []);
 
-  // Auto-save to localStorage every 2 seconds
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const timer = setTimeout(() => {
+  // Create field validators with context
+  const createFieldValidator = useCallback((fieldName: string) => {
+    return async (value: string): Promise<string | null> => {
+      setValidationInProgress(prev => ({ ...prev, [fieldName]: true }));
+      
       try {
-        localStorage.setItem(
-          DRAFT_KEY,
-          JSON.stringify({
-            data: formData,
-            timestamp: new Date().toISOString(),
-          })
-        );
-        setLastSaved(new Date());
-        setShowDraftIndicator(true);
+        let validator;
+        let context = {};
         
-        // Hide indicator after 2 seconds
-        setTimeout(() => setShowDraftIndicator(false), 2000);
-      } catch (error) {
-        console.error("Error saving draft:", error);
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [formData, isDirty]);
-
-  // Warn user about unsaved changes before leaving
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
+        switch (fieldName) {
+          case "itemName":
+            validator = itemNameValidator;
+            break;
+          case "batch":
+            validator = batchValidator;
+            break;
+          case "quantity":
+            validator = quantityValidator;
+            break;
+          case "reject":
+            validator = rejectValidator;
+            context = { quantity: formData.quantity };
+            break;
+          case "destination":
+            validator = destinationValidator;
+            break;
+          case "category":
+            validator = categoryValidator;
+            break;
+          case "notes":
+            validator = notesValidator;
+            break;
+          default:
+            return null;
+        }
+        
+        const result: ValidationResult = await validator(value, context);
+        
+        // Handle warnings separately
+        if (result.isValid && result.message && result.severity === "warning") {
+          setWarnings(prev => ({ ...prev, [fieldName]: result.message }));
+          setErrors(prev => ({ ...prev, [fieldName]: undefined }));
+        } else if (result.isValid && result.message && result.severity === "info") {
+          setWarnings(prev => ({ ...prev, [fieldName]: result.message }));
+          setErrors(prev => ({ ...prev, [fieldName]: undefined }));
+        } else if (!result.isValid) {
+          setErrors(prev => ({ ...prev, [fieldName]: result.message }));
+          setWarnings(prev => ({ ...prev, [fieldName]: undefined }));
+        } else {
+          setErrors(prev => ({ ...prev, [fieldName]: undefined }));
+          setWarnings(prev => ({ ...prev, [fieldName]: undefined }));
+        }
+        
+        return result.isValid ? null : result.message || "Invalid value";
+      } catch (validationError) {
+        console.error("Validation error:", validationError);
+        return "Validation failed";
+      } finally {
+        setValidationInProgress(prev => ({ ...prev, [fieldName]: false }));
       }
     };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
+  }, [formData.quantity]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -140,22 +226,7 @@ export function InventoryEntryForm() {
       // Ctrl+S or Cmd+S to save draft manually
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        if (isDirty) {
-          try {
-            localStorage.setItem(
-              DRAFT_KEY,
-              JSON.stringify({
-                data: formData,
-                timestamp: new Date().toISOString(),
-              })
-            );
-            setLastSaved(new Date());
-            setShowDraftIndicator(true);
-            setTimeout(() => setShowDraftIndicator(false), 2000);
-          } catch (error) {
-            console.error("Error saving draft:", error);
-          }
-        }
+        autoSave.save();
       }
 
       // Ctrl+Enter or Cmd+Enter to submit form
@@ -170,7 +241,7 @@ export function InventoryEntryForm() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [formData, isDirty]);
+  }, [autoSave]);
 
   // Calculate reject percentage
   const rejectPercentage = 
@@ -186,122 +257,43 @@ export function InventoryEntryForm() {
     return "text-danger-600 dark:text-danger-400";
   };
 
-  // Handle input change
-  const handleChange = (
+  // Handle input change with real-time validation
+  const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setIsDirty(true);
 
-    // Clear error for this field
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    // Debounced validation
+    const timeoutId = setTimeout(() => {
+      validateField(name, value);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [validateField]);
+
+  // Validate entire form before submission
+  const validateForm = async (): Promise<boolean> => {
+    try {
+      const result = await validateInventoryForm(formData);
+      
+      setErrors(result.errors);
+      setWarnings(result.warnings);
+      
+      return result.isValid;
+    } catch (error) {
+      console.error("Form validation error:", error);
+      setErrors({ itemName: "Validation failed. Please try again." });
+      return false;
     }
-
-    // Handle autocomplete for item name
-    if (name === "itemName" && value.length > 0) {
-      const filtered = COMMON_ITEMS.filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase())
-      );
-      setItemSuggestions(filtered);
-      setShowItemSuggestions(filtered.length > 0);
-    } else if (name === "itemName") {
-      setShowItemSuggestions(false);
-    }
-
-    // Handle autocomplete for category
-    if (name === "category" && value.length > 0) {
-      const filtered = COMMON_CATEGORIES.filter((cat) =>
-        cat.toLowerCase().includes(value.toLowerCase())
-      );
-      setCategorySuggestions(filtered);
-      setShowCategorySuggestions(filtered.length > 0);
-    } else if (name === "category") {
-      setShowCategorySuggestions(false);
-    }
-  };
-
-  // Validate form
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    // Item name validation
-    if (!formData.itemName.trim()) {
-      newErrors.itemName = "Item name is required";
-    } else if (formData.itemName.trim().length < 2) {
-      newErrors.itemName = "Item name must be at least 2 characters";
-    } else if (formData.itemName.trim().length > 100) {
-      newErrors.itemName = "Item name must not exceed 100 characters";
-    }
-
-    // Batch validation
-    if (!formData.batch.trim()) {
-      newErrors.batch = "Batch number is required";
-    } else if (formData.batch.trim().length < 3) {
-      newErrors.batch = "Batch number must be at least 3 characters";
-    } else if (formData.batch.trim().length > 50) {
-      newErrors.batch = "Batch number must not exceed 50 characters";
-    } else if (!/^[A-Z0-9]+$/.test(formData.batch.trim())) {
-      newErrors.batch = "Batch number must contain only uppercase letters and numbers";
-    }
-
-    // Quantity validation
-    if (!formData.quantity) {
-      newErrors.quantity = "Quantity is required";
-    } else {
-      const qty = parseFloat(formData.quantity);
-      if (isNaN(qty) || !Number.isInteger(qty)) {
-        newErrors.quantity = "Quantity must be a whole number";
-      } else if (qty <= 0) {
-        newErrors.quantity = "Quantity must be positive";
-      } else if (qty > 1000000) {
-        newErrors.quantity = "Quantity must not exceed 1,000,000";
-      }
-    }
-
-    // Reject validation
-    if (!formData.reject) {
-      newErrors.reject = "Reject quantity is required";
-    } else {
-      const rej = parseFloat(formData.reject);
-      if (isNaN(rej) || !Number.isInteger(rej)) {
-        newErrors.reject = "Reject quantity must be a whole number";
-      } else if (rej < 0) {
-        newErrors.reject = "Reject quantity cannot be negative";
-      } else if (formData.quantity && rej > parseFloat(formData.quantity)) {
-        newErrors.reject = "Reject quantity cannot exceed total quantity";
-      }
-    }
-
-    // Destination validation
-    if (!formData.destination) {
-      newErrors.destination = "Destination is required";
-    }
-
-    // Category validation (optional)
-    if (formData.category && formData.category.trim().length > 0) {
-      if (formData.category.trim().length < 2) {
-        newErrors.category = "Category must be at least 2 characters";
-      } else if (formData.category.trim().length > 50) {
-        newErrors.category = "Category must not exceed 50 characters";
-      }
-    }
-
-    // Notes validation (optional)
-    if (formData.notes && formData.notes.length > 500) {
-      newErrors.notes = "Notes must not exceed 500 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    const isValid = await validateForm();
+    if (!isValid) {
       return;
     }
 
@@ -342,11 +334,13 @@ export function InventoryEntryForm() {
 
       // Success - clear form, draft, and show success message
       setFormData(INITIAL_FORM_DATA);
-      setIsDirty(false);
       setErrors({});
-      setLastSaved(null);
-      localStorage.removeItem(DRAFT_KEY);
+      setWarnings({});
+      autoSave.clearSavedData();
       alert("Inventory item created successfully!");
+      
+      // Call success callback
+      onSuccess?.();
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("An error occurred while submitting the form");
@@ -355,17 +349,33 @@ export function InventoryEntryForm() {
     }
   };
 
-  // Handle suggestion selection
-  const selectItemSuggestion = (item: string) => {
-    setFormData((prev) => ({ ...prev, itemName: item }));
-    setShowItemSuggestions(false);
-    setIsDirty(true);
+  // Reset form
+  const resetForm = () => {
+    if (autoSave.hasUnsavedChanges && !confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
+      return;
+    }
+    setFormData(INITIAL_FORM_DATA);
+    setErrors({});
+    setWarnings({});
+    autoSave.clearSavedData();
   };
 
-  const selectCategorySuggestion = (category: string) => {
-    setFormData((prev) => ({ ...prev, category }));
-    setShowCategorySuggestions(false);
-    setIsDirty(true);
+  // Handle recovery modal actions
+  const handleRestoreData = (data: any) => {
+    setFormData(data);
+    setShowRecoveryModal(false);
+    setRecoveryData(null);
+  };
+
+  const handleDiscardRecovery = () => {
+    autoSave.clearSavedData();
+    setShowRecoveryModal(false);
+    setRecoveryData(null);
+  };
+
+  const handleCloseRecovery = () => {
+    setShowRecoveryModal(false);
+    setRecoveryData(null);
   };
 
   return (
@@ -397,93 +407,81 @@ export function InventoryEntryForm() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        {/* Item Name with Autocomplete */}
-        <div className="relative">
-          <Input
-            label="Item Name"
-            name="itemName"
-            value={formData.itemName}
-            onChange={handleChange}
-            error={errors.itemName}
-            required
-            maxLength={100}
-            placeholder="e.g., Surgical Mask"
-            autoComplete="off"
-            aria-autocomplete="list"
-            aria-controls={showItemSuggestions ? "item-suggestions" : undefined}
-            aria-expanded={showItemSuggestions}
-          />
-          {showItemSuggestions && (
-            <div 
-              id="item-suggestions"
-              role="listbox"
-              aria-label="Item name suggestions"
-              className="absolute z-10 w-full mt-1 bg-white dark:bg-secondary-800 border border-secondary-300 dark:border-secondary-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-            >
-              {itemSuggestions.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  role="option"
-                  aria-selected={formData.itemName === item}
-                  onClick={() => selectItemSuggestion(item)}
-                  className="w-full text-left px-3 py-2 hover:bg-secondary-100 dark:hover:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          )}
-          <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400" aria-live="polite">
-            {formData.itemName.length}/100 characters
-          </p>
-        </div>
+        {/* Item Name with Smart Suggestions */}
+        <SmartFormField
+          label="Item Name"
+          name="itemName"
+          value={formData.itemName}
+          onChange={handleChange}
+          error={errors.itemName}
+          required
+          maxLength={100}
+          placeholder="e.g., Surgical Mask"
+          suggestions={COMMON_ITEMS.map(item => ({ value: item, label: item }))}
+          onSuggestionsFetch={(query) => fetchSuggestions("itemName", query)}
+          showFrequency={true}
+          disabled={validationInProgress.itemName}
+        />
 
-        {/* Batch Number */}
-        <Input
+        {/* Batch Number with Real-time Validation */}
+        <ValidatedInput
           label="Batch Number"
           name="batch"
           value={formData.batch}
           onChange={handleChange}
           error={errors.batch}
+          validator={createFieldValidator("batch")}
           required
           maxLength={50}
           placeholder="e.g., BATCH123"
           helperText="Uppercase letters and numbers only"
           style={{ textTransform: "uppercase" }}
+          validMessage="Batch number is available"
         />
 
-        {/* Quantity */}
-        <Input
+        {/* Quantity with Real-time Validation */}
+        <ValidatedInput
           label="Quantity"
           name="quantity"
           type="number"
           value={formData.quantity}
           onChange={handleChange}
           error={errors.quantity}
+          validator={createFieldValidator("quantity")}
           required
           min="1"
           max="1000000"
           placeholder="e.g., 1000"
+          validMessage="Valid quantity"
         />
 
-        {/* Reject Quantity */}
+        {/* Reject Quantity with Real-time Validation */}
         <div>
-          <Input
+          <ValidatedInput
             label="Reject Quantity"
             name="reject"
             type="number"
             value={formData.reject}
             onChange={handleChange}
             error={errors.reject}
+            validator={createFieldValidator("reject")}
             required
             min="0"
             placeholder="e.g., 10"
-            aria-describedby={formData.quantity && formData.reject ? "reject-rate" : undefined}
+            validMessage="Valid reject quantity"
           />
+          {warnings.reject && (
+            <div className="mt-2 p-2 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 rounded-md">
+              <p className="text-sm text-warning-700 dark:text-warning-300 flex items-center">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                {warnings.reject}
+              </p>
+            </div>
+          )}
           {formData.quantity && formData.reject && (
             <p 
-              id="reject-rate"
               role="status"
               aria-live="polite"
               className={cn("mt-2 text-sm font-medium", getRejectColor(rejectPercentage))}
@@ -494,22 +492,33 @@ export function InventoryEntryForm() {
         </div>
 
         {/* Destination */}
-        <Select
-          label="Destination"
-          name="destination"
-          value={formData.destination}
-          onChange={handleChange}
-          error={errors.destination}
-          required
-        >
-          <option value="">Select destination</option>
-          <option value="MAIS">MAIS</option>
-          <option value="FOZAN">FOZAN</option>
-        </Select>
+        <div>
+          <Select
+            label="Destination"
+            name="destination"
+            value={formData.destination}
+            onChange={handleChange}
+            error={errors.destination}
+            required
+            disabled={validationInProgress.destination}
+          >
+            <option value="">Select destination</option>
+            <option value="MAIS">MAIS</option>
+            <option value="FOZAN">FOZAN</option>
+          </Select>
+          {formData.destination && !errors.destination && (
+            <div className="mt-1 flex items-center text-sm text-success-600 dark:text-success-400">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Destination selected
+            </div>
+          )}
+        </div>
 
-        {/* Category with Autocomplete */}
-        <div className="relative">
-          <Input
+        {/* Category with Smart Suggestions and Validation */}
+        <div>
+          <SmartFormField
             label="Category"
             name="category"
             value={formData.category}
@@ -517,62 +526,82 @@ export function InventoryEntryForm() {
             error={errors.category}
             maxLength={50}
             placeholder="e.g., PPE (optional)"
-            autoComplete="off"
-            aria-autocomplete="list"
-            aria-controls={showCategorySuggestions ? "category-suggestions" : undefined}
-            aria-expanded={showCategorySuggestions}
+            suggestions={COMMON_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+            onSuggestionsFetch={(query) => fetchSuggestions("category", query)}
+            showFrequency={true}
+            disabled={validationInProgress.category}
           />
-          {showCategorySuggestions && (
-            <div 
-              id="category-suggestions"
-              role="listbox"
-              aria-label="Category suggestions"
-              className="absolute z-10 w-full mt-1 bg-white dark:bg-secondary-800 border border-secondary-300 dark:border-secondary-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-            >
-              {categorySuggestions.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  role="option"
-                  aria-selected={formData.category === category}
-                  onClick={() => selectCategorySuggestion(category)}
-                  className="w-full text-left px-3 py-2 hover:bg-secondary-100 dark:hover:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
-                >
-                  {category}
-                </button>
-              ))}
+          {warnings.category && (
+            <div className="mt-1 flex items-center text-sm text-info-600 dark:text-info-400">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {warnings.category}
             </div>
           )}
-          <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400" aria-live="polite">
-            {formData.category.length}/50 characters
-          </p>
         </div>
       </div>
 
-      {/* Notes */}
-      <Textarea
-        label="Notes"
-        name="notes"
-        value={formData.notes}
-        onChange={handleChange}
-        error={errors.notes}
-        maxLength={500}
-        showCharCount
-        rows={4}
-        placeholder="Additional notes or comments (optional)"
-      />
+      {/* Notes with Real-time Validation */}
+      <div>
+        <Textarea
+          label="Notes"
+          name="notes"
+          value={formData.notes}
+          onChange={handleChange}
+          error={errors.notes}
+          maxLength={500}
+          showCharCount
+          rows={4}
+          placeholder="Additional notes or comments (optional)"
+          disabled={validationInProgress.notes}
+        />
+        {formData.notes && formData.notes.length > 0 && !errors.notes && (
+          <div className="mt-1 flex items-center text-sm text-success-600 dark:text-success-400">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Notes added ({formData.notes.length}/500 characters)
+          </div>
+        )}
+      </div>
 
-      {/* Draft Indicator - ARIA live region */}
+      {/* Auto-save Status */}
       <div 
         role="status" 
         aria-live="polite" 
         aria-atomic="true"
-        className="min-h-[24px]"
+        className="min-h-[24px] flex items-center justify-center"
       >
-        {showDraftIndicator && (
-          <div className="flex items-center justify-center text-sm text-success-600 dark:text-success-400">
+        {autoSave.isSaving && (
+          <div className="flex items-center text-sm text-primary-600 dark:text-primary-400">
             <svg
-              className="w-4 h-4 mr-2"
+              className="animate-spin w-4 h-4 mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            Saving draft...
+          </div>
+        )}
+        {autoSave.lastSaved && !autoSave.isSaving && (
+          <div className="text-sm text-success-600 dark:text-success-400">
+            <svg
+              className="w-4 h-4 mr-2 inline"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -585,7 +614,7 @@ export function InventoryEntryForm() {
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            Draft saved
+            Draft saved at {autoSave.lastSaved.toLocaleTimeString()}
           </div>
         )}
       </div>
@@ -596,16 +625,7 @@ export function InventoryEntryForm() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              if (isDirty && !confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-                return;
-              }
-              setFormData(INITIAL_FORM_DATA);
-              setErrors({});
-              setIsDirty(false);
-              setLastSaved(null);
-              localStorage.removeItem(DRAFT_KEY);
-            }}
+            onClick={resetForm}
             disabled={isSubmitting}
             aria-label="Reset form to initial state"
             className="w-full sm:w-auto"
@@ -613,14 +633,31 @@ export function InventoryEntryForm() {
             Reset
           </Button>
           
-          {lastSaved && (
-            <span 
-              className="text-xs text-center sm:text-left text-secondary-500 dark:text-secondary-400"
-              role="status"
-              aria-live="polite"
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={autoSave.save}
+            disabled={isSubmitting || !autoSave.hasUnsavedChanges}
+            aria-label="Save draft manually"
+            className="w-full sm:w-auto"
+          >
+            Save Draft
+          </Button>
+          
+          {autoSave.hasRecoveryData && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowRecoveryModal(true)}
+              disabled={isSubmitting}
+              aria-label="View recovery options"
+              className="w-full sm:w-auto"
             >
-              Last saved: {lastSaved.toLocaleTimeString()}
-            </span>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Recovery
+            </Button>
           )}
         </div>
 
@@ -635,6 +672,23 @@ export function InventoryEntryForm() {
           {isSubmitting ? "Saving..." : "Save Entry"}
         </Button>
       </div>
+
+      {/* Data Recovery Modal */}
+      <DataRecoveryModal
+        isOpen={showRecoveryModal}
+        onClose={handleCloseRecovery}
+        onRestore={handleRestoreData}
+        onDiscard={handleDiscardRecovery}
+        currentData={formData}
+        savedData={recoveryData ? {
+          data: recoveryData,
+          timestamp: new Date().toISOString(),
+          version: "2.0",
+          sessionId: "",
+          checksum: "",
+        } : null}
+        versionHistory={autoSave.getVersionHistory()}
+      />
     </form>
   );
 }

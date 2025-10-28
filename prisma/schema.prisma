@@ -84,6 +84,8 @@ model User {
   backups        Backup[]
   settingsUpdates SystemSettings[]
   notifications  Notification[]
+  savedSearches  SavedSearch[]
+  sharedSearches SavedSearchShare[]
   
   @@index([email])
   @@index([role])
@@ -199,4 +201,37 @@ model Notification {
   
   @@index([userId, isRead])
   @@index([createdAt])
+}
+
+model SavedSearch {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  query       String
+  filters     Json
+  isShared    Boolean  @default(false)
+  isPublic    Boolean  @default(false)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  sharedWith SavedSearchShare[]
+  
+  @@index([createdById, createdAt])
+  @@index([isPublic, createdAt])
+  @@index([name])
+}
+
+model SavedSearchShare {
+  id            String      @id @default(uuid())
+  savedSearchId String
+  savedSearch   SavedSearch @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  canEdit       Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  
+  @@unique([savedSearchId, userId])
+  @@index([userId])
 }
