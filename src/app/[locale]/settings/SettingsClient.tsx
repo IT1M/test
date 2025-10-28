@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, lazy, Suspense } from "react";
-import { User, Lock, Palette, Bell, Settings as SettingsIcon } from "lucide-react";
+import { User, Lock, Palette, Bell, Settings as SettingsIcon, Shield } from "lucide-react";
+import { canPerformAction } from "@/utils/rbac";
 
 type UserRole = "ADMIN" | "DATA_ENTRY" | "SUPERVISOR" | "MANAGER" | "AUDITOR";
 
@@ -11,6 +12,7 @@ const SecuritySettings = lazy(() => import("./SecuritySettings"));
 const AppearanceSettings = lazy(() => import("./AppearanceSettings"));
 const NotificationSettings = lazy(() => import("./NotificationSettings"));
 const APISettings = lazy(() => import("./APISettings"));
+const EnhancedAdminSettings = lazy(() => import("@/components/admin/EnhancedAdminSettings"));
 
 interface SettingsClientProps {
   user: {
@@ -22,7 +24,7 @@ interface SettingsClientProps {
   };
 }
 
-type Tab = "profile" | "security" | "appearance" | "notifications" | "api";
+type Tab = "profile" | "security" | "appearance" | "notifications" | "api" | "admin";
 
 export default function SettingsClient({ user }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
@@ -33,6 +35,11 @@ export default function SettingsClient({ user }: SettingsClientProps) {
     { id: "appearance" as Tab, label: "Appearance", icon: Palette },
     { id: "notifications" as Tab, label: "Notifications", icon: Bell },
   ];
+
+  // Add admin tabs for users with appropriate permissions
+  if (canPerformAction(user.role, "read", "user") || canPerformAction(user.role, "read", "monitoring")) {
+    tabs.push({ id: "admin" as Tab, label: "Administration", icon: Shield });
+  }
 
   // Add API tab only for ADMIN users
   if (user.role === "ADMIN") {
@@ -68,15 +75,21 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 
       {/* Content */}
       <div className="flex-1">
-        <div className="bg-white dark:bg-secondary-900 rounded-lg shadow p-6">
+        {activeTab === "admin" ? (
           <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div></div>}>
-            {activeTab === "profile" && <ProfileSettings user={user} />}
-            {activeTab === "security" && <SecuritySettings user={user} />}
-            {activeTab === "appearance" && <AppearanceSettings user={user} />}
-            {activeTab === "notifications" && <NotificationSettings user={user} />}
-            {activeTab === "api" && user.role === "ADMIN" && <APISettings />}
+            <EnhancedAdminSettings user={user} />
           </Suspense>
-        </div>
+        ) : (
+          <div className="bg-white dark:bg-secondary-900 rounded-lg shadow p-6">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div></div>}>
+              {activeTab === "profile" && <ProfileSettings user={user} />}
+              {activeTab === "security" && <SecuritySettings user={user} />}
+              {activeTab === "appearance" && <AppearanceSettings user={user} />}
+              {activeTab === "notifications" && <NotificationSettings user={user} />}
+              {activeTab === "api" && user.role === "ADMIN" && <APISettings />}
+            </Suspense>
+          </div>
+        )}
       </div>
     </div>
   );

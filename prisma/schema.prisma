@@ -31,6 +31,9 @@ enum AuditAction {
   LOGOUT
   EXPORT
   VIEW
+  BULK_IMPORT
+  BULK_UPDATE
+  BULK_DELETE
 }
 
 enum ReportType {

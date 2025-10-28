@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/services/auth";
 import { prisma } from "@/services/prisma";
+import { canPerformAction, canManageUser } from "@/utils/rbac";
 import { createAuditLog, getClientInfo } from "@/utils/audit";
-import { canPerformAction } from "@/utils/rbac";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -13,16 +13,15 @@ const UpdateUserSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
   role: z.enum(["ADMIN", "DATA_ENTRY", "SUPERVISOR", "MANAGER", "AUDITOR"]).optional(),
   isActive: z.boolean().optional(),
-  preferences: z.any().optional(),
+  twoFactorEnabled: z.boolean().optional(),
 });
 
-// GET /api/users/[id] - Get a specific user
+// GET /api/users/[id] - Get user details
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -40,14 +39,18 @@ export async function GET(
       );
     }
 
+    const userId = params.id;
+
+    // Get user with detailed information
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
         isActive: true,
+        twoFactorEnabled: true,
         createdAt: true,
         updatedAt: true,
         preferences: true,
@@ -55,37 +58,86 @@ export async function GET(
           select: {
             inventoryItems: true,
             auditLogs: true,
-            reports: true,
+            sessions: true,
+            activities: true,
+            securityAlerts: true,
           },
+        },
+        sessions: {
+          where: {
+            isActive: true,
+          },
+          select: {
+            id: true,
+            isActive: true,
+            lastActivity: true,
+            ipAddress: true,
+            userAgent: true,
+            createdAt: true,
+          },
+          orderBy: {
+            lastActivity: "desc",
+          },
+          take: 10,
+        },
+        activities: {
+          select: {
+            id: true,
+            action: true,
+            entityType: true,
+            timestamp: true,
+            ipAddress: true,
+          },
+          orderBy: {
+            timestamp: "desc",
+          },
+          take: 20,
+        },
+        securityAlerts: {
+          select: {
+            id: true,
+            type: true,
+            severity: true,
+            message: true,
+            timestamp: true,
+            resolved: true,
+          },
+          orderBy: {
+            timestamp: "desc",
+          },
+          take: 10,
         },
       },
     });
 
     if (!user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "NOT_FOUND",
-            message: "User not found",
-          },
-        },
+        { success: false, error: { code: "NOT_FOUND", message: "User not found" } },
         { status: 404 }
       );
     }
 
+    // Add computed fields
+    const lastActivity = user.sessions[0]?.lastActivity || user.activities[0]?.timestamp;
+    
+    const userWithDetails = {
+      ...user,
+      lastActivity: lastActivity?.toISOString(),
+      recentActivities: user.activities,
+    };
+
     return NextResponse.json({
       success: true,
-      data: user,
+      data: userWithDetails,
     });
   } catch (error) {
-    console.error("Error fetching user:", error);
+    console.error("Error fetching user details:", error);
     return NextResponse.json(
       {
         success: false,
         error: {
           code: "INTERNAL_ERROR",
-          message: "Failed to fetch user",
+          message: "Failed to fetch user details",
         },
       },
       { status: 500 }
@@ -93,13 +145,12 @@ export async function GET(
   }
 }
 
-// PATCH /api/users/[id] - Update a user
+// PATCH /api/users/[id] - Update user
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -117,6 +168,7 @@ export async function PATCH(
       );
     }
 
+    const userId = params.id;
     const body = await request.json();
 
     // Validate input
@@ -137,40 +189,50 @@ export async function PATCH(
 
     // Get existing user
     const existingUser = await prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        twoFactorEnabled: true,
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "NOT_FOUND",
-            message: "User not found",
-          },
-        },
+        { success: false, error: { code: "NOT_FOUND", message: "User not found" } },
         { status: 404 }
       );
     }
 
-    // Prevent users from deactivating themselves
-    if (body.isActive === false && session.user.id === id) {
+    // Check if current user can manage the target user
+    if (!canManageUser(session.user.role, existingUser.role)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "You cannot deactivate your own account",
-          },
-        },
+        { success: false, error: { code: "AUTHORIZATION_ERROR", message: "Cannot manage user with this role" } },
+        { status: 403 }
+      );
+    }
+
+    // Prevent users from modifying their own account through this endpoint
+    if (userId === session.user.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "VALIDATION_ERROR", message: "Cannot modify your own account through this endpoint" } },
         { status: 400 }
       );
     }
 
-    // Check if email is being changed and if it's already taken
-    if (body.email && body.email !== existingUser.email) {
-      const emailExists = await prisma.user.findUnique({
-        where: { email: body.email },
+    const updateData: any = {};
+    const { email, name, password, role, isActive, twoFactorEnabled } = validation.data;
+
+    if (email !== undefined) {
+      // Check if email is already taken by another user
+      const emailExists = await prisma.user.findFirst({
+        where: {
+          email,
+          id: { not: userId },
+        },
       });
 
       if (emailExists) {
@@ -179,31 +241,28 @@ export async function PATCH(
             success: false,
             error: {
               code: "VALIDATION_ERROR",
-              message: "Email already in use",
+              message: "Email is already taken by another user",
             },
           },
           { status: 400 }
         );
       }
+
+      updateData.email = email;
     }
 
-    // Prepare update data
-    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (role !== undefined) updateData.role = role;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (twoFactorEnabled !== undefined) updateData.twoFactorEnabled = twoFactorEnabled;
 
-    if (body.email) updateData.email = body.email;
-    if (body.name) updateData.name = body.name;
-    if (body.role) updateData.role = body.role;
-    if (body.isActive !== undefined) updateData.isActive = body.isActive;
-    if (body.preferences !== undefined) updateData.preferences = body.preferences;
-
-    // Hash password if provided
-    if (body.password) {
-      updateData.password = await bcrypt.hash(body.password, 12);
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 12);
     }
 
     // Update user
     const updatedUser = await prisma.user.update({
-      where: { id },
+      where: { id: userId },
       data: updateData,
       select: {
         id: true,
@@ -211,9 +270,9 @@ export async function PATCH(
         name: true,
         role: true,
         isActive: true,
+        twoFactorEnabled: true,
         createdAt: true,
         updatedAt: true,
-        preferences: true,
       },
     });
 
@@ -223,19 +282,9 @@ export async function PATCH(
       userId: session.user.id,
       action: "UPDATE",
       entityType: "User",
-      entityId: updatedUser.id,
-      oldValue: {
-        email: existingUser.email,
-        name: existingUser.name,
-        role: existingUser.role,
-        isActive: existingUser.isActive,
-      },
-      newValue: {
-        email: updatedUser.email,
-        name: updatedUser.name,
-        role: updatedUser.role,
-        isActive: updatedUser.isActive,
-      },
+      entityId: userId,
+      oldValue: existingUser,
+      newValue: updatedUser,
       ipAddress,
       userAgent,
     });
@@ -259,13 +308,12 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/users/[id] - Delete a user (soft delete by deactivating)
+// DELETE /api/users/[id] - Delete user (soft delete by deactivating)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -283,41 +331,46 @@ export async function DELETE(
       );
     }
 
-    // Prevent users from deleting themselves
-    if (session.user.id === id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "You cannot delete your own account",
-          },
-        },
-        { status: 400 }
-      );
-    }
+    const userId = params.id;
 
     // Get existing user
     const existingUser = await prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "NOT_FOUND",
-            message: "User not found",
-          },
-        },
+        { success: false, error: { code: "NOT_FOUND", message: "User not found" } },
         { status: 404 }
       );
     }
 
-    // Soft delete by deactivating
+    // Check if current user can manage the target user
+    if (!canManageUser(session.user.role, existingUser.role)) {
+      return NextResponse.json(
+        { success: false, error: { code: "AUTHORIZATION_ERROR", message: "Cannot delete user with this role" } },
+        { status: 403 }
+      );
+    }
+
+    // Prevent users from deleting their own account
+    if (userId === session.user.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "VALIDATION_ERROR", message: "Cannot delete your own account" } },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete by deactivating the user
     const updatedUser = await prisma.user.update({
-      where: { id },
+      where: { id: userId },
       data: { isActive: false },
       select: {
         id: true,
@@ -334,9 +387,9 @@ export async function DELETE(
       userId: session.user.id,
       action: "DELETE",
       entityType: "User",
-      entityId: updatedUser.id,
-      oldValue: { isActive: true },
-      newValue: { isActive: false },
+      entityId: userId,
+      oldValue: existingUser,
+      newValue: updatedUser,
       ipAddress,
       userAgent,
     });
@@ -344,6 +397,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       data: updatedUser,
+      message: "User deactivated successfully",
     });
   } catch (error) {
     console.error("Error deleting user:", error);

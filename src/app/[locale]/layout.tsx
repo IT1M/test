@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { Toaster } from '@/components/ui/Toast';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { SessionTrackingProvider } from '@/components/providers/SessionTrackingProvider';
+import { PerformanceProvider } from '@/components/providers/PerformanceProvider';
 import { routing } from '@/i18n/routing';
 import { locales, type Locale, isRTL } from '@/i18n/request';
 
@@ -81,6 +82,52 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
+      <head>
+        {/* Preconnect to external domains for better performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://generativelanguage.googleapis.com" />
+        
+        {/* DNS prefetch for better performance */}
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        
+        {/* Preload critical fonts */}
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          as="style"
+          onLoad="this.onload=null;this.rel='stylesheet'"
+        />
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
+          as="style"
+          onLoad="this.onload=null;this.rel='stylesheet'"
+        />
+        
+        {/* PWA manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Service worker registration script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body>
         <SessionProvider>
           <NextIntlClientProvider messages={messages || {}}>
@@ -91,9 +138,11 @@ export default async function LocaleLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                <SessionTrackingProvider>
-                  {children}
-                </SessionTrackingProvider>
+                <PerformanceProvider>
+                  <SessionTrackingProvider>
+                    {children}
+                  </SessionTrackingProvider>
+                </PerformanceProvider>
                 <Toaster />
               </ThemeProvider>
             </QueryProvider>

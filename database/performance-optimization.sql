@@ -1,427 +1,397 @@
--- =====================================================
--- تحسين أداء قاعدة البيانات
--- Database Performance Optimization
--- =====================================================
+-- Performance optimization SQL for Saudi Mais Inventory System
+-- This file contains additional indexes and optimizations for better database performance
 
--- 1. إنشاء فهارس إضافية لتحسين الأداء
--- =====================================================
+-- Enable pg_stat_statements extension for query performance monitoring
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
--- فهارس مركبة للاستعلامات الشائعة
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_destination_category_date 
-ON "InventoryItem" (destination, category, "createdAt" DESC);
+-- Enable auto_explain for automatic query plan logging
+LOAD 'auto_explain';
+SET auto_explain.log_min_duration = 1000; -- Log queries taking more than 1 second
+SET auto_explain.log_analyze = true;
+SET auto_explain.log_buffers = true;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_name_batch_destination 
-ON "InventoryItem" ("itemName", batch, destination);
+-- ============================================================================
+-- ENHANCED INDEXES FOR BETTER QUERY PERFORMANCE
+-- ============================================================================
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_user_entity_date 
-ON "AuditLog" ("userId", "entityType", timestamp DESC);
+-- Composite indexes for InventoryItem table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_search_optimized 
+ON "InventoryItem" USING GIN (to_tsvector('english', item_name || ' ' || COALESCE(batch, '') || ' ' || COALESCE(notes, '')));
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notification_user_unread_date 
-ON "Notification" ("userId", "isRead", "createdAt" DESC) 
-WHERE "isRead" = false;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_analytics 
+ON "InventoryItem" (destination, category, created_at DESC) 
+INCLUDE (quantity, reject);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_report_type_status_date 
-ON "Report" (type, status, "createdAt" DESC);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_batch_destination 
+ON "InventoryItem" (batch, destination, created_at DESC);
 
--- فهارس للبحث النصي
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_name_gin 
-ON "InventoryItem" USING gin(to_tsvector('arabic', "itemName"));
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_category_date 
+ON "InventoryItem" (category, created_at DESC) 
+WHERE category IS NOT NULL;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_notes_gin 
-ON "InventoryItem" USING gin(to_tsvector('arabic', notes)) 
-WHERE notes IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_reject_analysis 
+ON "InventoryItem" (destination, created_at DESC) 
+WHERE reject > 0;
 
--- فهارس جزئية للبيانات النشطة
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_active_email 
-ON "User" (email) WHERE "isActive" = true;
+-- Partial index for active items (non-zero quantity)
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_item_active 
+ON "InventoryItem" (created_at DESC, destination) 
+WHERE quantity > 0;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inventory_recent 
-ON "InventoryItem" ("createdAt" DESC, destination) 
-WHERE "createdAt" >= CURRENT_DATE - INTERVAL '30 days';
+-- Enhanced indexes for AuditLog table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_timeline_optimized 
+ON "AuditLog" (timestamp DESC, user_id, action) 
+INCLUDE (entity_type, entity_id);
 
--- 2. إنشاء مشاهدات محسنة للاستعلامات الشائعة
--- =====================================================
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_entity_tracking 
+ON "AuditLog" (entity_type, entity_id, timestamp DESC);
 
--- مشاهدة للمخزون مع الإحصائيات
-CREATE OR REPLACE VIEW inventory_summary AS
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_user_activity 
+ON "AuditLog" (user_id, action, timestamp DESC);
+
+-- Partial index for recent audit logs (last 6 months)
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_recent 
+ON "AuditLog" (timestamp DESC, action) 
+WHERE timestamp > NOW() - INTERVAL '6 months';
+
+-- Enhanced indexes for UserActivity table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_activity_session_timeline 
+ON "UserActivity" (session_id, timestamp DESC) 
+WHERE session_id IS NOT NULL;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_activity_action_analysis 
+ON "UserActivity" (action, timestamp DESC, user_id);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_activity_performance 
+ON "UserActivity" (user_id, timestamp DESC) 
+INCLUDE (action, duration);
+
+-- Partial index for long-running activities
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_activity_slow 
+ON "UserActivity" (timestamp DESC, duration DESC) 
+WHERE duration > 5000; -- Activities taking more than 5 seconds
+
+-- Enhanced indexes for UserSession table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_session_active_monitoring 
+ON "UserSession" (is_active, last_activity DESC, user_id);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_session_cleanup 
+ON "UserSession" (expires_at, is_active) 
+WHERE is_active = true;
+
+-- Enhanced indexes for Notification table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notification_user_priority 
+ON "Notification" (user_id, is_read, created_at DESC) 
+INCLUDE (type, title);
+
+-- Partial index for unread notifications
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notification_unread 
+ON "Notification" (user_id, created_at DESC) 
+WHERE is_read = false;
+
+-- Enhanced indexes for Report table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_report_generation_tracking 
+ON "Report" (status, created_at DESC, generated_by_id);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_report_period_analysis 
+ON "Report" (type, period_start, period_end) 
+INCLUDE (generated_by_id, status);
+
+-- Enhanced indexes for SecurityAlert table
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_alert_monitoring 
+ON "SecurityAlert" (alert_type, severity, created_at DESC) 
+WHERE is_resolved = false;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_alert_user_tracking 
+ON "SecurityAlert" (user_id, created_at DESC, severity) 
+WHERE user_id IS NOT NULL;
+
+-- ============================================================================
+-- MATERIALIZED VIEWS FOR ANALYTICS PERFORMANCE
+-- ============================================================================
+
+-- Daily inventory summary materialized view
+CREATE MATERIALIZED VIEW IF NOT EXISTS daily_inventory_summary AS
 SELECT 
-  destination,
-  category,
-  COUNT(*) as item_count,
-  SUM(quantity) as total_quantity,
-  SUM(reject) as total_reject,
-  AVG(quantity) as avg_quantity,
-  MIN("createdAt") as first_entry,
-  MAX("createdAt") as last_entry,
-  COUNT(DISTINCT "enteredById") as unique_users
-FROM "InventoryItem"
-GROUP BY destination, category;
-
--- مشاهدة للمستخدمين مع إحصائيات النشاط
-CREATE OR REPLACE VIEW user_activity_summary AS
-SELECT 
-  u.id,
-  u.name,
-  u.email,
-  u.role,
-  u."isActive",
-  COUNT(i.id) as items_entered,
-  COALESCE(SUM(i.quantity), 0) as total_quantity,
-  COUNT(a.id) as audit_actions,
-  MAX(i."createdAt") as last_item_entry,
-  MAX(a.timestamp) as last_activity
-FROM "User" u
-LEFT JOIN "InventoryItem" i ON u.id = i."enteredById"
-LEFT JOIN "AuditLog" a ON u.id = a."userId"
-GROUP BY u.id, u.name, u.email, u.role, u."isActive";
-
--- مشاهدة للإحصائيات اليومية
-CREATE OR REPLACE VIEW daily_statistics AS
-SELECT 
-  DATE(i."createdAt") as entry_date,
-  i.destination,
-  COUNT(*) as items_added,
-  SUM(i.quantity) as total_quantity,
-  SUM(i.reject) as total_reject,
-  COUNT(DISTINCT i."enteredById") as active_users,
-  COUNT(DISTINCT i.category) as categories_used
-FROM "InventoryItem" i
-WHERE i."createdAt" >= CURRENT_DATE - INTERVAL '30 days'
-GROUP BY DATE(i."createdAt"), i.destination
-ORDER BY entry_date DESC, i.destination;
-
--- 3. إنشاء دوال محسنة للاستعلامات المعقدة
--- =====================================================
-
--- دالة للبحث السريع في المخزون
-CREATE OR REPLACE FUNCTION search_inventory(
-  search_term text DEFAULT '',
-  filter_destination text DEFAULT NULL,
-  filter_category text DEFAULT NULL,
-  limit_count integer DEFAULT 50
-)
-RETURNS TABLE(
-  id text,
-  item_name text,
-  batch text,
-  quantity integer,
-  destination text,
-  category text,
-  created_at timestamp,
-  entered_by_name text,
-  rank real
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    i.id,
-    i."itemName",
-    i.batch,
-    i.quantity,
-    i.destination::text,
-    i.category,
-    i."createdAt",
-    u.name,
+    DATE(created_at) as summary_date,
+    destination,
+    category,
+    COUNT(*) as item_count,
+    SUM(quantity) as total_quantity,
+    SUM(reject) as total_rejects,
     CASE 
-      WHEN search_term = '' THEN 1.0
-      ELSE ts_rank(to_tsvector('arabic', i."itemName"), plainto_tsquery('arabic', search_term))
-    END as rank
-  FROM "InventoryItem" i
-  JOIN "User" u ON i."enteredById" = u.id
-  WHERE 
-    (search_term = '' OR to_tsvector('arabic', i."itemName") @@ plainto_tsquery('arabic', search_term))
-    AND (filter_destination IS NULL OR i.destination::text = filter_destination)
-    AND (filter_category IS NULL OR i.category = filter_category)
-  ORDER BY 
-    CASE WHEN search_term = '' THEN i."createdAt" END DESC,
-    CASE WHEN search_term != '' THEN ts_rank(to_tsvector('arabic', i."itemName"), plainto_tsquery('arabic', search_term)) END DESC
-  LIMIT limit_count;
-END;
-$$ LANGUAGE plpgsql STABLE;
+        WHEN SUM(quantity) > 0 THEN (SUM(reject)::float / SUM(quantity)) * 100 
+        ELSE 0 
+    END as reject_rate,
+    COUNT(DISTINCT entered_by_id) as unique_users
+FROM "InventoryItem"
+WHERE created_at >= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY DATE(created_at), destination, category
+ORDER BY summary_date DESC, destination, category;
 
--- دالة لحساب الإحصائيات المتقدمة
-CREATE OR REPLACE FUNCTION get_advanced_statistics(
-  start_date date DEFAULT CURRENT_DATE - INTERVAL '30 days',
-  end_date date DEFAULT CURRENT_DATE
-)
-RETURNS TABLE(
-  metric_name text,
-  metric_value numeric,
-  metric_unit text,
-  comparison_period numeric,
-  trend text
-) AS $$
-DECLARE
-  prev_start_date date := start_date - (end_date - start_date);
-  prev_end_date date := start_date;
+-- Create index on materialized view
+CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_inventory_summary_pk 
+ON daily_inventory_summary (summary_date, destination, COALESCE(category, ''));
+
+CREATE INDEX IF NOT EXISTS idx_daily_inventory_summary_date 
+ON daily_inventory_summary (summary_date DESC);
+
+-- Weekly inventory trends materialized view
+CREATE MATERIALIZED VIEW IF NOT EXISTS weekly_inventory_trends AS
+SELECT 
+    DATE_TRUNC('week', created_at) as week_start,
+    destination,
+    COUNT(*) as item_count,
+    SUM(quantity) as total_quantity,
+    SUM(reject) as total_rejects,
+    AVG(quantity) as avg_quantity,
+    CASE 
+        WHEN SUM(quantity) > 0 THEN (SUM(reject)::float / SUM(quantity)) * 100 
+        ELSE 0 
+    END as reject_rate
+FROM "InventoryItem"
+WHERE created_at >= CURRENT_DATE - INTERVAL '2 years'
+GROUP BY DATE_TRUNC('week', created_at), destination
+ORDER BY week_start DESC, destination;
+
+-- Create index on weekly trends
+CREATE UNIQUE INDEX IF NOT EXISTS idx_weekly_inventory_trends_pk 
+ON weekly_inventory_trends (week_start, destination);
+
+-- User activity summary materialized view
+CREATE MATERIALIZED VIEW IF NOT EXISTS user_activity_summary AS
+SELECT 
+    DATE(timestamp) as activity_date,
+    user_id,
+    action,
+    COUNT(*) as action_count,
+    AVG(duration) as avg_duration,
+    MAX(duration) as max_duration,
+    COUNT(DISTINCT session_id) as unique_sessions
+FROM "UserActivity"
+WHERE timestamp >= CURRENT_DATE - INTERVAL '6 months'
+GROUP BY DATE(timestamp), user_id, action
+ORDER BY activity_date DESC, user_id, action;
+
+-- Create index on user activity summary
+CREATE INDEX IF NOT EXISTS idx_user_activity_summary_date_user 
+ON user_activity_summary (activity_date DESC, user_id);
+
+-- ============================================================================
+-- FUNCTIONS FOR AUTOMATIC MAINTENANCE
+-- ============================================================================
+
+-- Function to refresh materialized views
+CREATE OR REPLACE FUNCTION refresh_analytics_views()
+RETURNS void AS $$
 BEGIN
-  RETURN QUERY
-  WITH current_stats AS (
-    SELECT 
-      COUNT(*)::numeric as total_items,
-      SUM(quantity)::numeric as total_quantity,
-      COUNT(DISTINCT "enteredById")::numeric as active_users,
-      AVG(quantity)::numeric as avg_quantity
-    FROM "InventoryItem"
-    WHERE DATE("createdAt") BETWEEN start_date AND end_date
-  ),
-  previous_stats AS (
-    SELECT 
-      COUNT(*)::numeric as total_items,
-      SUM(quantity)::numeric as total_quantity,
-      COUNT(DISTINCT "enteredById")::numeric as active_users,
-      AVG(quantity)::numeric as avg_quantity
-    FROM "InventoryItem"
-    WHERE DATE("createdAt") BETWEEN prev_start_date AND prev_end_date
-  )
-  SELECT 'إجمالي العناصر'::text, c.total_items, 'عنصر'::text, 
-         CASE WHEN p.total_items > 0 THEN ((c.total_items - p.total_items) / p.total_items * 100) ELSE 0 END,
-         CASE WHEN p.total_items > 0 AND c.total_items > p.total_items THEN 'صاعد ↗️'
-              WHEN p.total_items > 0 AND c.total_items < p.total_items THEN 'هابط ↘️'
-              ELSE 'ثابت ➡️' END
-  FROM current_stats c, previous_stats p
-  UNION ALL
-  SELECT 'إجمالي الكمية'::text, c.total_quantity, 'وحدة'::text,
-         CASE WHEN p.total_quantity > 0 THEN ((c.total_quantity - p.total_quantity) / p.total_quantity * 100) ELSE 0 END,
-         CASE WHEN p.total_quantity > 0 AND c.total_quantity > p.total_quantity THEN 'صاعد ↗️'
-              WHEN p.total_quantity > 0 AND c.total_quantity < p.total_quantity THEN 'هابط ↘️'
-              ELSE 'ثابت ➡️' END
-  FROM current_stats c, previous_stats p
-  UNION ALL
-  SELECT 'المستخدمون النشطون'::text, c.active_users, 'مستخدم'::text,
-         CASE WHEN p.active_users > 0 THEN ((c.active_users - p.active_users) / p.active_users * 100) ELSE 0 END,
-         CASE WHEN p.active_users > 0 AND c.active_users > p.active_users THEN 'صاعد ↗️'
-              WHEN p.active_users > 0 AND c.active_users < p.active_users THEN 'هابط ↘️'
-              ELSE 'ثابت ➡️' END
-  FROM current_stats c, previous_stats p;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY daily_inventory_summary;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY weekly_inventory_trends;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY user_activity_summary;
+    
+    -- Update table statistics
+    ANALYZE "InventoryItem";
+    ANALYZE "AuditLog";
+    ANALYZE "UserActivity";
+    ANALYZE "UserSession";
+    
+    RAISE NOTICE 'Analytics views refreshed successfully at %', NOW();
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql;
 
--- 4. إعدادات تحسين الأداء
--- =====================================================
-
--- تحسين إعدادات الذاكرة (يجب تشغيلها بحذر)
--- ALTER SYSTEM SET shared_buffers = '256MB';
--- ALTER SYSTEM SET effective_cache_size = '1GB';
--- ALTER SYSTEM SET maintenance_work_mem = '64MB';
--- ALTER SYSTEM SET checkpoint_completion_target = 0.9;
--- ALTER SYSTEM SET wal_buffers = '16MB';
--- ALTER SYSTEM SET default_statistics_target = 100;
-
--- تحسين إعدادات الاستعلامات
--- ALTER SYSTEM SET random_page_cost = 1.1;
--- ALTER SYSTEM SET effective_io_concurrency = 200;
-
--- 5. إنشاء جداول مقسمة للبيانات الكبيرة (Partitioning)
--- =====================================================
-
--- تقسيم جدول سجلات المراجعة حسب التاريخ
--- CREATE TABLE audit_log_partitioned (
---   LIKE "AuditLog" INCLUDING ALL
--- ) PARTITION BY RANGE (timestamp);
-
--- إنشاء أقسام شهرية
--- CREATE TABLE audit_log_2024_01 PARTITION OF audit_log_partitioned
--- FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
-
--- CREATE TABLE audit_log_2024_02 PARTITION OF audit_log_partitioned
--- FOR VALUES FROM ('2024-02-01') TO ('2024-03-01');
-
--- 6. إنشاء مهام الصيانة التلقائية
--- =====================================================
-
--- دالة لتنظيف البيانات القديمة
+-- Function to cleanup old data
 CREATE OR REPLACE FUNCTION cleanup_old_data()
-RETURNS void AS $$
+RETURNS TABLE(table_name text, deleted_count bigint) AS $$
+DECLARE
+    audit_deleted bigint;
+    activity_deleted bigint;
+    session_deleted bigint;
 BEGIN
-  -- حذف سجلات المراجعة الأقدم من سنة
-  DELETE FROM "AuditLog" 
-  WHERE timestamp < NOW() - INTERVAL '1 year';
-  
-  -- حذف الإشعارات المقروءة الأقدم من 3 شهور
-  DELETE FROM "Notification" 
-  WHERE "isRead" = true AND "createdAt" < NOW() - INTERVAL '3 months';
-  
-  -- حذف التقارير المكتملة الأقدم من سنتين
-  DELETE FROM "Report" 
-  WHERE status = 'COMPLETED' AND "createdAt" < NOW() - INTERVAL '2 years';
-  
-  RAISE NOTICE 'تم تنظيف البيانات القديمة بنجاح';
+    -- Cleanup old audit logs (keep 1 year)
+    DELETE FROM "AuditLog" 
+    WHERE timestamp < NOW() - INTERVAL '1 year';
+    GET DIAGNOSTICS audit_deleted = ROW_COUNT;
+    
+    -- Cleanup old user activities (keep 6 months)
+    DELETE FROM "UserActivity" 
+    WHERE timestamp < NOW() - INTERVAL '6 months';
+    GET DIAGNOSTICS activity_deleted = ROW_COUNT;
+    
+    -- Cleanup expired sessions
+    DELETE FROM "UserSession" 
+    WHERE expires_at < NOW() AND is_active = false;
+    GET DIAGNOSTICS session_deleted = ROW_COUNT;
+    
+    -- Return results
+    RETURN QUERY VALUES 
+        ('AuditLog', audit_deleted),
+        ('UserActivity', activity_deleted),
+        ('UserSession', session_deleted);
 END;
 $$ LANGUAGE plpgsql;
 
--- دالة لتحديث الإحصائيات
-CREATE OR REPLACE FUNCTION update_table_statistics()
-RETURNS void AS $$
+-- Function to analyze query performance
+CREATE OR REPLACE FUNCTION get_slow_queries(min_duration_ms integer DEFAULT 1000)
+RETURNS TABLE(
+    query text,
+    calls bigint,
+    total_time numeric,
+    mean_time numeric,
+    rows bigint
+) AS $$
 BEGIN
-  ANALYZE "User";
-  ANALYZE "InventoryItem";
-  ANALYZE "AuditLog";
-  ANALYZE "Report";
-  ANALYZE "Notification";
-  
-  RAISE NOTICE 'تم تحديث إحصائيات الجداول بنجاح';
+    RETURN QUERY
+    SELECT 
+        pss.query,
+        pss.calls,
+        pss.total_exec_time as total_time,
+        pss.mean_exec_time as mean_time,
+        pss.rows
+    FROM pg_stat_statements pss
+    WHERE pss.mean_exec_time > min_duration_ms
+    ORDER BY pss.mean_exec_time DESC
+    LIMIT 20;
+EXCEPTION
+    WHEN undefined_table THEN
+        RAISE NOTICE 'pg_stat_statements extension not available';
+        RETURN;
 END;
 $$ LANGUAGE plpgsql;
 
--- 7. مراقبة الأداء
--- =====================================================
+-- ============================================================================
+-- SCHEDULED MAINTENANCE JOBS (to be run via cron or application scheduler)
+-- ============================================================================
 
--- مشاهدة لمراقبة الاستعلامات البطيئة
-CREATE OR REPLACE VIEW slow_queries AS
-SELECT 
-  query,
-  calls,
-  total_time,
-  mean_time,
-  max_time,
-  stddev_time,
-  rows,
-  100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
-FROM pg_stat_statements 
-WHERE mean_time > 100  -- أكثر من 100ms
-ORDER BY mean_time DESC;
+-- Create a maintenance log table
+CREATE TABLE IF NOT EXISTS maintenance_log (
+    id SERIAL PRIMARY KEY,
+    operation text NOT NULL,
+    status text NOT NULL,
+    details jsonb,
+    duration_ms integer,
+    executed_at timestamp DEFAULT NOW()
+);
 
--- مشاهدة لمراقبة استخدام الفهارس
-CREATE OR REPLACE VIEW index_usage AS
+-- Function to log maintenance operations
+CREATE OR REPLACE FUNCTION log_maintenance_operation(
+    operation_name text,
+    operation_status text,
+    operation_details jsonb DEFAULT NULL,
+    operation_duration integer DEFAULT NULL
+)
+RETURNS void AS $$
+BEGIN
+    INSERT INTO maintenance_log (operation, status, details, duration_ms)
+    VALUES (operation_name, operation_status, operation_details, operation_duration);
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================================
+-- PERFORMANCE MONITORING VIEWS
+-- ============================================================================
+
+-- View for monitoring table sizes and growth
+CREATE OR REPLACE VIEW table_size_monitoring AS
 SELECT 
-  schemaname,
-  relname as table_name,
-  indexrelname as index_name,
-  idx_scan as times_used,
-  pg_size_pretty(pg_relation_size(indexrelid)) as index_size,
-  CASE 
-    WHEN idx_scan = 0 THEN 'غير مستخدم - يمكن حذفه'
-    WHEN idx_scan < 100 THEN 'قليل الاستخدام'
-    ELSE 'مستخدم بكثرة'
-  END as usage_status
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as total_size,
+    pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) as table_size,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) - pg_relation_size(schemaname||'.'||tablename)) as index_size,
+    pg_stat_get_tuples_inserted(c.oid) as inserts,
+    pg_stat_get_tuples_updated(c.oid) as updates,
+    pg_stat_get_tuples_deleted(c.oid) as deletes,
+    pg_stat_get_live_tuples(c.oid) as live_tuples,
+    pg_stat_get_dead_tuples(c.oid) as dead_tuples
+FROM pg_tables pt
+JOIN pg_class c ON c.relname = pt.tablename
+WHERE schemaname = 'public'
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+
+-- View for monitoring index usage
+CREATE OR REPLACE VIEW index_usage_monitoring AS
+SELECT 
+    schemaname,
+    tablename,
+    indexname,
+    idx_scan as scans,
+    idx_tup_read as tuples_read,
+    idx_tup_fetch as tuples_fetched,
+    pg_size_pretty(pg_relation_size(indexrelid)) as index_size,
+    CASE 
+        WHEN idx_scan = 0 THEN 'UNUSED'
+        WHEN idx_scan < 100 THEN 'LOW_USAGE'
+        ELSE 'ACTIVE'
+    END as usage_status
 FROM pg_stat_user_indexes
+WHERE schemaname = 'public'
 ORDER BY idx_scan DESC;
 
--- مشاهدة لمراقبة حجم الجداول
-CREATE OR REPLACE VIEW table_sizes AS
+-- View for monitoring connection and activity
+CREATE OR REPLACE VIEW connection_monitoring AS
 SELECT 
-  schemaname,
-  relname as table_name,
-  pg_size_pretty(pg_total_relation_size(relid)) as total_size,
-  pg_size_pretty(pg_relation_size(relid)) as table_size,
-  pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as index_size,
-  pg_stat_get_tuples_returned(relid) as rows_read,
-  pg_stat_get_tuples_fetched(relid) as rows_fetched
-FROM pg_stat_user_tables
-ORDER BY pg_total_relation_size(relid) DESC;
+    state,
+    count(*) as connection_count,
+    max(now() - state_change) as max_duration,
+    avg(now() - state_change) as avg_duration
+FROM pg_stat_activity 
+WHERE datname = current_database()
+GROUP BY state
+ORDER BY connection_count DESC;
 
--- 8. إنشاء تقارير الأداء
--- =====================================================
+-- ============================================================================
+-- CONFIGURATION RECOMMENDATIONS
+-- ============================================================================
 
--- دالة لتقرير الأداء الشامل
-CREATE OR REPLACE FUNCTION generate_performance_report()
-RETURNS TABLE(
-  section text,
-  metric text,
-  value text,
-  recommendation text
-) AS $$
-BEGIN
-  RETURN QUERY
-  -- إحصائيات قاعدة البيانات
-  SELECT 
-    'إحصائيات عامة'::text,
-    'حجم قاعدة البيانات'::text,
-    pg_size_pretty(pg_database_size(current_database())),
-    'مراقبة النمو بانتظام'::text
-  UNION ALL
-  SELECT 
-    'إحصائيات عامة'::text,
-    'عدد الاتصالات النشطة'::text,
-    (SELECT COUNT(*)::text FROM pg_stat_activity WHERE state = 'active'),
-    'تأكد من عدم تجاوز الحد الأقصى'::text
-  UNION ALL
-  -- أداء الاستعلامات
-  SELECT 
-    'أداء الاستعلامات'::text,
-    'متوسط وقت الاستعلام'::text,
-    COALESCE((SELECT ROUND(AVG(mean_time), 2)::text || ' ms' FROM pg_stat_statements), 'غير متاح'),
-    'استهدف أقل من 100ms للاستعلامات الشائعة'::text
-  UNION ALL
-  -- استخدام الذاكرة
-  SELECT 
-    'استخدام الموارد'::text,
-    'نسبة إصابة الذاكرة المؤقتة'::text,
-    (SELECT ROUND(100.0 * sum(blks_hit) / (sum(blks_hit) + sum(blks_read)), 2)::text || '%' 
-     FROM pg_stat_database WHERE datname = current_database()),
-    'يجب أن تكون أكثر من 95%'::text;
-END;
-$$ LANGUAGE plpgsql STABLE;
-
--- 9. استعلامات التحسين السريع
--- =====================================================
-
--- البحث عن الجداول التي تحتاج VACUUM
+-- Display current PostgreSQL configuration relevant to performance
+CREATE OR REPLACE VIEW performance_config AS
 SELECT 
-  schemaname,
-  relname,
-  n_dead_tup,
-  n_live_tup,
-  ROUND(n_dead_tup * 100.0 / GREATEST(n_live_tup, 1), 2) as dead_tuple_percent
-FROM pg_stat_user_tables 
-WHERE n_dead_tup > 1000
-ORDER BY dead_tuple_percent DESC;
+    name,
+    setting,
+    unit,
+    short_desc
+FROM pg_settings 
+WHERE name IN (
+    'shared_buffers',
+    'effective_cache_size',
+    'maintenance_work_mem',
+    'checkpoint_completion_target',
+    'wal_buffers',
+    'default_statistics_target',
+    'random_page_cost',
+    'effective_io_concurrency',
+    'work_mem',
+    'max_connections',
+    'max_worker_processes',
+    'max_parallel_workers_per_gather'
+)
+ORDER BY name;
 
--- البحث عن الفهارس غير المستخدمة
-SELECT 
-  schemaname,
-  relname,
-  indexrelname,
-  pg_size_pretty(pg_relation_size(indexrelid)) as size
-FROM pg_stat_user_indexes 
-WHERE idx_scan = 0 
-  AND pg_relation_size(indexrelid) > 1024 * 1024  -- أكبر من 1MB
-ORDER BY pg_relation_size(indexrelid) DESC;
+-- ============================================================================
+-- COMMENTS AND DOCUMENTATION
+-- ============================================================================
 
--- البحث عن الاستعلامات التي تحتاج تحسين
-SELECT 
-  LEFT(query, 100) as query_start,
-  calls,
-  ROUND(mean_time, 2) as avg_time_ms,
-  ROUND(total_time, 2) as total_time_ms
-FROM pg_stat_statements 
-WHERE calls > 100 AND mean_time > 50
-ORDER BY mean_time DESC
-LIMIT 10;
+COMMENT ON MATERIALIZED VIEW daily_inventory_summary IS 'Daily aggregated inventory statistics for fast analytics queries';
+COMMENT ON MATERIALIZED VIEW weekly_inventory_trends IS 'Weekly inventory trends for performance dashboards';
+COMMENT ON MATERIALIZED VIEW user_activity_summary IS 'Daily user activity summary for monitoring and analytics';
 
--- 10. نصائح التحسين
--- =====================================================
+COMMENT ON FUNCTION refresh_analytics_views() IS 'Refreshes all materialized views and updates table statistics';
+COMMENT ON FUNCTION cleanup_old_data() IS 'Removes old audit logs, activities, and expired sessions';
+COMMENT ON FUNCTION get_slow_queries(integer) IS 'Returns slow queries from pg_stat_statements';
 
-/*
-نصائح لتحسين الأداء:
+-- ============================================================================
+-- FINAL MAINTENANCE
+-- ============================================================================
 
-1. الفهارس:
-   - أنشئ فهارس على الأعمدة المستخدمة في WHERE و JOIN
-   - استخدم فهارس مركبة للاستعلامات المعقدة
-   - احذف الفهارس غير المستخدمة
+-- Update all table statistics
+ANALYZE;
 
-2. الاستعلامات:
-   - استخدم LIMIT في الاستعلامات الكبيرة
-   - تجنب SELECT * واختر الأعمدة المطلوبة فقط
-   - استخدم EXISTS بدلاً من IN للاستعلامات الفرعية
+-- Log the completion of optimization setup
+SELECT log_maintenance_operation(
+    'performance_optimization_setup',
+    'completed',
+    '{"indexes_created": true, "materialized_views_created": true, "functions_created": true}'::jsonb,
+    NULL
+);
 
-3. الصيانة:
-   - شغل VACUUM ANALYZE بانتظام
-   - راقب نمو قاعدة البيانات
-   - احذف البيانات القديمة غير المطلوبة
-
-4. المراقبة:
-   - راقب الاستعلامات البطيئة
-   - تحقق من استخدام الذاكرة المؤقتة
-   - راقب الاتصالات النشطة
-
-5. النسخ الاحتياطي:
-   - أنشئ نسخ احتياطية منتظمة
-   - اختبر استعادة البيانات
-   - احفظ النسخ في مواقع متعددة
-*/
-
--- =====================================================
--- انتهاء ملف تحسين الأداء
--- =====================================================
+RAISE NOTICE 'Database performance optimization completed successfully at %', NOW();

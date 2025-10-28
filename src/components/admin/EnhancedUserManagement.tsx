@@ -34,6 +34,7 @@ import toast from "react-hot-toast";
 import UserModal from "../../app/[locale]/settings/users/UserModal";
 import UserDetailsModal from "./UserDetailsModal";
 import RolePermissionsModal from "../../app/[locale]/settings/users/RolePermissionsModal";
+import UserImportModal from "./UserImportModal";
 
 type UserRole = "ADMIN" | "DATA_ENTRY" | "SUPERVISOR" | "MANAGER" | "AUDITOR";
 
@@ -104,6 +105,7 @@ export default function EnhancedUserManagement({
   const [showUserModal, setShowUserModal] = useState(false);
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [showRolePermissions, setShowRolePermissions] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Get manageable roles for current user
   const manageableRoles = useMemo(() => {
@@ -411,6 +413,14 @@ export default function EnhancedUserManagement({
               </Button>
 
               <Button
+                variant="outline"
+                onClick={() => setShowImportModal(true)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+
+              <Button
                 variant="ghost"
                 onClick={() => setShowRolePermissions(true)}
               >
@@ -620,7 +630,8 @@ export default function EnhancedUserManagement({
                                   variant={user.isActive ? "danger" : "success"}
                                   size="sm"
                                   onClick={() => handleBulkAction(
-                                    user.isActive ? 'deactivate' : 'activate'
+                                    user.isActive ? 'deactivate' : 'activate',
+                                    { isActive: !user.isActive }
                                   )}
                                 >
                                   {user.isActive ? 'Deactivate' : 'Activate'}
@@ -689,6 +700,18 @@ export default function EnhancedUserManagement({
         <RolePermissionsModal
           isOpen={showRolePermissions}
           onClose={() => setShowRolePermissions(false)}
+        />
+      )}
+
+      {/* User Import Modal */}
+      {showImportModal && (
+        <UserImportModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            setShowImportModal(false);
+            fetchUsers();
+          }}
         />
       )}
     </div>

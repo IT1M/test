@@ -401,3 +401,102 @@ export function getManageableRoles(userRole: UserRole): UserRole[] {
       return [];
   }
 }
+
+/**
+ * Enhanced role hierarchy with more granular permissions
+ */
+export const roleCapabilities: Record<UserRole, {
+  canManageUsers: UserRole[];
+  canViewUsers: UserRole[];
+  canExportData: boolean;
+  canBulkOperations: boolean;
+  canViewSecurityAlerts: boolean;
+  canManageSecurityAlerts: boolean;
+  maxUsersManageable?: number;
+}> = {
+  ADMIN: {
+    canManageUsers: ["DATA_ENTRY", "SUPERVISOR", "AUDITOR", "MANAGER", "ADMIN"],
+    canViewUsers: ["DATA_ENTRY", "SUPERVISOR", "AUDITOR", "MANAGER", "ADMIN"],
+    canExportData: true,
+    canBulkOperations: true,
+    canViewSecurityAlerts: true,
+    canManageSecurityAlerts: true,
+  },
+  MANAGER: {
+    canManageUsers: ["DATA_ENTRY", "SUPERVISOR", "AUDITOR"],
+    canViewUsers: ["DATA_ENTRY", "SUPERVISOR", "AUDITOR", "MANAGER"],
+    canExportData: true,
+    canBulkOperations: true,
+    canViewSecurityAlerts: true,
+    canManageSecurityAlerts: false,
+    maxUsersManageable: 50,
+  },
+  SUPERVISOR: {
+    canManageUsers: [],
+    canViewUsers: ["DATA_ENTRY"],
+    canExportData: false,
+    canBulkOperations: false,
+    canViewSecurityAlerts: false,
+    canManageSecurityAlerts: false,
+    maxUsersManageable: 10,
+  },
+  AUDITOR: {
+    canManageUsers: [],
+    canViewUsers: ["DATA_ENTRY", "SUPERVISOR", "AUDITOR", "MANAGER", "ADMIN"],
+    canExportData: true,
+    canBulkOperations: false,
+    canViewSecurityAlerts: true,
+    canManageSecurityAlerts: false,
+  },
+  DATA_ENTRY: {
+    canManageUsers: [],
+    canViewUsers: [],
+    canExportData: false,
+    canBulkOperations: false,
+    canViewSecurityAlerts: false,
+    canManageSecurityAlerts: false,
+  },
+};
+
+/**
+ * Check if a user role can view another user's details
+ */
+export function canViewUser(viewerRole: UserRole, targetRole: UserRole): boolean {
+  const capabilities = roleCapabilities[viewerRole];
+  return capabilities.canViewUsers.includes(targetRole);
+}
+
+/**
+ * Check if a user role can export user data
+ */
+export function canExportUserData(userRole: UserRole): boolean {
+  return roleCapabilities[userRole].canExportData;
+}
+
+/**
+ * Check if a user role can perform bulk operations
+ */
+export function canPerformBulkOperations(userRole: UserRole): boolean {
+  return roleCapabilities[userRole].canBulkOperations;
+}
+
+/**
+ * Get maximum number of users a role can manage
+ */
+export function getMaxManageableUsers(userRole: UserRole): number | undefined {
+  return roleCapabilities[userRole].maxUsersManageable;
+}
+
+/**
+ * Check if a user can view security alerts
+ */
+export function canViewSecurityAlerts(userRole: UserRole): boolean {
+  return roleCapabilities[userRole].canViewSecurityAlerts;
+}
+
+/**
+ * Check if a user can manage security alerts
+ */
+export function canManageSecurityAlerts(userRole: UserRole): boolean {
+  return roleCapabilities[userRole].canManageSecurityAlerts;
+}
