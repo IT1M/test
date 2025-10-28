@@ -1,0 +1,24 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: saudi-mais-monitor
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    networks:
+      - saudi-mais-network
+    environment:
+      - UPTIME_KUMA_PORT=3001
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`monitor.saudimais.sa`)"
+      - "traefik.http.routers.uptime-kuma.tls=true"
+
+volumes:
+  uptime-kuma-data:
+
+networks:
+  saudi-mais-network:
+    external: true

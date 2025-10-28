@@ -1,0 +1,202 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  DATA_ENTRY
+  SUPERVISOR
+  MANAGER
+  AUDITOR
+}
+
+enum Destination {
+  MAIS
+  FOZAN
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  VIEW
+}
+
+enum ReportType {
+  MONTHLY
+  YEARLY
+  CUSTOM
+  AUDIT
+}
+
+enum ReportStatus {
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+enum BackupType {
+  CSV
+  JSON
+  SQL
+}
+
+enum BackupStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  name              String
+  password          String
+  role              UserRole       @default(DATA_ENTRY)
+  isActive          Boolean        @default(true)
+  preferences       Json?
+  twoFactorEnabled  Boolean        @default(false)
+  twoFactorSecret   String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  inventoryItems InventoryItem[]
+  auditLogs      AuditLog[]
+  reports        Report[]
+  backups        Backup[]
+  settingsUpdates SystemSettings[]
+  notifications  Notification[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+model InventoryItem {
+  id          String      @id @default(uuid())
+  itemName    String
+  batch       String
+  quantity    Int
+  reject      Int         @default(0)
+  destination Destination
+  category    String?
+  notes       String?
+  enteredById String
+  enteredBy   User        @relation(fields: [enteredById], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  auditLogs   AuditLog[]
+  
+  @@index([itemName])
+  @@index([batch])
+  @@index([createdAt, destination])
+  @@index([enteredById])
+  @@index([category])
+  @@index([destination, createdAt])
+  @@index([itemName, batch])
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  action      AuditAction
+  entityType  String
+  entityId    String?
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime    @default(now())
+  
+  inventoryItem InventoryItem? @relation(fields: [entityId], references: [id])
+  
+  @@index([userId, timestamp])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@index([action, timestamp])
+  @@index([userId, action])
+}
+
+model Report {
+  id           String       @id @default(uuid())
+  title        String
+  type         ReportType
+  periodStart  DateTime
+  periodEnd    DateTime
+  generatedById String
+  generatedBy  User         @relation(fields: [generatedById], references: [id])
+  fileUrl      String?
+  dataSnapshot Json
+  aiInsights   String?
+  status       ReportStatus @default(GENERATING)
+  createdAt    DateTime     @default(now())
+  
+  @@index([type, periodStart])
+  @@index([generatedById])
+  @@index([status, createdAt])
+  @@index([generatedById, createdAt])
+}
+
+model Backup {
+  id          String       @id @default(uuid())
+  fileName    String
+  fileSize    Int
+  fileType    BackupType
+  recordCount Int
+  storagePath String
+  status      BackupStatus @default(IN_PROGRESS)
+  createdAt   DateTime     @default(now())
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([createdById, createdAt])
+}
+
+model SystemSettings {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  category  String
+  updatedById String
+  updatedBy User     @relation(fields: [updatedById], references: [id])
+  updatedAt DateTime @updatedAt
+  
+  @@index([category])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+}

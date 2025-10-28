@@ -1,0 +1,22 @@
+npm run db:check    # فحص حالة قاعدة البيانات
+npm run db:test     # اختبار الاتصال
+npm run db:seed     # إنشاء البيانات الأولية
+npm run db:studio   # فتح واجهة إدارة قاعدة البيانات
+البريد الإلكتروني: admin@saudimais.sa
+كلمة المرور: Admin@123
+
+
+# 1. تشغيل سكريبت التحسينات الأمنية
+chmod +x scripts/security-enhancements.sh
+./scripts/security-enhancements.sh
+
+password: Asd1234512345@
+
+
+
+# 2. تفعيل المراقبة الخارجية
+./scripts/simple-monitoring.sh
+
+# 3. اختبار النسخ الاحتياطي المشفر
+chmod +x scripts/backup-simple.sh
+./scripts/backup-simple.sh

@@ -1,0 +1,21 @@
+# How to decrypt Saudi Mais backup
+
+## Decryption Command:
+openssl enc -aes-256-cbc -d -in saudi_mais_backup_20251026_000214.sql.enc -out decrypted_backup.sql -k SaudiMais2024BackupKey
+
+## Alternative with password prompt:
+openssl enc -aes-256-cbc -d -in saudi_mais_backup_20251026_000214.sql.enc -out decrypted_backup.sql
+
+## Restore to database:
+# For cloud database:
+psql "$DATABASE_URL" < decrypted_backup.sql
+
+# For local Docker:
+docker-compose exec -T saudi-mais-db psql -U postgres -d saudi_mais < decrypted_backup.sql
+
+## Backup Details:
+- File: saudi_mais_backup_20251026_000214.sql.enc
+- Size: 4.0K
+- Encryption: AES-256-CBC
+- Created: Sun Oct 26 00:02:15 +03 2025
+- Password: SaudiMais2024BackupKey (change this in production!)

@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Next.js
+.next/
+out/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+
+# Testing
+coverage/
+
+# Misc
+.DS_Store
+*.tgz
+*.tar.gz
+
+# Debug
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Scripts (except production ones)
+scripts/test-*
+scripts/debug-*
+scripts/check-*
+
+# Development files
+.eslintrc.json
+.prettierrc
+tailwind.config.js
+postcss.config.js
