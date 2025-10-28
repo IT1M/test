@@ -92,6 +92,8 @@ model User {
   sessions       UserSession[]
   activities     UserActivity[]
   securityAlerts SecurityAlert[]
+  apiKeys        ApiKey[]
+  webhooks       Webhook[]
   
   @@index([email])
   @@index([role])
@@ -306,4 +308,101 @@ model SecurityAlert {
   @@index([severity, isResolved])
   @@index([userId, createdAt])
   @@index([isResolved, createdAt])
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  BOUNCED
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  name        String
+  key         String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions Json      @default("[]")
+  rateLimit   Int       @default(1000)
+  isActive    Boolean   @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([key])
+  @@index([isActive])
+}
+
+model Webhook {
+  id               String    @id @default(uuid())
+  name             String
+  url              String
+  events           Json      @default("[]")
+  secret           String
+  isActive         Boolean   @default(true)
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  retryCount       Int       @default(3)
+  timeout          Int       @default(30000)
+  lastTriggeredAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  logs WebhookLog[]
+  
+  @@index([userId])
+  @@index([isActive])
+}
+
+model WebhookLog {
+  id            String   @id @default(uuid())
+  webhookId     String
+  webhook       Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event         String
+  payload       Json
+  response      Json?
+  statusCode    Int?
+  success       Boolean  @default(false)
+  errorMessage  String?
+  attemptNumber Int      @default(1)
+  createdAt     DateTime @default(now())
+  
+  @@index([webhookId])
+  @@index([createdAt])
+  @@index([success])
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  subject     String
+  htmlContent String
+  textContent String?
+  variables   Json     @default("[]")
+  category    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  logs EmailLog[]
+}
+
+model EmailLog {
+  id           String       @id @default(uuid())
+  templateId   String?
+  template     EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  to           String
+  subject      String
+  status       EmailStatus  @default(PENDING)
+  sentAt       DateTime?
+  errorMessage String?
+  metadata     Json?
+  createdAt    DateTime     @default(now())
+  
+  @@index([status])
+  @@index([createdAt])
+  @@index([templateId])
 }
