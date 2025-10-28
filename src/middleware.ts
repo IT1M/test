@@ -1,8 +1,12 @@
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/services/auth';
+import { auth } from '@/lib/auth';
 import { hasRouteAccess, getDefaultDashboard } from '@/utils/rbac';
 import { routing } from '@/i18n/routing';
+import { 
+  getActionFromPath, 
+  getResourceFromPath
+} from '@/middleware/activityTracking';
 
 // Define public routes that don't require authentication
 const publicRoutes = ['/login', '/register'];
@@ -121,6 +125,16 @@ export default auth(async function middleware(request) {
   }
 
   console.log(`[Middleware] Allowing access to: ${pathname}`);
+  
+  // Track user activity for authenticated users (simplified logging)
+  if (session?.user?.id) {
+    const action = getActionFromPath(pathname, 'GET');
+    const resource = getResourceFromPath(pathname);
+    
+    // Simple activity logging (detailed tracking happens client-side)
+    console.log(`[Activity] User ${session.user.id} - ${action} on ${resource || pathname}`);
+  }
+  
   return i18nResponse;
 });
 

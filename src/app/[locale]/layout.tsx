@@ -6,6 +6,7 @@ import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { Toaster } from '@/components/ui/Toast';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { SessionTrackingProvider } from '@/components/providers/SessionTrackingProvider';
 import { routing } from '@/i18n/routing';
 import { locales, type Locale, isRTL } from '@/i18n/request';
 
@@ -90,7 +91,9 @@ export default async function LocaleLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                {children}
+                <SessionTrackingProvider>
+                  {children}
+                </SessionTrackingProvider>
                 <Toaster />
               </ThemeProvider>
             </QueryProvider>

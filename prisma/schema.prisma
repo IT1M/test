@@ -86,6 +86,9 @@ model User {
   notifications  Notification[]
   savedSearches  SavedSearch[]
   sharedSearches SavedSearchShare[]
+  sessions       UserSession[]
+  activities     UserActivity[]
+  securityAlerts SecurityAlert[]
   
   @@index([email])
   @@index([role])
@@ -234,4 +237,70 @@ model SavedSearchShare {
   
   @@unique([savedSearchId, userId])
   @@index([userId])
+}
+
+model UserSession {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String    @unique
+  ipAddress   String
+  userAgent   String
+  location    String?
+  device      String?
+  browser     String?
+  isActive    Boolean   @default(true)
+  lastActivity DateTime @default(now())
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  endedAt     DateTime?
+  
+  activities UserActivity[]
+  
+  @@index([userId, isActive])
+  @@index([sessionId])
+  @@index([lastActivity])
+  @@index([isActive, lastActivity])
+}
+
+model UserActivity {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  session     UserSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  action      String
+  resource    String?
+  details     Json?
+  ipAddress   String
+  userAgent   String
+  duration    Int?        // Duration in milliseconds
+  timestamp   DateTime    @default(now())
+  
+  @@index([userId, timestamp])
+  @@index([action, timestamp])
+  @@index([sessionId, timestamp])
+  @@index([timestamp])
+}
+
+model SecurityAlert {
+  id          String    @id @default(uuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  alertType   String    // 'SUSPICIOUS_LOGIN', 'MULTIPLE_FAILED_ATTEMPTS', 'UNUSUAL_ACTIVITY', etc.
+  severity    String    // 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
+  title       String
+  description String
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  isResolved  Boolean   @default(false)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  
+  @@index([alertType, createdAt])
+  @@index([severity, isResolved])
+  @@index([userId, createdAt])
+  @@index([isResolved, createdAt])
 }
