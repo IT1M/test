@@ -5,8 +5,7 @@ import {
   registerServiceWorker, 
   CacheManager, 
   NetworkManager, 
-  PerformanceMonitor,
-  useComponentPreloading 
+  PerformanceMonitor
 } from '@/utils/serviceWorker';
 
 interface PerformanceContextType {
@@ -48,13 +47,6 @@ export function PerformanceProvider({ children }: PerformanceProviderProps) {
     resourceCount?: number;
     cacheHitRate?: number;
   }>({});
-
-  const {
-    preloadDashboardComponents,
-    preloadDataComponents,
-    preloadAdminComponents,
-    preloadReportComponents,
-  } = useComponentPreloading();
 
   // Initialize performance monitoring and service worker
   useEffect(() => {
@@ -178,20 +170,7 @@ export function PerformanceProvider({ children }: PerformanceProviderProps) {
 
   const preloadComponents = (type: 'dashboard' | 'data' | 'admin' | 'reports') => {
     try {
-      switch (type) {
-        case 'dashboard':
-          preloadDashboardComponents();
-          break;
-        case 'data':
-          preloadDataComponents();
-          break;
-        case 'admin':
-          preloadAdminComponents();
-          break;
-        case 'reports':
-          preloadReportComponents();
-          break;
-      }
+      // Component preloading logic can be implemented here if needed
       console.log(`[Performance] Preloading ${type} components`);
     } catch (error) {
       console.error(`[Performance] Failed to preload ${type} components:`, error);
