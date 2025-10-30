@@ -42,23 +42,10 @@ const nextConfig = {
       '@tanstack/react-query',
       'date-fns'
     ],
-    // Enable modern bundling optimizations
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
     // Enable partial prerendering for better performance
     ppr: false, // Will enable when stable
     // Enable optimized CSS loading
     optimizeCss: true,
-    // Enable server components logging in development
-    logging: {
-      level: 'verbose',
-    },
   },
   
   // Enhanced webpack configuration for better bundling

@@ -19,7 +19,7 @@ const authRoutes = ['/login', '/register'];
  */
 function isPublicRoute(pathname: string): boolean {
   // Remove locale prefix
-  const cleanPath = pathname.replace(/^\/(en|ar)/, '');
+  const cleanPath = pathname.replace(/^\/(en)/, '');
   
   return publicRoutes.some(
     (route) => cleanPath === route || cleanPath.startsWith(`${route}/`)
@@ -31,7 +31,7 @@ function isPublicRoute(pathname: string): boolean {
  */
 function isAuthRoute(pathname: string): boolean {
   // Remove locale prefix
-  const cleanPath = pathname.replace(/^\/(en|ar)/, '');
+  const cleanPath = pathname.replace(/^\/(en)/, '');
   
   return authRoutes.some(
     (route) => cleanPath === route || cleanPath.startsWith(`${route}/`)

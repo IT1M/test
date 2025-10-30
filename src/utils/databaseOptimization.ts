@@ -647,11 +647,3 @@ export class DatabaseMaintenance {
     }
   }
 }
-
-export {
-  OptimizedPrismaClient,
-  DatabasePerformanceAnalyzer,
-  QueryOptimizer,
-  ConnectionPoolManager,
-  DatabaseMaintenance,
-};
