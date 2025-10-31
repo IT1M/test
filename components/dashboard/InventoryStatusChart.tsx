@@ -11,8 +11,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { db } from "@/lib/db/schema";
 
 interface InventoryDataPoint {
   category: string;
@@ -22,9 +22,6 @@ interface InventoryDataPoint {
 }
 
 interface InventoryStatusChartProps {
-  data: InventoryDataPoint[];
-  title?: string;
-  description?: string;
   className?: string;
   height?: number;
 }
@@ -36,12 +33,63 @@ const COLORS = {
 };
 
 export function InventoryStatusChart({
-  data,
-  title = "Inventory Status",
-  description = "Stock levels by category",
   className,
-  height = 350,
+  height = 300,
 }: InventoryStatusChartProps) {
+  const [data, setData] = React.useState<InventoryDataPoint[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    loadInventoryStatus();
+  }, []);
+
+  const loadInventoryStatus = async () => {
+    try {
+      setLoading(true);
+      
+      // Get all active products
+      const products = await db.products.where('isActive').equals(1).toArray();
+
+      // Group by category and count stock status
+      const categoryMap = new Map<string, InventoryDataPoint>();
+
+      for (const product of products) {
+        const category = product.category || 'Uncategorized';
+        const existing = categoryMap.get(category) || {
+          category,
+          inStock: 0,
+          lowStock: 0,
+          outOfStock: 0,
+        };
+
+        if (product.stockQuantity === 0) {
+          existing.outOfStock++;
+        } else if (product.stockQuantity <= product.reorderLevel) {
+          existing.lowStock++;
+        } else {
+          existing.inStock++;
+        }
+
+        categoryMap.set(category, existing);
+      }
+
+      const inventoryData = Array.from(categoryMap.values());
+      setData(inventoryData);
+    } catch (error) {
+      console.error('Failed to load inventory status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-[300px] flex items-center justify-center">
+        <div className="text-muted-foreground">Loading chart...</div>
+      </div>
+    );
+  }
+
   // Transform data for stacked bar chart
   const chartData = data.map((item) => ({
     category: item.category,
@@ -61,11 +109,9 @@ export function InventoryStatusChart({
   );
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-        <div className="flex gap-4 mt-2">
+    <div className={className}>
+      <div className="mb-4">
+        <div className="flex gap-4">
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full"
@@ -94,9 +140,8 @@ export function InventoryStatusChart({
             </span>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
+      </div>
+      <ResponsiveContainer width="100%" height={height}>
           <BarChart
             data={chartData}
             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -164,7 +209,6 @@ export function InventoryStatusChart({
             <Bar dataKey="Out of Stock" stackId="a" fill={COLORS.outOfStock} radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

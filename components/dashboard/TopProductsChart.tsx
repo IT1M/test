@@ -10,7 +10,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/db/schema";
+import { subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
 interface ProductDataPoint {
   name: string;
@@ -19,30 +20,84 @@ interface ProductDataPoint {
 }
 
 interface TopProductsChartProps {
-  data: ProductDataPoint[];
-  title?: string;
-  description?: string;
+  period: 'daily' | 'weekly' | 'monthly';
   className?: string;
   height?: number;
   dataKey?: "sales" | "revenue";
 }
 
 export function TopProductsChart({
-  data,
-  title = "Top Selling Products",
-  description = "Products by sales volume",
+  period,
   className,
-  height = 350,
+  height = 300,
   dataKey = "sales",
 }: TopProductsChartProps) {
+  const [data, setData] = React.useState<ProductDataPoint[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    loadTopProducts();
+  }, [period]);
+
+  const loadTopProducts = async () => {
+    try {
+      setLoading(true);
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+
+      if (period === 'daily') {
+        startDate = startOfDay(subDays(now, 7));
+      } else if (period === 'weekly') {
+        startDate = startOfWeek(subDays(now, 56)); // 8 weeks
+      } else {
+        startDate = startOfMonth(new Date(now.getFullYear(), now.getMonth() - 6, 1)); // 6 months
+      }
+
+      // Get all orders in the period
+      const orders = await db.orders
+        .where('orderDate')
+        .between(startDate, endDate)
+        .and(order => order.status !== 'cancelled')
+        .toArray();
+
+      // Aggregate sales by product
+      const productSales = new Map<string, { sales: number; revenue: number }>();
+
+      for (const order of orders) {
+        for (const item of order.items) {
+          const existing = productSales.get(item.productName) || { sales: 0, revenue: 0 };
+          productSales.set(item.productName, {
+            sales: existing.sales + item.quantity,
+            revenue: existing.revenue + item.total,
+          });
+        }
+      }
+
+      // Convert to array and sort by sales
+      const topProducts = Array.from(productSales.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.sales - a.sales)
+        .slice(0, 10); // Top 10 products
+
+      setData(topProducts);
+    } catch (error) {
+      console.error('Failed to load top products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-[300px] flex items-center justify-center">
+        <div className="text-muted-foreground">Loading chart...</div>
+      </div>
+    );
+  }
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
+    <div className={className}>
+      <ResponsiveContainer width="100%" height={height}>
           <BarChart
             data={data}
             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -109,7 +164,6 @@ export function TopProductsChart({
             />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

@@ -10,10 +10,13 @@ interface StatCardProps {
   value: string | number;
   change?: number;
   changeLabel?: string;
-  icon?: LucideIcon;
+  trend?: 'up' | 'down';
+  icon?: React.ReactNode | LucideIcon;
   iconColor?: string;
   loading?: boolean;
   className?: string;
+  subtitle?: string;
+  variant?: 'default' | 'warning' | 'success' | 'danger';
 }
 
 export function StatCard({
@@ -21,13 +24,23 @@ export function StatCard({
   value,
   change,
   changeLabel,
-  icon: Icon,
+  trend,
+  icon,
   iconColor = "text-primary",
   loading = false,
   className,
+  subtitle,
+  variant = 'default',
 }: StatCardProps) {
-  const isPositive = change !== undefined && change >= 0;
+  const isPositive = trend === 'up' || (change !== undefined && change >= 0);
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+  
+  const variantColors = {
+    default: 'text-blue-600',
+    warning: 'text-yellow-600',
+    success: 'text-green-600',
+    danger: 'text-red-600',
+  };
 
   if (loading) {
     return (
@@ -52,11 +65,18 @@ export function StatCard({
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {Icon && <Icon className={cn("h-4 w-4", iconColor)} />}
+        {icon && (
+          <div className={cn(variantColors[variant])}>
+            {typeof icon === 'function' ? React.createElement(icon as LucideIcon, { className: "h-4 w-4" }) : icon}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {change !== undefined && (
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+        )}
+        {change !== undefined && change !== 0 && (
           <div className="flex items-center text-xs text-muted-foreground mt-1">
             <TrendIcon
               className={cn(
@@ -71,7 +91,7 @@ export function StatCard({
               )}
             >
               {isPositive ? "+" : ""}
-              {change}%
+              {change.toFixed(1)}%
             </span>
             {changeLabel && (
               <span className="ml-1">{changeLabel}</span>

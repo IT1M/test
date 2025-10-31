@@ -10,8 +10,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils/cn";
+import { db } from "@/lib/db/schema";
+import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
 interface RevenueDataPoint {
   date: string;
@@ -20,28 +20,109 @@ interface RevenueDataPoint {
 }
 
 interface RevenueChartProps {
-  data: RevenueDataPoint[];
-  title?: string;
-  description?: string;
+  period: 'daily' | 'weekly' | 'monthly';
   className?: string;
   height?: number;
 }
 
 export function RevenueChart({
-  data,
-  title = "Revenue Trend",
-  description = "Daily revenue over time",
+  period,
   className,
-  height = 350,
+  height = 300,
 }: RevenueChartProps) {
+  const [data, setData] = React.useState<RevenueDataPoint[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    loadRevenueData();
+  }, [period]);
+
+  const loadRevenueData = async () => {
+    try {
+      setLoading(true);
+      const now = new Date();
+      let dataPoints: RevenueDataPoint[] = [];
+
+      if (period === 'daily') {
+        // Last 7 days
+        for (let i = 6; i >= 0; i--) {
+          const date = subDays(now, i);
+          const dayStart = startOfDay(date);
+          const dayEnd = endOfDay(date);
+
+          const orders = await db.orders
+            .where('orderDate')
+            .between(dayStart, dayEnd)
+            .and(order => order.status !== 'cancelled')
+            .toArray();
+
+          const revenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+          dataPoints.push({
+            date: format(date, 'MMM dd'),
+            revenue,
+          });
+        }
+      } else if (period === 'weekly') {
+        // Last 8 weeks
+        for (let i = 7; i >= 0; i--) {
+          const date = subDays(now, i * 7);
+          const weekStart = startOfWeek(date);
+          const weekEnd = endOfWeek(date);
+
+          const orders = await db.orders
+            .where('orderDate')
+            .between(weekStart, weekEnd)
+            .and(order => order.status !== 'cancelled')
+            .toArray();
+
+          const revenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+          dataPoints.push({
+            date: format(weekStart, 'MMM dd'),
+            revenue,
+          });
+        }
+      } else {
+        // Last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthStart = startOfMonth(date);
+          const monthEnd = endOfMonth(date);
+
+          const orders = await db.orders
+            .where('orderDate')
+            .between(monthStart, monthEnd)
+            .and(order => order.status !== 'cancelled')
+            .toArray();
+
+          const revenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+          dataPoints.push({
+            date: format(date, 'MMM yyyy'),
+            revenue,
+          });
+        }
+      }
+
+      setData(dataPoints);
+    } catch (error) {
+      console.error('Failed to load revenue data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-[300px] flex items-center justify-center">
+        <div className="text-muted-foreground">Loading chart...</div>
+      </div>
+    );
+  }
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
+    <div className={className}>
+      <ResponsiveContainer width="100%" height={height}>
           <AreaChart
             data={data}
             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -127,7 +208,6 @@ export function RevenueChart({
             />
           </AreaChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
