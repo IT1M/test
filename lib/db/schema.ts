@@ -17,6 +17,21 @@ import type {
   SearchHistory,
   SystemLog,
   User,
+  Rejection,
+  RejectionReason,
+  QualityInspection,
+  Employee,
+  Department,
+  Position,
+  Attendance,
+  Leave,
+  Payroll,
+  PerformanceReview,
+  Training,
+  JobPosting,
+  Applicant,
+  Interview,
+  RecruitmentPipeline,
 } from '@/types/database';
 
 /**
@@ -42,6 +57,21 @@ export class MedicalProductsDB extends Dexie {
   searchHistory!: Table<SearchHistory, string>;
   systemLogs!: Table<SystemLog, string>;
   users!: Table<User, string>;
+  rejections!: Table<Rejection, string>;
+  rejectionReasons!: Table<RejectionReason, string>;
+  qualityInspections!: Table<QualityInspection, string>;
+  employees!: Table<Employee, string>;
+  departments!: Table<Department, string>;
+  positions!: Table<Position, string>;
+  attendance!: Table<Attendance, string>;
+  leaves!: Table<Leave, string>;
+  payroll!: Table<Payroll, string>;
+  performanceReviews!: Table<PerformanceReview, string>;
+  training!: Table<Training, string>;
+  jobPostings!: Table<JobPosting, string>;
+  applicants!: Table<Applicant, string>;
+  interviews!: Table<Interview, string>;
+  recruitmentPipeline!: Table<RecruitmentPipeline, string>;
 
   constructor() {
     super('MedicalProductsDB');
@@ -92,6 +122,53 @@ export class MedicalProductsDB extends Dexie {
       
       // Users table with indexes for authentication
       users: 'id, username, email, role, isActive, lastLogin, createdAt, [role+isActive]',
+      
+      // Rejections table with indexes for quality control
+      rejections: 'id, rejectionId, itemCode, productId, machineName, lotNumber, batchNumber, rejectionDate, rejectionType, inspectorId, supplierId, status, severity, createdAt, [productId+rejectionDate], [batchNumber+rejectionDate], [lotNumber+rejectionDate], [itemCode+rejectionDate], [status+rejectionDate], [severity+status], [inspectorId+rejectionDate], [supplierId+rejectionDate]',
+      
+      // Rejection reasons table with indexes for categorization
+      rejectionReasons: 'id, code, category, isActive, [category+isActive]',
+      
+      // Quality inspections table with indexes for tracking
+      qualityInspections: 'id, inspectionId, productId, orderId, batchNumber, inspectionDate, inspectorId, inspectionType, status, createdAt, [productId+inspectionDate], [batchNumber+inspectionDate], [inspectorId+inspectionDate], [status+inspectionDate], [inspectionType+inspectionDate]',
+      
+      // HR Management tables
+      // Employees table with indexes for HR operations
+      employees: 'id, employeeId, nationalId, firstName, lastName, departmentId, positionId, managerId, hireDate, status, userId, createdAt, [departmentId+status], [positionId+status], [managerId+status], [status+hireDate], [firstName+lastName]',
+      
+      // Departments table with indexes for organizational structure
+      departments: 'id, departmentId, name, managerId, parentDepartmentId, isActive, createdAt, [managerId+isActive], [parentDepartmentId+isActive]',
+      
+      // Positions table with indexes for job management
+      positions: 'id, positionId, title, departmentId, level, isActive, createdAt, [departmentId+isActive], [level+isActive]',
+      
+      // Attendance table with indexes for tracking
+      attendance: 'id, employeeId, date, status, createdAt, [employeeId+date], [employeeId+status], [date+status]',
+      
+      // Leaves table with indexes for leave management
+      leaves: 'id, leaveId, employeeId, leaveType, startDate, endDate, status, requestDate, approvedBy, createdAt, [employeeId+status], [employeeId+startDate], [status+requestDate], [approvedBy+status]',
+      
+      // Payroll table with indexes for salary processing
+      payroll: 'id, payrollId, employeeId, month, year, status, paymentDate, createdAt, [employeeId+month+year], [employeeId+status], [status+paymentDate]',
+      
+      // Performance reviews table with indexes for tracking
+      performanceReviews: 'id, reviewId, employeeId, reviewDate, reviewerId, status, createdAt, [employeeId+reviewDate], [reviewerId+reviewDate], [status+reviewDate]',
+      
+      // Training table with indexes for learning management
+      training: 'id, trainingId, title, category, type, startDate, endDate, status, createdAt, [category+status], [type+status], [startDate+status]',
+      
+      // Recruitment Management tables
+      // Job postings table with indexes for recruitment
+      jobPostings: 'id, jobId, title, departmentId, positionId, status, postedDate, closingDate, hiringManagerId, createdAt, [departmentId+status], [positionId+status], [status+postedDate], [hiringManagerId+status]',
+      
+      // Applicants table with indexes for tracking
+      applicants: 'id, applicantId, jobId, firstName, lastName, email, phone, applicationDate, status, source, createdAt, [jobId+status], [jobId+applicationDate], [status+applicationDate], [source+status], [firstName+lastName]',
+      
+      // Interviews table with indexes for scheduling
+      interviews: 'id, interviewId, applicantId, jobId, scheduledDate, type, status, createdAt, [applicantId+scheduledDate], [jobId+scheduledDate], [status+scheduledDate], [type+status]',
+      
+      // Recruitment pipeline table for tracking applicant journey
+      recruitmentPipeline: 'id, applicantId, jobId, stage, enteredAt, exitedAt, [applicantId+stage], [jobId+stage], [stage+enteredAt]',
     });
 
     // Add hooks for automatic field updates
@@ -169,6 +246,139 @@ export class MedicalProductsDB extends Dexie {
       if (!obj.createdAt) obj.createdAt = new Date();
       if (obj.isActive === undefined) obj.isActive = true;
     });
+
+    this.rejections.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.rejectionDate) obj.rejectionDate = new Date();
+    });
+
+    this.rejections.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.qualityInspections.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.inspectionDate) obj.inspectionDate = new Date();
+    });
+
+    // HR Management hooks
+    this.employees.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.hireDate) obj.hireDate = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+    });
+
+    this.employees.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.departments.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.isActive === undefined) obj.isActive = true;
+    });
+
+    this.departments.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.positions.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.isActive === undefined) obj.isActive = true;
+    });
+
+    this.positions.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.attendance.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.date) obj.date = new Date();
+    });
+
+    this.leaves.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.requestDate) obj.requestDate = new Date();
+      if (obj.status === undefined) obj.status = 'pending';
+    });
+
+    this.leaves.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.payroll.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+    });
+
+    this.payroll.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.performanceReviews.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.reviewDate) obj.reviewDate = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+    });
+
+    this.performanceReviews.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.training.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'planned';
+    });
+
+    this.training.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    // Recruitment Management hooks
+    this.jobPostings.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.postedDate) obj.postedDate = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+      if (obj.views === undefined) obj.views = 0;
+      if (obj.applicationsCount === undefined) obj.applicationsCount = 0;
+    });
+
+    this.jobPostings.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.applicants.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.applicationDate) obj.applicationDate = new Date();
+      if (obj.status === undefined) obj.status = 'applied';
+    });
+
+    this.applicants.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.interviews.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'scheduled';
+    });
+
+    this.interviews.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.recruitmentPipeline.hook('creating', (primKey, obj) => {
+      if (!obj.enteredAt) obj.enteredAt = new Date();
+    });
   }
 
   /**
@@ -191,6 +401,21 @@ export class MedicalProductsDB extends Dexie {
       this.searchHistory,
       this.systemLogs,
       this.users,
+      this.rejections,
+      this.rejectionReasons,
+      this.qualityInspections,
+      this.employees,
+      this.departments,
+      this.positions,
+      this.attendance,
+      this.leaves,
+      this.payroll,
+      this.performanceReviews,
+      this.training,
+      this.jobPostings,
+      this.applicants,
+      this.interviews,
+      this.recruitmentPipeline,
     ], async () => {
       await Promise.all([
         this.products.clear(),
@@ -208,6 +433,21 @@ export class MedicalProductsDB extends Dexie {
         this.searchHistory.clear(),
         this.systemLogs.clear(),
         this.users.clear(),
+        this.rejections.clear(),
+        this.rejectionReasons.clear(),
+        this.qualityInspections.clear(),
+        this.employees.clear(),
+        this.departments.clear(),
+        this.positions.clear(),
+        this.attendance.clear(),
+        this.leaves.clear(),
+        this.payroll.clear(),
+        this.performanceReviews.clear(),
+        this.training.clear(),
+        this.jobPostings.clear(),
+        this.applicants.clear(),
+        this.interviews.clear(),
+        this.recruitmentPipeline.clear(),
       ]);
     });
   }
@@ -221,6 +461,12 @@ export class MedicalProductsDB extends Dexie {
     orders: number;
     patients: number;
     medicalRecords: number;
+    rejections: number;
+    qualityInspections: number;
+    employees: number;
+    departments: number;
+    jobPostings: number;
+    applicants: number;
     totalSize: number;
   }> {
     const [
@@ -229,12 +475,24 @@ export class MedicalProductsDB extends Dexie {
       ordersCount,
       patientsCount,
       medicalRecordsCount,
+      rejectionsCount,
+      qualityInspectionsCount,
+      employeesCount,
+      departmentsCount,
+      jobPostingsCount,
+      applicantsCount,
     ] = await Promise.all([
       this.products.count(),
       this.customers.count(),
       this.orders.count(),
       this.patients.count(),
       this.medicalRecords.count(),
+      this.rejections.count(),
+      this.qualityInspections.count(),
+      this.employees.count(),
+      this.departments.count(),
+      this.jobPostings.count(),
+      this.applicants.count(),
     ]);
 
     // Estimate database size (rough calculation)
@@ -246,6 +504,12 @@ export class MedicalProductsDB extends Dexie {
       orders: ordersCount,
       patients: patientsCount,
       medicalRecords: medicalRecordsCount,
+      rejections: rejectionsCount,
+      qualityInspections: qualityInspectionsCount,
+      employees: employeesCount,
+      departments: departmentsCount,
+      jobPostings: jobPostingsCount,
+      applicants: applicantsCount,
       totalSize,
     };
   }
@@ -283,6 +547,21 @@ export class MedicalProductsDB extends Dexie {
       searchHistory,
       systemLogs,
       users,
+      rejections,
+      rejectionReasons,
+      qualityInspections,
+      employees,
+      departments,
+      positions,
+      attendance,
+      leaves,
+      payroll,
+      performanceReviews,
+      training,
+      jobPostings,
+      applicants,
+      interviews,
+      recruitmentPipeline,
     ] = await Promise.all([
       this.products.toArray(),
       this.customers.toArray(),
@@ -299,6 +578,21 @@ export class MedicalProductsDB extends Dexie {
       this.searchHistory.toArray(),
       this.systemLogs.toArray(),
       this.users.toArray(),
+      this.rejections.toArray(),
+      this.rejectionReasons.toArray(),
+      this.qualityInspections.toArray(),
+      this.employees.toArray(),
+      this.departments.toArray(),
+      this.positions.toArray(),
+      this.attendance.toArray(),
+      this.leaves.toArray(),
+      this.payroll.toArray(),
+      this.performanceReviews.toArray(),
+      this.training.toArray(),
+      this.jobPostings.toArray(),
+      this.applicants.toArray(),
+      this.interviews.toArray(),
+      this.recruitmentPipeline.toArray(),
     ]);
 
     return {
@@ -320,6 +614,21 @@ export class MedicalProductsDB extends Dexie {
         searchHistory,
         systemLogs,
         users,
+        rejections,
+        rejectionReasons,
+        qualityInspections,
+        employees,
+        departments,
+        positions,
+        attendance,
+        leaves,
+        payroll,
+        performanceReviews,
+        training,
+        jobPostings,
+        applicants,
+        interviews,
+        recruitmentPipeline,
       },
     };
   }
@@ -344,6 +653,21 @@ export class MedicalProductsDB extends Dexie {
       this.searchHistory,
       this.systemLogs,
       this.users,
+      this.rejections,
+      this.rejectionReasons,
+      this.qualityInspections,
+      this.employees,
+      this.departments,
+      this.positions,
+      this.attendance,
+      this.leaves,
+      this.payroll,
+      this.performanceReviews,
+      this.training,
+      this.jobPostings,
+      this.applicants,
+      this.interviews,
+      this.recruitmentPipeline,
     ], async () => {
       const data = backup.data;
 
@@ -362,6 +686,21 @@ export class MedicalProductsDB extends Dexie {
       if (data.searchHistory) await this.searchHistory.bulkPut(data.searchHistory);
       if (data.systemLogs) await this.systemLogs.bulkPut(data.systemLogs);
       if (data.users) await this.users.bulkPut(data.users);
+      if (data.rejections) await this.rejections.bulkPut(data.rejections);
+      if (data.rejectionReasons) await this.rejectionReasons.bulkPut(data.rejectionReasons);
+      if (data.qualityInspections) await this.qualityInspections.bulkPut(data.qualityInspections);
+      if (data.employees) await this.employees.bulkPut(data.employees);
+      if (data.departments) await this.departments.bulkPut(data.departments);
+      if (data.positions) await this.positions.bulkPut(data.positions);
+      if (data.attendance) await this.attendance.bulkPut(data.attendance);
+      if (data.leaves) await this.leaves.bulkPut(data.leaves);
+      if (data.payroll) await this.payroll.bulkPut(data.payroll);
+      if (data.performanceReviews) await this.performanceReviews.bulkPut(data.performanceReviews);
+      if (data.training) await this.training.bulkPut(data.training);
+      if (data.jobPostings) await this.jobPostings.bulkPut(data.jobPostings);
+      if (data.applicants) await this.applicants.bulkPut(data.applicants);
+      if (data.interviews) await this.interviews.bulkPut(data.interviews);
+      if (data.recruitmentPipeline) await this.recruitmentPipeline.bulkPut(data.recruitmentPipeline);
     });
   }
 }

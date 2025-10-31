@@ -424,3 +424,145 @@ The Medical Products Company Management System is a comprehensive full-stack web
 9. THE System SHALL analyze user behavior patterns and suggest UI/UX improvements
 10. THE System SHALL predict when backup operations should run based on data change frequency
 11. THE System SHALL generate automated system health reports with proactive maintenance recommendations
+
+### Requirement 23
+
+**User Story:** As a system administrator or AI operations manager, I want a comprehensive AI Control Center ("AI Mais Co.") to monitor, control, and optimize all AI operations in the system, so that I can ensure AI services are running efficiently, securely, and delivering maximum value.
+
+#### Acceptance Criteria
+
+**A. Operational Dashboard (AI Visibility & Monitoring)**
+
+1. THE System SHALL provide a dedicated page at /ai-control-center titled "AI Mais Co." accessible only to users with AI_ADMIN or ADMIN roles
+2. THE System SHALL display real-time status of all AI models and modules including name, version, status (active/inactive/error), last execution time, and current confidence level
+3. THE System SHALL show cumulative AI activity metrics including total API calls (last 24 hours, 7 days, 30 days), successful vs failed requests, average response time, and total tokens consumed
+4. THE System SHALL display interactive time-series charts showing API response times, accuracy rates, error rates, and cost trends over selectable time periods
+5. THE System SHALL provide a live activity feed showing recent AI operations with timestamp, operation type, input summary, output summary, confidence score, and execution duration
+6. THE System SHALL display AI model health indicators with color-coded status (green: healthy, yellow: degraded, red: critical) and alert badges for issues requiring attention
+7. THE System SHALL show current rate limit status for each AI service with visual progress bars indicating usage percentage and time until reset
+8. THE System SHALL provide quick statistics cards showing: total AI operations today, average confidence score, cost per operation, and success rate percentage
+
+**B. Audit & Decisions Log (Comprehensive AI Activity Tracking)**
+
+9. THE System SHALL maintain a searchable audit log (AIActivityLog table) storing all AI interactions with fields: id, timestamp, userId, modelName, operationType, inputData (sanitized), outputData, confidenceScore, executionTime, status, errorMessage, and metadata
+10. THE System SHALL provide advanced search and filtering capabilities for the audit log including filters by date range, model name, user, operation type, confidence threshold, and status
+11. THE System SHALL display audit log entries in a paginated table with columns: timestamp, user, model, operation, confidence, duration, status, and action buttons (view details, export)
+12. THE System SHALL provide detailed view modal for each log entry showing complete input/output data, confidence breakdown, processing steps, and related system events
+13. THE System SHALL implement export functionality for audit logs supporting CSV, JSON, and Excel formats with customizable column selection and date range
+14. THE System SHALL provide audit log analytics showing most used models, peak usage times, average confidence by operation type, and error pattern analysis
+15. THE System SHALL automatically flag suspicious or anomalous AI activities (e.g., repeated low confidence results, unusual input patterns) for administrator review
+
+**C. AI Settings & Configuration (Control Panel)**
+
+16. THE System SHALL provide an AI Settings section with tabs for: Model Configuration, Performance Tuning, Security & Privacy, and Automation Rules
+17. THE System SHALL allow administrators to enable/disable individual AI models with immediate effect and confirmation dialog showing impact on dependent features
+18. THE System SHALL provide configuration controls for each AI model including: API endpoint, model version, temperature setting, max tokens, timeout duration, and retry attempts
+19. THE System SHALL implement rate limiting controls allowing administrators to set: requests per minute, requests per hour, daily quota, and cost limits with automatic throttling
+20. THE System SHALL provide confidence threshold settings for automatic decision-making with separate thresholds for: auto-approve actions, require human review, and reject/flag for review
+21. THE System SHALL implement data privacy controls including: enable/disable PHI sanitization before AI processing, data encryption in transit, data retention period for AI logs, and opt-out options for specific data types
+22. THE System SHALL provide caching configuration with settings for: cache duration, cache size limit, cache invalidation rules, and selective caching by operation type
+23. THE System SHALL allow administrators to configure fallback behaviors when AI services are unavailable including: use cached results, queue for later processing, or disable feature temporarily
+24. THE System SHALL provide cost management controls including: set budget alerts, automatic service suspension at cost threshold, and cost allocation by department/user
+25. THE System SHALL log all configuration changes to AIConfigurationHistory table with fields: timestamp, userId, settingName, oldValue, newValue, reason, and approvedBy
+
+**D. Automation & Scheduled Tasks (AI Workflow Management)**
+
+26. THE System SHALL display a list of all active AI automation rules showing: rule name, trigger condition, AI operation, action to take, status (active/paused), last execution, and success rate
+27. THE System SHALL provide an automation rule builder interface allowing administrators to create rules with: trigger selection (event-based, schedule-based, condition-based), AI operation configuration, and action definition
+28. THE System SHALL support automation triggers including: new document uploaded, order created, inventory below threshold, customer inquiry received, scheduled time, and custom database events
+29. THE System SHALL allow configuration of AI operations in automation rules including: model selection, input data mapping, confidence threshold for action, and fallback behavior
+30. THE System SHALL support automation actions including: update database record, send notification, create task, generate report, trigger workflow, and execute custom function
+31. THE System SHALL provide automation rule testing functionality allowing administrators to simulate rule execution with sample data and view predicted outcomes
+32. THE System SHALL implement automation rule monitoring showing execution history, success/failure rates, average execution time, and cost per execution
+33. THE System SHALL allow administrators to pause, resume, edit, or delete automation rules with confirmation dialogs and impact warnings
+34. THE System SHALL provide scheduled AI tasks management for recurring operations including: daily briefing generation, weekly analytics reports, monthly model performance review, and data quality checks
+35. THE System SHALL display upcoming scheduled tasks with countdown timers and allow manual triggering or rescheduling
+
+**E. Diagnostics & Recovery Tools (AI Health Management)**
+
+36. THE System SHALL provide AI model diagnostics tools including: connection test, latency test, accuracy validation, and load test capabilities
+37. THE System SHALL display model performance metrics including: average response time, p95/p99 latency, error rate, timeout rate, and availability percentage
+38. THE System SHALL provide data quality diagnostics showing: input data validation results, common data issues, data completeness scores, and recommendations for improvement
+39. THE System SHALL implement AI model comparison tools allowing administrators to compare performance metrics between different model versions or configurations
+40. THE System SHALL provide rollback functionality allowing administrators to revert to previous AI configuration versions with one-click restoration
+41. THE System SHALL maintain configuration snapshots (AIConfigurationSnapshot table) storing complete AI settings at regular intervals and before major changes
+42. THE System SHALL provide emergency controls including: pause all AI operations, switch to safe mode (cached results only), and force model refresh
+43. THE System SHALL display system health indicators showing: database connection status, API service status, cache status, and background job status
+44. THE System SHALL provide troubleshooting guides and recommendations based on detected issues with step-by-step resolution instructions
+45. THE System SHALL implement automated health checks running every 5 minutes to detect and alert on: API failures, high error rates, slow response times, and quota exhaustion
+
+**F. Security & Compliance (AI Governance)**
+
+46. THE System SHALL implement role-based access control (RBAC) for AI Control Center with roles: AI_ADMIN (full access), AI_OPERATOR (view and basic controls), AI_AUDITOR (view only)
+47. THE System SHALL require multi-factor authentication for critical AI operations including: disabling models, changing security settings, exporting audit logs, and deleting automation rules
+48. THE System SHALL log all user actions in AI Control Center to SecurityAuditLog table with fields: timestamp, userId, action, resourceAffected, ipAddress, and outcome
+49. THE System SHALL implement data sanitization for PHI/PII before sending to AI services with configurable sanitization rules and validation checks
+50. THE System SHALL provide compliance reporting showing: data processing activities, consent tracking, data retention compliance, and regulatory requirement adherence
+51. THE System SHALL implement automatic PHI detection in AI inputs/outputs with alerts when sensitive data is detected and options to redact or encrypt
+52. THE System SHALL provide data lineage tracking showing: data source, AI processing steps, output destination, and data retention status
+53. THE System SHALL implement secure API key management with encrypted storage, key rotation reminders, and access logging
+54. THE System SHALL provide audit trail export for compliance purposes with tamper-proof signatures and chain-of-custody documentation
+
+**G. Performance & Cost Optimization (AI Efficiency)**
+
+55. THE System SHALL display cost analytics dashboard showing: daily/weekly/monthly AI costs, cost per operation type, cost by model, and cost trends
+56. THE System SHALL provide cost optimization recommendations based on usage patterns including: caching opportunities, model selection suggestions, and batch processing options
+57. THE System SHALL implement budget tracking with visual indicators showing: budget consumed, remaining budget, projected end-of-month cost, and variance from budget
+58. THE System SHALL provide performance optimization suggestions including: slow query identification, inefficient prompt patterns, and model configuration improvements
+59. THE System SHALL display cache effectiveness metrics showing: cache hit rate, cache miss rate, cache size, and estimated cost savings from caching
+60. THE System SHALL implement automatic cost alerts when: daily budget threshold reached, unusual spending detected, or projected monthly cost exceeds budget
+61. THE System SHALL provide ROI analysis showing: AI-driven revenue impact, cost savings from automation, time saved, and efficiency improvements
+62. THE System SHALL display model efficiency comparison showing: cost per operation, accuracy, speed, and overall value score for each model
+
+**H. Integration & API Management (AI Connectivity)**
+
+63. THE System SHALL display all AI service integrations showing: service name, provider, endpoint URL, authentication status, and connection health
+64. THE System SHALL provide API key management interface allowing administrators to: add new keys, rotate existing keys, set expiration dates, and monitor key usage
+65. THE System SHALL implement API health monitoring with automatic alerts for: connection failures, authentication errors, rate limit warnings, and service degradation
+66. THE System SHALL provide webhook configuration for AI events allowing external systems to receive notifications for: model updates, high-priority alerts, and automation completions
+67. THE System SHALL display API usage statistics by endpoint showing: request count, average response time, error rate, and most common operations
+68. THE System SHALL implement API versioning support allowing administrators to test new API versions before switching production traffic
+
+**I. Reporting & Analytics (AI Intelligence)**
+
+69. THE System SHALL provide pre-built AI analytics reports including: Model Performance Report, Cost Analysis Report, Automation Effectiveness Report, and Security Audit Report
+70. THE System SHALL allow administrators to create custom AI reports with drag-and-drop interface for selecting metrics, filters, groupings, and visualizations
+71. THE System SHALL implement scheduled report generation with automatic email delivery to specified recipients on daily, weekly, or monthly basis
+72. THE System SHALL provide executive summary dashboard showing: key AI metrics, cost trends, performance highlights, and action items requiring attention
+73. THE System SHALL display AI impact metrics showing: business outcomes influenced by AI, accuracy improvements over time, and user satisfaction with AI features
+74. THE System SHALL provide comparative analytics showing: period-over-period changes, model performance comparisons, and benchmark against industry standards
+
+**J. User Interface & Experience (AI Control Center UX)**
+
+75. THE System SHALL implement responsive design for AI Control Center supporting desktop (1920x1080+), tablet (768x1024+), and mobile (375x667+) viewports
+76. THE System SHALL provide real-time updates using WebSocket connections with automatic reconnection and offline mode support
+77. THE System SHALL implement dark mode support with theme toggle and automatic theme detection based on system preferences
+78. THE System SHALL provide customizable dashboard layouts allowing administrators to: rearrange widgets, hide/show sections, and save layout preferences
+79. THE System SHALL implement keyboard shortcuts for common actions including: refresh data (Ctrl+R), search logs (Ctrl+F), export data (Ctrl+E), and toggle sections
+80. THE System SHALL provide contextual help and tooltips explaining each metric, setting, and feature with links to detailed documentation
+81. THE System SHALL implement loading states and skeleton screens for all data-fetching operations to improve perceived performance
+82. THE System SHALL provide error messages in clear English with actionable suggestions and links to troubleshooting resources
+83. THE System SHALL implement confirmation dialogs for destructive actions with clear warnings about consequences and required acknowledgment
+84. THE System SHALL provide success notifications for completed actions with undo options where applicable
+
+**K. Data Management & Storage (AI Data Governance)**
+
+85. THE System SHALL create AIActivityLog table in IndexedDB with indexes on: timestamp, userId, modelName, operationType, and confidenceScore
+86. THE System SHALL create AIConfigurationHistory table storing all configuration changes with full audit trail
+87. THE System SHALL create AIConfigurationSnapshot table storing periodic configuration backups for rollback capability
+88. THE System SHALL create AIAutomationRule table storing automation rule definitions with execution history
+89. THE System SHALL create AIModelMetrics table storing aggregated performance metrics for efficient dashboard rendering
+90. THE System SHALL implement automatic data retention policies with configurable retention periods: audit logs (90 days default), configuration history (1 year), and metrics (6 months)
+91. THE System SHALL provide data archival functionality allowing administrators to export and archive old AI logs before deletion
+92. THE System SHALL implement data compression for stored AI logs to optimize storage usage while maintaining searchability
+93. THE System SHALL provide data integrity checks running daily to detect and report: missing records, corrupted data, and inconsistencies
+
+**L. Notifications & Alerts (AI Event Management)**
+
+94. THE System SHALL implement real-time alert system for critical AI events including: model failures, high error rates, budget threshold exceeded, and security incidents
+95. THE System SHALL provide configurable alert channels including: in-app notifications, email alerts, SMS alerts (if configured), and webhook notifications
+96. THE System SHALL allow administrators to configure alert rules with: condition definition, severity level, notification channels, and escalation policies
+97. THE System SHALL implement alert aggregation to prevent notification fatigue by grouping similar alerts and providing summary notifications
+98. THE System SHALL provide alert history showing: all triggered alerts, acknowledgment status, resolution time, and actions taken
+99. THE System SHALL implement alert snoozing allowing administrators to temporarily suppress specific alerts with automatic re-enabling
+100. THE System SHALL provide alert analytics showing: most frequent alerts, average resolution time, and alert trends over time

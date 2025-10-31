@@ -18,6 +18,29 @@ export type StockMovementType = 'in' | 'out' | 'adjustment' | 'transfer';
 export type LogStatus = 'success' | 'error' | 'warning';
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'medical';
 export type DocumentType = 'invoice' | 'purchase_order' | 'medical_report' | 'prescription' | 'lab_result' | 'delivery_note' | 'other';
+export type RejectionType = 'cosmetic' | 'functional' | 'safety' | 'documentation' | 'other';
+export type RejectionStatus = 'pending' | 'under-review' | 'corrective-action' | 'resolved' | 'closed';
+export type RejectionSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type CorrectionActionStatus = 'open' | 'in-progress' | 'completed' | 'verified';
+export type InspectionType = 'incoming' | 'in-process' | 'final' | 'random';
+export type InspectionStatus = 'passed' | 'failed' | 'conditional';
+export type InspectionResult = 'pass' | 'fail';
+export type EmployeeStatus = 'active' | 'on-leave' | 'suspended' | 'archived' | 'terminated';
+export type ContractType = 'permanent' | 'contract' | 'part-time' | 'intern';
+export type LeaveType = 'annual' | 'sick' | 'emergency' | 'unpaid' | 'maternity' | 'paternity' | 'bereavement' | 'other';
+export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type PayrollStatus = 'draft' | 'approved' | 'paid' | 'cancelled';
+export type PerformanceReviewStatus = 'draft' | 'submitted' | 'acknowledged' | 'completed';
+export type TrainingStatus = 'planned' | 'ongoing' | 'completed' | 'cancelled';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'half-day' | 'on-leave' | 'holiday';
+export type PositionLevel = 'entry' | 'junior' | 'mid' | 'senior' | 'lead' | 'manager' | 'director' | 'executive';
+export type JobPostingStatus = 'draft' | 'active' | 'closed' | 'filled' | 'cancelled';
+export type ApplicantStatus = 'applied' | 'screening' | 'interview' | 'assessment' | 'offer' | 'hired' | 'rejected' | 'withdrawn';
+export type ApplicantSource = 'website' | 'linkedin' | 'referral' | 'job-board' | 'other';
+export type InterviewType = 'phone' | 'video' | 'in-person' | 'technical' | 'panel';
+export type InterviewStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+export type HiringRecommendation = 'strong-hire' | 'hire' | 'maybe' | 'no-hire';
+export type WorkType = 'on-site' | 'remote' | 'hybrid';
 
 // ============================================================================
 // SUPPORTING TYPES
@@ -392,6 +415,97 @@ export interface DemandPrediction {
 }
 
 // ============================================================================
+// QUALITY CONTROL AND REJECTION MANAGEMENT
+// ============================================================================
+
+export interface RejectionImage {
+  id: string;
+  url: string;
+  fileName: string;
+  capturedAt: Date;
+  analysisResults?: {
+    defectType: string;
+    severity: string;
+    confidence: number;
+  };
+}
+
+export interface CorrectionAction {
+  id: string;
+  description: string;
+  assignedTo: string;
+  dueDate: Date;
+  status: CorrectionActionStatus;
+  completedAt?: Date;
+  effectiveness?: number;
+}
+
+export interface Rejection {
+  id: string;
+  rejectionId: string;
+  itemCode: string;
+  productId: string;
+  machineName: string;
+  lotNumber: string;
+  batchNumber: string;
+  quantity: number;
+  rejectionDate: Date;
+  rejectionReason: string;
+  rejectionType: RejectionType;
+  inspectorId: string;
+  supplierId?: string;
+  orderId?: string;
+  status: RejectionStatus;
+  severity: RejectionSeverity;
+  images: RejectionImage[];
+  correctionActions: CorrectionAction[];
+  costImpact: number;
+  geminiAnalysis?: {
+    defectType: string;
+    confidence: number;
+    suggestedActions: string[];
+    similarCases: string[];
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  resolvedAt?: Date;
+}
+
+export interface RejectionReason {
+  id: string;
+  code: string;
+  category: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface InspectionCheckpoint {
+  parameter: string;
+  specification: string;
+  actualValue: string;
+  result: InspectionResult;
+  notes?: string;
+}
+
+export interface QualityInspection {
+  id: string;
+  inspectionId: string;
+  productId: string;
+  orderId?: string;
+  batchNumber: string;
+  inspectionDate: Date;
+  inspectorId: string;
+  inspectionType: InspectionType;
+  sampleSize: number;
+  passedQuantity: number;
+  failedQuantity: number;
+  status: InspectionStatus;
+  notes: string;
+  checkpoints: InspectionCheckpoint[];
+  createdAt: Date;
+}
+
+// ============================================================================
 // UTILITY TYPES
 // ============================================================================
 
@@ -471,3 +585,477 @@ export const calculateProfitMarginFromAmounts = (totalAmount: number, costAmount
   if (totalAmount === 0) return 0;
   return ((totalAmount - costAmount) / totalAmount) * 100;
 };
+
+// ============================================================================
+// HUMAN RESOURCES MANAGEMENT
+// ============================================================================
+
+export interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+  alternatePhone?: string;
+}
+
+export interface Qualification {
+  degree: string;
+  institution: string;
+  fieldOfStudy: string;
+  graduationYear: number;
+  grade?: string;
+}
+
+export interface Certification {
+  name: string;
+  issuingOrganization: string;
+  issueDate: Date;
+  expiryDate?: Date;
+  credentialId?: string;
+}
+
+export interface EmployeeDocument {
+  id: string;
+  type: 'contract' | 'id-copy' | 'certificate' | 'resume' | 'other';
+  fileName: string;
+  url: string;
+  uploadDate: Date;
+}
+
+export interface Employee {
+  id: string;
+  employeeId: string;
+  nationalId: string;
+  firstName: string;
+  lastName: string;
+  fullName?: string;
+  dateOfBirth: Date;
+  age?: number;
+  gender: Gender;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  country: string;
+  
+  // Employment Details
+  departmentId: string;
+  positionId: string;
+  managerId?: string;
+  hireDate: Date;
+  contractType: ContractType;
+  contractEndDate?: Date;
+  probationEndDate?: Date;
+  
+  // Compensation
+  basicSalary: number;
+  currency: string;
+  paymentFrequency: 'monthly' | 'bi-weekly' | 'weekly';
+  bankAccount?: string;
+  
+  // Status
+  status: EmployeeStatus;
+  terminationDate?: Date;
+  terminationReason?: string;
+  
+  // Personal Details
+  emergencyContact: EmergencyContact;
+  qualifications: Qualification[];
+  certifications: Certification[];
+  
+  // Documents
+  photo?: string;
+  documents: EmployeeDocument[];
+  
+  // Performance
+  performanceRating?: number;
+  lastReviewDate?: Date;
+  nextReviewDate?: Date;
+  
+  // Leave Balance
+  annualLeaveBalance: number;
+  sickLeaveBalance: number;
+  
+  // System
+  userId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt?: Date;
+}
+
+export interface Department {
+  id: string;
+  departmentId: string;
+  name: string;
+  description?: string;
+  managerId?: string;
+  parentDepartmentId?: string;
+  budget?: number;
+  employeeCount?: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Position {
+  id: string;
+  positionId: string;
+  title: string;
+  departmentId: string;
+  level: PositionLevel;
+  description: string;
+  responsibilities: string[];
+  requirements: string[];
+  minSalary: number;
+  maxSalary: number;
+  requiredQualifications: string[];
+  requiredSkills: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Attendance {
+  id: string;
+  employeeId: string;
+  date: Date;
+  checkIn?: Date;
+  checkOut?: Date;
+  workHours?: number;
+  status: AttendanceStatus;
+  lateMinutes?: number;
+  earlyDepartureMinutes?: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  notes?: string;
+  approvedBy?: string;
+  createdAt: Date;
+}
+
+export interface Leave {
+  id: string;
+  leaveId: string;
+  employeeId: string;
+  leaveType: LeaveType;
+  startDate: Date;
+  endDate: Date;
+  totalDays: number;
+  reason: string;
+  status: LeaveStatus;
+  requestDate: Date;
+  approvedBy?: string;
+  approvalDate?: Date;
+  rejectionReason?: string;
+  attachments?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PayrollItem {
+  description: string;
+  amount: number;
+  type: 'fixed' | 'variable';
+}
+
+export interface Payroll {
+  id: string;
+  payrollId: string;
+  employeeId: string;
+  month: number;
+  year: number;
+  
+  // Earnings
+  basicSalary: number;
+  allowances: PayrollItem[];
+  overtime: number;
+  bonus: number;
+  totalEarnings: number;
+  
+  // Deductions
+  deductions: PayrollItem[];
+  tax: number;
+  insurance: number;
+  totalDeductions: number;
+  
+  // Net
+  netSalary: number;
+  
+  // Payment
+  paymentDate?: Date;
+  paymentMethod: 'bank-transfer' | 'cash' | 'cheque';
+  paymentReference?: string;
+  status: PayrollStatus;
+  
+  // Approval
+  approvedBy?: string;
+  approvalDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PerformanceRating {
+  category: string;
+  rating: number;
+  comments?: string;
+}
+
+export interface PerformanceGoal {
+  description: string;
+  targetDate: Date;
+  status: 'not-started' | 'in-progress' | 'completed' | 'cancelled';
+  completionDate?: Date;
+}
+
+export interface PerformanceReview {
+  id: string;
+  reviewId: string;
+  employeeId: string;
+  reviewPeriodStart: Date;
+  reviewPeriodEnd: Date;
+  reviewDate: Date;
+  reviewerId: string;
+  
+  // Ratings
+  overallRating: number;
+  ratings: PerformanceRating[];
+  
+  // Feedback
+  strengths: string[];
+  areasForImprovement: string[];
+  achievements: string[];
+  goals: PerformanceGoal[];
+  
+  // Next Steps
+  developmentPlan: string;
+  nextReviewDate: Date;
+  
+  // Status
+  status: PerformanceReviewStatus;
+  employeeComments?: string;
+  acknowledgedDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TrainingAttendee {
+  employeeId: string;
+  enrollmentDate: Date;
+  status: 'enrolled' | 'attended' | 'completed' | 'failed' | 'cancelled';
+  completionDate?: Date;
+  score?: number;
+  certificateUrl?: string;
+  feedback?: string;
+}
+
+export interface Training {
+  id: string;
+  trainingId: string;
+  title: string;
+  description: string;
+  category: string;
+  type: 'internal' | 'external' | 'online' | 'workshop' | 'certification';
+  
+  // Schedule
+  startDate: Date;
+  endDate: Date;
+  duration: number;
+  location?: string;
+  
+  // Instructor
+  instructor?: string;
+  instructorType: 'internal' | 'external';
+  
+  // Participants
+  maxParticipants?: number;
+  attendees: TrainingAttendee[];
+  
+  // Cost
+  costPerParticipant: number;
+  totalCost: number;
+  
+  // Status
+  status: TrainingStatus;
+  
+  // Materials
+  materials: string[];
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================================
+// RECRUITMENT MANAGEMENT
+// ============================================================================
+
+export interface WorkExperience {
+  company: string;
+  position: string;
+  startDate: string;
+  endDate?: string;
+  description: string;
+  isCurrent: boolean;
+}
+
+export interface ApplicantNote {
+  id: string;
+  authorId: string;
+  content: string;
+  createdAt: Date;
+}
+
+export interface InterviewerFeedback {
+  interviewerId: string;
+  rating: number;
+  feedback: string;
+  strengths: string[];
+  concerns: string[];
+  recommendation: HiringRecommendation;
+  submittedAt?: Date;
+}
+
+export interface JobPosting {
+  id: string;
+  jobId: string;
+  title: string;
+  departmentId: string;
+  positionId: string;
+  description: string;
+  responsibilities: string[];
+  requirements: string[];
+  qualifications: string[];
+  skills: string[];
+  
+  // Compensation
+  salaryMin?: number;
+  salaryMax?: number;
+  currency: string;
+  benefits: string[];
+  
+  // Location
+  location: string;
+  workType: WorkType;
+  
+  // Dates
+  postedDate: Date;
+  closingDate?: Date;
+  
+  // Status
+  status: JobPostingStatus;
+  
+  // Tracking
+  views: number;
+  applicationsCount: number;
+  
+  // Publishing
+  publishedOn: string[];
+  
+  // Hiring Manager
+  hiringManagerId: string;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Applicant {
+  id: string;
+  applicantId: string;
+  jobId: string;
+  
+  // Personal Info
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address?: string;
+  
+  // Application
+  applicationDate: Date;
+  source: ApplicantSource;
+  referredBy?: string;
+  
+  // Documents
+  resumeUrl: string;
+  coverLetterUrl?: string;
+  portfolioUrl?: string;
+  
+  // Parsed Resume Data (from AI)
+  parsedData?: {
+    education: Qualification[];
+    experience: WorkExperience[];
+    skills: string[];
+    certifications: string[];
+    summary: string;
+  };
+  
+  // Evaluation
+  aiCompatibilityScore?: number;
+  aiAnalysis?: {
+    strengths: string[];
+    concerns: string[];
+    recommendation: string;
+    confidence: number;
+  };
+  
+  // Status
+  status: ApplicantStatus;
+  currentStage: string;
+  
+  // Rating
+  overallRating?: number;
+  
+  // Notes
+  notes: ApplicantNote[];
+  
+  // Interviews
+  interviews: string[];
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Interview {
+  id: string;
+  interviewId: string;
+  applicantId: string;
+  jobId: string;
+  
+  // Schedule
+  scheduledDate: Date;
+  duration: number;
+  
+  // Type
+  type: InterviewType;
+  location?: string;
+  meetingLink?: string;
+  
+  // Interviewers
+  interviewers: InterviewerFeedback[];
+  
+  // Questions (AI-generated)
+  suggestedQuestions?: string[];
+  
+  // Status
+  status: InterviewStatus;
+  
+  // Overall Feedback
+  overallRating?: number;
+  recommendation: HiringRecommendation;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RecruitmentPipeline {
+  id: string;
+  applicantId: string;
+  jobId: string;
+  stage: ApplicantStatus;
+  enteredAt: Date;
+  exitedAt?: Date;
+  durationDays?: number;
+  notes?: string;
+}

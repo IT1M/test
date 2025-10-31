@@ -1040,14 +1040,14 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Document scaling considerations
 
 - [ ] 28. Quality Control and Rejection Management
-  - [ ] 28.1 Create rejection tracking database schema
+  - [x] 28.1 Create rejection tracking database schema
     - Add Rejections table with fields: id, rejectionId, itemCode, machineName, lotNumber, batchNumber, quantity, rejectionDate, rejectionReason, rejectionType, inspectorId, productId, supplierId, status, images, correctionActions, createdAt, updatedAt
     - Add RejectionReasons table for predefined rejection categories
     - Add QualityInspections table linking to products and orders
     - Create indexes for itemCode, batchNumber, lotNumber, rejectionDate
     - _New Feature: Quality Control Management_
   
-  - [ ] 28.2 Create rejection entry interface
+  - [x] 28.2 Create rejection entry interface
     - Implement app/quality/rejections/page.tsx with rejections list
     - Create app/quality/rejections/new/page.tsx for rejection entry form
     - Add fields: item code (with product lookup), machine name, lot number, batch number, quantity, rejection reason, images upload
@@ -1056,7 +1056,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Validate batch numbers against inventory records
     - _New Feature: Quality Control Management_
   
-  - [ ] 28.3 Implement AI-powered defect detection
+  - [x] 28.3 Implement AI-powered defect detection
     - Use Gemini Vision API to analyze uploaded defect images
     - Automatically categorize defect types (cosmetic, functional, safety)
     - Suggest rejection reasons based on image analysis
@@ -1064,7 +1064,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Link similar historical rejections using AI pattern matching
     - _New Feature: AI Quality Analysis_
   
-  - [ ] 28.4 Create rejection analytics dashboard
+  - [x] 28.4 Create rejection analytics dashboard
     - Implement app/quality/analytics/page.tsx with rejection metrics
     - Display rejection rate by product, supplier, machine, time period
     - Show Pareto charts for top rejection reasons
@@ -1073,7 +1073,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Generate supplier quality scorecards
     - _New Feature: Quality Analytics_
   
-  - [ ] 28.5 Implement corrective action tracking
+  - [x] 28.5 Implement corrective action tracking
     - Create workflow for corrective actions (open → in-progress → resolved → verified)
     - Link rejections to corrective actions
     - Track action effectiveness with before/after metrics
@@ -1082,7 +1082,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - _New Feature: Quality Improvement_
 
 - [ ] 29. Human Resources Management System
-  - [ ] 29.1 Create HR database schema
+  - [x] 29.1 Create HR database schema
     - Add Employees table with fields: id, employeeId, firstName, lastName, nationalId, dateOfBirth, gender, phone, email, address, position, department, hireDate, salary, contractType, status (active/archived/on-leave), emergencyContact, qualifications, certifications, photo, createdAt, updatedAt
     - Add Departments table with fields: id, departmentId, name, managerId, budget, description
     - Add Positions table with fields: id, positionId, title, department, level, minSalary, maxSalary, requirements
@@ -1093,7 +1093,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Add Training table with fields: id, trainingId, title, description, startDate, endDate, instructor, attendees, cost, status
     - _New Feature: HR Management_
   
-  - [ ] 29.2 Create employees management interface
+  - [x] 29.2 Create employees management interface
     - Implement app/hr/employees/page.tsx with employee directory
     - Add filters for department, position, status, hire date
     - Create app/hr/employees/[id]/page.tsx for employee profile
@@ -1103,7 +1103,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Implement employee archiving (no permanent deletion)
     - _New Feature: HR Management_
   
-  - [ ] 29.3 Create attendance tracking system
+  - [x] 29.3 Create attendance tracking system
     - Implement app/hr/attendance/page.tsx with attendance dashboard
     - Add check-in/check-out interface with timestamp and location
     - Implement QR code/biometric integration for attendance
@@ -1112,7 +1112,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Use AI to detect attendance patterns and anomalies
     - _New Feature: Attendance Management_
   
-  - [ ] 29.4 Create leave management system
+  - [x] 29.4 Create leave management system
     - Implement app/hr/leaves/page.tsx with leave requests list
     - Add leave request form with type selection (annual, sick, emergency, unpaid)
     - Implement approval workflow (pending → approved/rejected)
@@ -1121,7 +1121,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Use AI to predict leave patterns and suggest optimal staffing
     - _New Feature: Leave Management_
   
-  - [ ] 29.5 Create payroll management system
+  - [x] 29.5 Create payroll management system
     - Implement app/hr/payroll/page.tsx with payroll dashboard
     - Add monthly payroll processing interface
     - Calculate salaries with allowances, deductions, taxes
@@ -1130,7 +1130,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Export payroll data to accounting systems
     - _New Feature: Payroll Management_
   
-  - [ ] 29.6 Create performance management system
+  - [x] 29.6 Create performance management system
     - Implement app/hr/performance/page.tsx with performance dashboard
     - Add performance review form with rating scales
     - Track KPIs and goals for each employee
@@ -1139,7 +1139,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Use AI to identify high performers and improvement areas
     - _New Feature: Performance Management_
   
-  - [ ] 29.7 Create training management system
+  - [x] 29.7 Create training management system
     - Implement app/hr/training/page.tsx with training programs list
     - Add training scheduling and enrollment interface
     - Track training completion and certifications
@@ -1149,14 +1149,14 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - _New Feature: Training Management_
 
 - [ ] 30. AI-Powered Smart Recruitment System
-  - [ ] 30.1 Create recruitment database schema
+  - [x] 30.1 Create recruitment database schema
     - Add JobPostings table with fields: id, jobId, title, department, position, description, requirements, qualifications, salary range, location, status, postedDate, closingDate
     - Add Applicants table with fields: id, applicantId, jobId, firstName, lastName, email, phone, resume, coverLetter, applicationDate, status, source, rating, notes
     - Add Interviews table with fields: id, applicantId, interviewDate, interviewers, type, location, feedback, rating, status
     - Add RecruitmentPipeline table tracking applicant journey stages
     - _New Feature: Smart Recruitment_
   
-  - [ ] 30.2 Create job posting management
+  - [x] 30.2 Create job posting management
     - Implement app/hr/recruitment/jobs/page.tsx with job postings list
     - Add job posting creation form with rich text editor
     - Implement job posting templates
@@ -1164,7 +1164,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Track job posting performance (views, applications)
     - _New Feature: Smart Recruitment_
   
-  - [ ] 30.3 Implement AI-powered resume screening
+  - [x] 30.3 Implement AI-powered resume screening
     - Use Gemini AI to parse and extract data from resumes (PDF, DOCX)
     - Automatically extract: name, contact, education, experience, skills
     - Match applicant qualifications against job requirements
@@ -1173,7 +1173,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Identify red flags or missing qualifications
     - _New Feature: AI Resume Screening_
   
-  - [ ] 30.4 Create applicant tracking system (ATS)
+  - [x] 30.4 Create applicant tracking system (ATS)
     - Implement app/hr/recruitment/applicants/page.tsx with applicant pipeline
     - Display Kanban board with stages: Applied → Screening → Interview → Offer → Hired/Rejected
     - Add drag-and-drop to move applicants between stages
@@ -1182,7 +1182,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Send automated emails for status updates
     - _New Feature: Applicant Tracking_
   
-  - [ ] 30.5 Implement AI interview assistant
+  - [x] 30.5 Implement AI interview assistant
     - Use Gemini AI to generate interview questions based on job requirements
     - Suggest behavioral and technical questions
     - Analyze interview feedback and generate candidate summaries
@@ -1191,7 +1191,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Generate hiring recommendations with reasoning
     - _New Feature: AI Interview Assistant_
   
-  - [ ] 30.6 Create recruitment analytics dashboard
+  - [x] 30.6 Create recruitment analytics dashboard
     - Implement app/hr/recruitment/analytics/page.tsx
     - Display time-to-hire, cost-per-hire, source effectiveness
     - Show applicant funnel conversion rates
@@ -1510,3 +1510,310 @@ All modules leverage Gemini AI for:
 - **Full AI Integration** with Gemini API across all features
 - **Complete Data Relationships** with automatic cascade operations
 - **Comprehensive Analytics** with cross-module insights
+
+- [ ] 37. AI Control Center - "AI Mais Co." (Comprehensive AI Operations Management)
+  - [ ] 37.1 Create AI Control Center database schema
+    - Add AIActivityLog table with fields: id, timestamp, userId, modelName, operationType, inputData, outputData, confidenceScore, executionTime, status, errorMessage, metadata, createdAt
+    - Add AIConfigurationHistory table with fields: id, timestamp, userId, settingName, oldValue, newValue, reason, approvedBy, createdAt
+    - Add AIConfigurationSnapshot table with fields: id, snapshotName, configuration (JSON), createdAt, createdBy, description
+    - Add AIAutomationRule table with fields: id, ruleName, triggerType, triggerCondition, aiOperation, actionType, actionConfig, status, lastExecution, successRate, createdAt, updatedAt
+    - Add AIModelMetrics table with fields: id, modelName, date, totalCalls, successfulCalls, failedCalls, avgResponseTime, avgConfidence, totalCost, createdAt
+    - Add SecurityAuditLog table with fields: id, timestamp, userId, action, resourceAffected, ipAddress, outcome, details, createdAt
+    - Create compound indexes for efficient querying on timestamp, modelName, userId, and status fields
+    - _Requirements: 23.85, 23.86, 23.87, 23.88, 23.89, 23.93_
+  
+  - [ ] 37.2 Implement AI activity logging service
+    - Create services/ai/activity-logger.ts with AIActivityLogger class
+    - Implement logAIOperation() method to record all AI interactions with automatic PHI sanitization
+    - Add getActivityLogs() with advanced filtering (date range, model, user, confidence threshold)
+    - Implement exportActivityLogs() supporting CSV, JSON, and Excel formats
+    - Add getActivityAnalytics() for aggregated statistics and trends
+    - Implement automatic log retention and archival based on configured policies
+    - Add detectAnomalousActivity() using pattern analysis to flag suspicious operations
+    - _Requirements: 23.9, 23.10, 23.11, 23.12, 23.13, 23.14, 23.15_
+  
+  - [ ] 37.3 Create AI Control Center main page
+    - Implement app/ai-control-center/page.tsx with comprehensive dashboard layout
+    - Add role-based access control requiring AI_ADMIN or ADMIN role
+    - Create responsive grid layout with sections: Status Overview, Activity Feed, Quick Stats, Alerts
+    - Implement real-time data updates using WebSocket or polling (60-second default, configurable)
+    - Add dark mode support with theme toggle
+    - Implement customizable dashboard layout with drag-and-drop widget arrangement
+    - Add keyboard shortcuts (Ctrl+R refresh, Ctrl+F search, Ctrl+E export)
+    - _Requirements: 23.1, 23.75, 23.76, 23.77, 23.78, 23.79_
+  
+  - [ ] 37.4 Build operational dashboard components
+    - Create components/ai-control/ModelStatusCard.tsx showing model name, version, status, health indicator
+    - Implement components/ai-control/ActivityMetrics.tsx with cumulative statistics (24h, 7d, 30d)
+    - Add components/ai-control/PerformanceCharts.tsx using Recharts for response time, accuracy, error rate, cost trends
+    - Create components/ai-control/LiveActivityFeed.tsx with real-time operation stream
+    - Implement components/ai-control/RateLimitIndicator.tsx with progress bars and countdown timers
+    - Add components/ai-control/QuickStatsCards.tsx for key metrics display
+    - _Requirements: 23.2, 23.3, 23.4, 23.5, 23.6, 23.7, 23.8_
+  
+  - [ ] 37.5 Implement audit log viewer
+    - Create app/ai-control-center/audit-logs/page.tsx with searchable log table
+    - Implement advanced filtering UI with date range picker, model selector, user filter, confidence slider
+    - Add pagination with configurable page size (25, 50, 100, 200 rows)
+    - Create components/ai-control/LogDetailModal.tsx for detailed log entry view
+    - Implement export functionality with column selection and format options (CSV, JSON, Excel)
+    - Add log analytics dashboard showing usage patterns, peak times, error analysis
+    - Implement automatic flagging of suspicious activities with visual indicators
+    - _Requirements: 23.10, 23.11, 23.12, 23.13, 23.14, 23.15_
+  
+  - [ ] 37.6 Build AI settings configuration panel
+    - Create app/ai-control-center/settings/page.tsx with tabbed interface
+    - Implement Model Configuration tab with enable/disable toggles, version selection, parameter tuning
+    - Add Performance Tuning tab with rate limiting controls, timeout settings, retry configuration
+    - Create Security & Privacy tab with PHI sanitization toggle, encryption settings, data retention policies
+    - Implement Automation Rules tab with rule builder interface
+    - Add confirmation dialogs for critical changes with impact warnings
+    - Implement settings validation and error handling
+    - Log all configuration changes to AIConfigurationHistory table
+    - _Requirements: 23.16, 23.17, 23.18, 23.19, 23.20, 23.21, 23.22, 23.23, 23.24, 23.25_
+  
+  - [ ] 37.7 Create automation rule management
+    - Implement components/ai-control/AutomationRuleBuilder.tsx with visual rule builder
+    - Add trigger selection UI supporting event-based, schedule-based, and condition-based triggers
+    - Create AI operation configuration interface with model selection and parameter mapping
+    - Implement action definition UI with multiple action types (update DB, send notification, create task)
+    - Add rule testing functionality with sample data simulation
+    - Create components/ai-control/AutomationRuleList.tsx showing all rules with status and metrics
+    - Implement rule execution monitoring with success/failure tracking
+    - Add pause/resume/edit/delete controls with confirmation dialogs
+    - _Requirements: 23.26, 23.27, 23.28, 23.29, 23.30, 23.31, 23.32, 23.33, 23.34, 23.35_
+  
+  - [ ] 37.8 Implement diagnostics and recovery tools
+    - Create app/ai-control-center/diagnostics/page.tsx with diagnostic tools dashboard
+    - Implement AI model connection test with latency measurement
+    - Add accuracy validation tool comparing AI outputs against known correct results
+    - Create load testing interface for stress testing AI services
+    - Implement model performance comparison tool with side-by-side metrics
+    - Add configuration rollback functionality with snapshot selection UI
+    - Create emergency controls panel with pause all, safe mode, force refresh buttons
+    - Implement system health indicators with real-time status updates
+    - Add troubleshooting guide generator based on detected issues
+    - Implement automated health checks running every 5 minutes with alert generation
+    - _Requirements: 23.36, 23.37, 23.38, 23.39, 23.40, 23.41, 23.42, 23.43, 23.44, 23.45_
+  
+  - [ ] 37.9 Build security and compliance features
+    - Implement RBAC for AI Control Center with roles: AI_ADMIN, AI_OPERATOR, AI_AUDITOR
+    - Add multi-factor authentication requirement for critical operations
+    - Create SecurityAuditLog service logging all user actions with IP tracking
+    - Implement PHI/PII detection service with automatic sanitization
+    - Add compliance reporting dashboard showing data processing activities and consent tracking
+    - Create data lineage tracking visualization showing data flow through AI processing
+    - Implement secure API key management with encrypted storage and rotation reminders
+    - Add audit trail export with tamper-proof signatures for compliance
+    - _Requirements: 23.46, 23.47, 23.48, 23.49, 23.50, 23.51, 23.52, 23.53, 23.54_
+  
+  - [ ] 37.10 Create cost and performance optimization tools
+    - Implement app/ai-control-center/cost-analytics/page.tsx with cost dashboard
+    - Add cost breakdown charts by operation type, model, and time period
+    - Create budget tracking widget with visual indicators and projections
+    - Implement cost optimization recommendation engine analyzing usage patterns
+    - Add cache effectiveness metrics dashboard with hit/miss rates and savings calculation
+    - Create automatic cost alert system with configurable thresholds
+    - Implement ROI analysis calculator showing AI-driven business impact
+    - Add model efficiency comparison tool with cost/accuracy/speed metrics
+    - _Requirements: 23.55, 23.56, 23.57, 23.58, 23.59, 23.60, 23.61, 23.62_
+  
+  - [ ] 37.11 Implement integration and API management
+    - Create app/ai-control-center/integrations/page.tsx showing all AI service connections
+    - Implement API key management interface with add/rotate/expire functionality
+    - Add API health monitoring with automatic connection testing
+    - Create webhook configuration UI for AI event notifications
+    - Implement API usage statistics dashboard by endpoint
+    - Add API versioning support with A/B testing capability
+    - _Requirements: 23.63, 23.64, 23.65, 23.66, 23.67, 23.68_
+  
+  - [ ] 37.12 Build reporting and analytics features
+    - Create app/ai-control-center/reports/page.tsx with pre-built report templates
+    - Implement custom report builder with drag-and-drop interface
+    - Add scheduled report generation with email delivery
+    - Create executive summary dashboard with key metrics and action items
+    - Implement AI impact metrics showing business outcomes
+    - Add comparative analytics with period-over-period comparisons
+    - _Requirements: 23.69, 23.70, 23.71, 23.72, 23.73, 23.74_
+  
+  - [ ] 37.13 Implement notification and alert system
+    - Create services/ai/alert-manager.ts with AlertManager class
+    - Implement real-time alert generation for critical AI events
+    - Add configurable alert channels (in-app, email, SMS, webhook)
+    - Create alert rule configuration UI with condition builder
+    - Implement alert aggregation to prevent notification fatigue
+    - Add alert history viewer with acknowledgment tracking
+    - Create alert snoozing functionality with automatic re-enabling
+    - Implement alert analytics dashboard showing trends and resolution times
+    - _Requirements: 23.94, 23.95, 23.96, 23.97, 23.98, 23.99, 23.100_
+  
+  - [ ] 37.14 Create AI Control Center navigation and routing
+    - Update app/layout.tsx to include AI Control Center in main navigation
+    - Add navigation item visible only to users with AI_ADMIN or ADMIN roles
+    - Implement breadcrumb navigation for AI Control Center sub-pages
+    - Add quick access shortcuts in user menu for AI admins
+    - Create AI Control Center landing page with feature overview
+    - _Requirements: 23.1_
+  
+  - [ ] 37.15 Implement data retention and archival
+    - Create background job for automatic log cleanup based on retention policies
+    - Implement data archival service exporting old logs before deletion
+    - Add data compression for stored AI logs to optimize storage
+    - Create data integrity checker running daily to detect issues
+    - Implement manual data export/import for backup and migration
+    - _Requirements: 23.90, 23.91, 23.92, 23.93_
+  
+  - [ ] 37.16 Add UI enhancements and user experience features
+    - Implement loading states and skeleton screens for all data-fetching operations
+    - Add contextual help tooltips for all metrics and settings
+    - Create error messages with actionable suggestions and troubleshooting links
+    - Implement confirmation dialogs for destructive actions with clear warnings
+    - Add success notifications with undo options where applicable
+    - Create onboarding tour for first-time AI Control Center users
+    - Implement search functionality across all AI Control Center pages
+    - _Requirements: 23.80, 23.81, 23.82, 23.83, 23.84_
+  
+  - [ ] 37.16.1 Create Floating Help Button and Modal (دليل الإعداد المنبثق)
+    - Create components/ai-control/FloatingHelpButton.tsx with animated floating button
+    - Position button fixed at bottom-right (bottom-6 right-6) with z-index 50
+    - Add gradient background (blue-600 to purple-600) with hover effects and scale animation
+    - Implement pulse animation ring around button for attention
+    - Add Arabic tooltip "دليل الإعداد والمساعدة" on hover
+    - Create components/ai-control/HelpModal.tsx as full-screen modal overlay
+    - Implement modal with sidebar navigation and main content area
+    - Add 6 help sections: Getting Started, Configuration, Security, Automation, Troubleshooting, API Reference
+    - Create GettingStartedContent component with Arabic RTL layout and step-by-step guide
+    - Create ConfigurationContent component with settings tables and examples
+    - Create SecurityContent component with security policies and RBAC explanation
+    - Create AutomationContent component with rule builder guide
+    - Create TroubleshootingContent component with common issues and solutions
+    - Create APIReferenceContent component with endpoint documentation
+    - Add PDF download button in modal footer for complete guide export
+    - Implement modal close on ESC key and backdrop click
+    - Add smooth fade-in and zoom-in animations for modal appearance
+    - Support dark mode with proper color schemes
+    - Ensure responsive design for mobile (collapsible sidebar, stacked layout)
+    - Add last updated date in Arabic format in modal footer
+    - Integrate FloatingHelpButton in AI Control Center layout (visible on all sub-pages)
+    - _Requirements: 23.80, 23.84, Documentation requirement_
+  
+  - [ ] 37.17 Integrate AI Control Center with existing AI services
+    - Update services/gemini/client.ts to log all operations to AIActivityLog
+    - Modify all AI service calls to respect AI Control Center configuration settings
+    - Implement rate limiting enforcement based on AI Control Center settings
+    - Add PHI sanitization layer before all AI API calls
+    - Create hooks for automation rule triggers in relevant system events
+    - Implement cost tracking for all AI operations
+    - Add performance metrics collection for all AI calls
+    - _Requirements: 23.9, 23.19, 23.21, 23.49_
+  
+  - [ ] 37.18 Create AI Control Center API endpoints
+    - Implement API endpoint GET /api/ai-control/status for dashboard data
+    - Add POST /api/ai-control/settings for configuration updates
+    - Create GET /api/ai-control/logs with filtering and pagination
+    - Implement POST /api/ai-control/logs/export for log export
+    - Add GET /api/ai-control/metrics for performance metrics
+    - Create POST /api/ai-control/automation-rules for rule management
+    - Implement POST /api/ai-control/diagnostics/test for health checks
+    - Add GET /api/ai-control/cost-analytics for cost data
+    - Create WebSocket endpoint /api/ai-control/live for real-time updates
+    - _Requirements: 23.2, 23.3, 23.4, 23.76_
+  
+  - [ ] 37.19 Implement AI Control Center testing
+    - Write unit tests for AIActivityLogger service
+    - Create integration tests for automation rule execution
+    - Add E2E tests for AI Control Center user workflows
+    - Implement security tests for RBAC and data sanitization
+    - Create performance tests for dashboard rendering with large datasets
+    - Add tests for alert generation and notification delivery
+    - _Requirements: Testing best practices_
+  
+  - [ ] 37.20 Create AI Control Center documentation
+    - Write administrator guide for AI Control Center setup and configuration
+    - Create user manual for AI Control Center features and workflows
+    - Add API documentation for AI Control Center endpoints
+    - Create troubleshooting guide for common issues
+    - Write security and compliance documentation
+    - Add video tutorials for key features
+    - _Requirements: Documentation standards_
+
+## Task 37 Summary - AI Control Center "AI Mais Co."
+
+### Overview
+Complete AI operations management dashboard with real-time monitoring, comprehensive audit logging, configuration management, automation rules, diagnostics tools, and an integrated floating help system.
+
+### Key Deliverables
+1. **6 New Database Tables**: AIActivityLog, AIConfigurationHistory, AIConfigurationSnapshot, AIAutomationRule, AIModelMetrics, SecurityAuditLog
+2. **20+ Sub-tasks**: Covering all aspects from database to UI to API
+3. **9 API Endpoints**: Full REST API with WebSocket support for real-time updates
+4. **Floating Help Modal**: Interactive Arabic/English help system with 6 comprehensive sections
+5. **3 User Roles**: AI_ADMIN, AI_OPERATOR, AI_AUDITOR with granular permissions
+6. **Real-time Dashboard**: Live updates every 60 seconds (configurable)
+7. **Complete Audit Trail**: All AI operations logged with PHI sanitization
+8. **Automation Engine**: Visual rule builder with trigger-condition-action workflow
+9. **Cost Analytics**: Budget tracking, optimization recommendations, ROI analysis
+10. **Security Features**: MFA for critical operations, PHI detection, data encryption
+
+### Technical Stack
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS, shadcn/ui, Recharts
+- **State**: Zustand for global state, WebSocket for real-time updates
+- **Database**: IndexedDB via Dexie.js with 6 new tables
+- **API**: RESTful endpoints + WebSocket for live data
+- **Security**: RBAC, MFA, PHI sanitization, AES-256 encryption
+
+### Page Routes
+- `/ai-control-center` - Main dashboard
+- `/ai-control-center/audit-logs` - Audit log viewer
+- `/ai-control-center/settings` - Configuration panel
+- `/ai-control-center/automation` - Automation rules
+- `/ai-control-center/diagnostics` - Diagnostic tools
+- `/ai-control-center/cost-analytics` - Cost analysis
+- `/ai-control-center/integrations` - API management
+- `/ai-control-center/reports` - Reports & analytics
+
+### Special Features
+- **Floating Help Button**: Always-accessible help with animated button at bottom-right
+- **Help Modal**: 6-section comprehensive guide in Arabic with PDF export
+- **Dark Mode**: Full support with automatic theme detection
+- **RTL Support**: Proper Arabic text rendering and layout
+- **Responsive**: Desktop, tablet, and mobile optimized
+- **Accessibility**: WCAG AA compliant with keyboard navigation
+
+### Implementation Priority
+1. Database schema (37.1)
+2. Activity logging service (37.2)
+3. Main page and dashboard (37.3, 37.4)
+4. Floating help system (37.16.1) ⭐
+5. Settings and configuration (37.6)
+6. API endpoints (37.18)
+7. Integration with existing services (37.17)
+8. Testing and documentation (37.19, 37.20)
+
+### Estimated Effort
+- **Database & Services**: 3-4 days
+- **UI Components**: 5-6 days
+- **API Development**: 2-3 days
+- **Integration**: 2-3 days
+- **Testing**: 2-3 days
+- **Documentation**: 1-2 days
+- **Total**: ~15-21 days
+
+### Dependencies
+- Requires completed Tasks 1-7 (Core infrastructure, database, AI services)
+- Requires RBAC implementation from Task 22
+- Requires existing Gemini AI services from Task 3
+
+### Success Criteria
+✅ All 6 database tables created with proper indexes
+✅ Real-time dashboard showing live AI model status
+✅ Audit logs searchable and exportable (CSV, JSON, Excel)
+✅ Floating help button visible and functional on all pages
+✅ Help modal with 6 complete sections in Arabic
+✅ Settings changes logged and reversible (rollback)
+✅ Automation rules can be created, tested, and executed
+✅ PHI sanitization working for all AI operations
+✅ Cost tracking and budget alerts functional
+✅ All API endpoints documented and tested
+✅ RBAC enforced for all operations
+✅ Mobile responsive design working
+✅ Dark mode fully supported
