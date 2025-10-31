@@ -460,15 +460,15 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Display optimal stock levels based on sales velocity
     - _Requirements: 17.6, 17.7, 17.9_
 
-- [-] 13. Sales and Financial Management
-  - [ ] 13.1 Create quotations management
+- [x] 13. Sales and Financial Management
+  - [x] 13.1 Create quotations management
     - Implement quotation creation interface with customer and product selection
     - Add validity period and terms and conditions
     - Implement quotation status workflow (draft → sent → approved/rejected/expired)
     - Add convert-to-order functionality with one click
     - _Requirements: 13.1, 13.2, 13.3_
   
-  - [ ] 13.2 Create invoices management
+  - [x] 13.2 Create invoices management
     - Implement app/sales/invoices/page.tsx with invoice list
     - Add automatic invoice generation from delivered orders
     - Display payment terms and due dates
@@ -476,21 +476,21 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Implement invoice printing and PDF export
     - _Requirements: 13.6_
   
-  - [ ] 13.3 Create payment recording interface
+  - [x] 13.3 Create payment recording interface
     - Implement payment recording form with invoice selection
     - Add payment method, reference number, and date fields
     - Automatically update invoice and customer balance on payment
     - Send payment confirmation notifications
     - _Requirements: 13.9, 13.8_
   
-  - [ ] 13.4 Create accounts receivable dashboard
+  - [x] 13.4 Create accounts receivable dashboard
     - Display accounts receivable aging report (0-30, 31-60, 61-90, 90+ days)
     - Show outstanding amounts by customer
     - Implement automated payment reminders for overdue invoices
     - Add customer statements generation
     - _Requirements: 13.10, 13.8, 15.9_
   
-  - [ ] 13.5 Implement sales commission tracking
+  - [x] 13.5 Implement sales commission tracking
     - Calculate sales commission for each sales person based on completed orders
     - Display commission reports by period
     - _Requirements: 13.11_
