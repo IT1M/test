@@ -7,6 +7,7 @@ import { PricingService as PricingServiceClass } from './pricing';
 import { InsightsService as InsightsServiceClass } from './insights';
 import { MedicalAnalysisService as MedicalAnalysisServiceClass } from './medical';
 import { OCRService as OCRServiceClass } from './ocr';
+import { SystemOptimizationService as SystemOptimizationServiceClass, getSystemOptimizationService as getSystemOptimizationServiceFn } from './system-optimization';
 
 export { GeminiServiceClass as GeminiService, getGeminiServiceFn as getGeminiService, resetGeminiServiceFn as resetGeminiService };
 export { ForecastingServiceClass as ForecastingService };
@@ -14,6 +15,7 @@ export { PricingServiceClass as PricingService };
 export { InsightsServiceClass as InsightsService };
 export { MedicalAnalysisServiceClass as MedicalAnalysisService };
 export { OCRServiceClass as OCRService };
+export { SystemOptimizationServiceClass as SystemOptimizationService, getSystemOptimizationServiceFn as getSystemOptimizationService };
 
 // Re-export types for convenience
 export type {
@@ -47,6 +49,7 @@ export function initializeGeminiServices() {
     insights: new InsightsServiceClass(geminiClient),
     medical: new MedicalAnalysisServiceClass(geminiClient),
     ocr: new OCRServiceClass(geminiClient),
+    systemOptimization: getSystemOptimizationServiceFn(),
   };
 }
 
