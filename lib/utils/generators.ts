@@ -1,55 +1,64 @@
 // ID and Code Generators
-
-import { v4 as uuidv4 } from 'uuid';
+// Utility functions for generating unique identifiers and codes
 
 /**
- * Generate a unique ID using UUID v4
+ * Generate a unique ID using timestamp and random string
  */
 export function generateId(): string {
-  return uuidv4();
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 /**
- * Generate a unique order ID
+ * Generate a business-friendly ID with prefix
+ * @param prefix - Prefix for the ID (e.g., 'ORD', 'CUST', 'INV')
+ * @param length - Length of the numeric part (default: 6)
  */
-export function generateOrderId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
-  return `ORD-${timestamp}-${random}`.toUpperCase();
+export function generateBusinessId(prefix: string, length: number = 6): string {
+  const timestamp = Date.now().toString().slice(-length);
+  const random = Math.floor(Math.random() * Math.pow(10, length)).toString().padStart(length, '0');
+  const combined = (parseInt(timestamp) + parseInt(random)).toString().slice(-length).padStart(length, '0');
+  return `${prefix}-${combined}`;
 }
 
 /**
- * Generate a unique customer ID
+ * Generate a UUID v4
  */
-export function generateCustomerId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
-  return `CUST-${timestamp}-${random}`.toUpperCase();
+export function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 /**
- * Generate a unique invoice ID
+ * Generate a SKU code
+ * @param category - Product category
+ * @param sequence - Sequence number
  */
-export function generateInvoiceId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
-  return `INV-${timestamp}-${random}`.toUpperCase();
+export function generateSKU(category: string, sequence: number): string {
+  const categoryCode = category.substring(0, 3).toUpperCase();
+  const sequenceStr = sequence.toString().padStart(4, '0');
+  return `${categoryCode}-${sequenceStr}`;
 }
 
 /**
- * Generate a unique patient ID
+ * Generate a batch number
  */
-export function generatePatientId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
-  return `PAT-${timestamp}-${random}`.toUpperCase();
+export function generateBatchNumber(): string {
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `BATCH-${year}${month}-${random}`;
 }
 
 /**
- * Generate a unique SKU
+ * Generate a reference number
+ * @param prefix - Prefix for the reference
  */
-export function generateSKU(prefix: string = 'PRD'): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
-  return `${prefix}-${timestamp}-${random}`.toUpperCase();
+export function generateReferenceNumber(prefix: string = 'REF'): string {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${prefix}-${timestamp}-${random}`;
 }

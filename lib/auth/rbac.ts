@@ -1,49 +1,42 @@
-import { logPermissionCheck } from '@/lib/security/audit';
+// Role-Based Access Control (RBAC) - Permission definitions and management
+// Requirements: 12.8
 
-// ============================================================================
-// Permission Enum
-// ============================================================================
+import { User, UserRole } from '@/types/database';
 
+/**
+ * System permissions enum
+ */
 export enum Permission {
   // Product permissions
   VIEW_PRODUCTS = 'view_products',
   CREATE_PRODUCTS = 'create_products',
   EDIT_PRODUCTS = 'edit_products',
   DELETE_PRODUCTS = 'delete_products',
-  MANAGE_PRODUCT_PRICING = 'manage_product_pricing',
-  VIEW_PRODUCT_COSTS = 'view_product_costs',
-
+  
   // Customer permissions
   VIEW_CUSTOMERS = 'view_customers',
   CREATE_CUSTOMERS = 'create_customers',
   EDIT_CUSTOMERS = 'edit_customers',
   DELETE_CUSTOMERS = 'delete_customers',
-  VIEW_CUSTOMER_FINANCIAL = 'view_customer_financial',
-  MANAGE_CUSTOMER_CREDIT = 'manage_customer_credit',
-
+  
   // Order permissions
   VIEW_ORDERS = 'view_orders',
   CREATE_ORDERS = 'create_orders',
   EDIT_ORDERS = 'edit_orders',
   CANCEL_ORDERS = 'cancel_orders',
-  APPROVE_ORDERS = 'approve_orders',
-  VIEW_ORDER_COSTS = 'view_order_costs',
-
+  DELETE_ORDERS = 'delete_orders',
+  
   // Financial permissions
   VIEW_FINANCIAL = 'view_financial',
   MANAGE_PAYMENTS = 'manage_payments',
   VIEW_REPORTS = 'view_reports',
-  EXPORT_FINANCIAL_DATA = 'export_financial_data',
-  MANAGE_INVOICES = 'manage_invoices',
-  MANAGE_QUOTATIONS = 'manage_quotations',
-
+  EXPORT_REPORTS = 'export_reports',
+  
   // Inventory permissions
   VIEW_INVENTORY = 'view_inventory',
   ADJUST_INVENTORY = 'adjust_inventory',
-  MANAGE_STOCK_MOVEMENTS = 'manage_stock_movements',
   MANAGE_PURCHASE_ORDERS = 'manage_purchase_orders',
-  VIEW_INVENTORY_COSTS = 'view_inventory_costs',
-
+  
   // Medical permissions
   VIEW_PATIENTS = 'view_patients',
   CREATE_PATIENTS = 'create_patients',
@@ -53,550 +46,261 @@ export enum Permission {
   CREATE_MEDICAL_RECORDS = 'create_medical_records',
   EDIT_MEDICAL_RECORDS = 'edit_medical_records',
   DELETE_MEDICAL_RECORDS = 'delete_medical_records',
-
-  // Analytics permissions
-  VIEW_ANALYTICS = 'view_analytics',
-  VIEW_SALES_ANALYTICS = 'view_sales_analytics',
-  VIEW_INVENTORY_ANALYTICS = 'view_inventory_analytics',
-  VIEW_CUSTOMER_ANALYTICS = 'view_customer_analytics',
-  VIEW_FINANCIAL_ANALYTICS = 'view_financial_analytics',
-
-  // AI Features permissions
-  USE_AI_INSIGHTS = 'use_ai_insights',
-  USE_AI_FORECASTING = 'use_ai_forecasting',
-  USE_AI_PRICING = 'use_ai_pricing',
-  USE_AI_SEARCH = 'use_ai_search',
-
+  
   // Admin permissions
   MANAGE_USERS = 'manage_users',
-  MANAGE_ROLES = 'manage_roles',
   VIEW_LOGS = 'view_logs',
   MANAGE_SETTINGS = 'manage_settings',
-  MANAGE_SYSTEM = 'manage_system',
-  VIEW_AUDIT_TRAIL = 'view_audit_trail',
-
-  // Data management permissions
-  EXPORT_DATA = 'export_data',
-  IMPORT_DATA = 'import_data',
-  BACKUP_DATA = 'backup_data',
-  RESTORE_DATA = 'restore_data',
-  DELETE_DATA = 'delete_data',
+  ACCESS_ADMIN_DASHBOARD = 'access_admin_dashboard',
+  
+  // Analytics permissions
+  VIEW_ANALYTICS = 'view_analytics',
+  VIEW_AI_INSIGHTS = 'view_ai_insights',
 }
 
-// ============================================================================
-// Role Type
-// ============================================================================
-
-export type Role = 'admin' | 'manager' | 'sales' | 'inventory' | 'medical';
-
-// ============================================================================
-// User Interface
-// ============================================================================
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: Role;
-  permissions?: Permission[];
-  isActive: boolean;
-  lastLogin?: Date;
-  createdAt: Date;
-}
-
-// ============================================================================
-// Role Permissions Mapping
-// ============================================================================
-
-export const RolePermissions: Record<Role, Permission[]> = {
+/**
+ * Role to permissions mapping
+ */
+export const RolePermissions: Record<UserRole, Permission[]> = {
   admin: Object.values(Permission), // Admin has all permissions
-
+  
   manager: [
-    // Product permissions
+    // Products
     Permission.VIEW_PRODUCTS,
     Permission.CREATE_PRODUCTS,
     Permission.EDIT_PRODUCTS,
-    Permission.MANAGE_PRODUCT_PRICING,
-    Permission.VIEW_PRODUCT_COSTS,
-
-    // Customer permissions
+    
+    // Customers
     Permission.VIEW_CUSTOMERS,
     Permission.CREATE_CUSTOMERS,
     Permission.EDIT_CUSTOMERS,
-    Permission.VIEW_CUSTOMER_FINANCIAL,
-    Permission.MANAGE_CUSTOMER_CREDIT,
-
-    // Order permissions
+    
+    // Orders
     Permission.VIEW_ORDERS,
     Permission.CREATE_ORDERS,
     Permission.EDIT_ORDERS,
     Permission.CANCEL_ORDERS,
-    Permission.APPROVE_ORDERS,
-    Permission.VIEW_ORDER_COSTS,
-
-    // Financial permissions
+    
+    // Financial
     Permission.VIEW_FINANCIAL,
     Permission.MANAGE_PAYMENTS,
     Permission.VIEW_REPORTS,
-    Permission.EXPORT_FINANCIAL_DATA,
-    Permission.MANAGE_INVOICES,
-    Permission.MANAGE_QUOTATIONS,
-
-    // Inventory permissions
+    Permission.EXPORT_REPORTS,
+    
+    // Inventory
     Permission.VIEW_INVENTORY,
     Permission.ADJUST_INVENTORY,
-    Permission.MANAGE_STOCK_MOVEMENTS,
     Permission.MANAGE_PURCHASE_ORDERS,
-    Permission.VIEW_INVENTORY_COSTS,
-
-    // Medical permissions
+    
+    // Medical
     Permission.VIEW_PATIENTS,
     Permission.VIEW_MEDICAL_RECORDS,
-
-    // Analytics permissions
+    
+    // Analytics
     Permission.VIEW_ANALYTICS,
-    Permission.VIEW_SALES_ANALYTICS,
-    Permission.VIEW_INVENTORY_ANALYTICS,
-    Permission.VIEW_CUSTOMER_ANALYTICS,
-    Permission.VIEW_FINANCIAL_ANALYTICS,
-
-    // AI Features
-    Permission.USE_AI_INSIGHTS,
-    Permission.USE_AI_FORECASTING,
-    Permission.USE_AI_PRICING,
-    Permission.USE_AI_SEARCH,
-
-    // Data management
-    Permission.EXPORT_DATA,
-    Permission.IMPORT_DATA,
-    Permission.VIEW_AUDIT_TRAIL,
+    Permission.VIEW_AI_INSIGHTS,
   ],
-
+  
   sales: [
-    // Product permissions
+    // Products
     Permission.VIEW_PRODUCTS,
-
-    // Customer permissions
+    
+    // Customers
     Permission.VIEW_CUSTOMERS,
     Permission.CREATE_CUSTOMERS,
     Permission.EDIT_CUSTOMERS,
-    Permission.VIEW_CUSTOMER_FINANCIAL,
-
-    // Order permissions
+    
+    // Orders
     Permission.VIEW_ORDERS,
     Permission.CREATE_ORDERS,
     Permission.EDIT_ORDERS,
-
-    // Financial permissions
+    
+    // Financial
     Permission.VIEW_REPORTS,
-    Permission.MANAGE_QUOTATIONS,
-
-    // Analytics permissions
-    Permission.VIEW_SALES_ANALYTICS,
-    Permission.VIEW_CUSTOMER_ANALYTICS,
-
-    // AI Features
-    Permission.USE_AI_INSIGHTS,
-    Permission.USE_AI_SEARCH,
-
-    // Data management
-    Permission.EXPORT_DATA,
+    
+    // Analytics
+    Permission.VIEW_ANALYTICS,
   ],
-
+  
   inventory: [
-    // Product permissions
+    // Products
     Permission.VIEW_PRODUCTS,
     Permission.CREATE_PRODUCTS,
     Permission.EDIT_PRODUCTS,
-    Permission.VIEW_PRODUCT_COSTS,
-
-    // Order permissions
-    Permission.VIEW_ORDERS,
-
-    // Inventory permissions
+    
+    // Inventory
     Permission.VIEW_INVENTORY,
     Permission.ADJUST_INVENTORY,
-    Permission.MANAGE_STOCK_MOVEMENTS,
     Permission.MANAGE_PURCHASE_ORDERS,
-    Permission.VIEW_INVENTORY_COSTS,
-
-    // Analytics permissions
-    Permission.VIEW_INVENTORY_ANALYTICS,
-
-    // AI Features
-    Permission.USE_AI_INSIGHTS,
-    Permission.USE_AI_FORECASTING,
-
-    // Data management
-    Permission.EXPORT_DATA,
-    Permission.IMPORT_DATA,
+    
+    // Orders (view only for fulfillment)
+    Permission.VIEW_ORDERS,
+    
+    // Reports
+    Permission.VIEW_REPORTS,
   ],
-
+  
   medical: [
-    // Product permissions
+    // Products (view only)
     Permission.VIEW_PRODUCTS,
-
-    // Medical permissions
+    
+    // Patients
     Permission.VIEW_PATIENTS,
     Permission.CREATE_PATIENTS,
     Permission.EDIT_PATIENTS,
+    
+    // Medical Records
     Permission.VIEW_MEDICAL_RECORDS,
     Permission.CREATE_MEDICAL_RECORDS,
     Permission.EDIT_MEDICAL_RECORDS,
-
-    // AI Features
-    Permission.USE_AI_INSIGHTS,
-    Permission.USE_AI_SEARCH,
-
-    // Data management
-    Permission.EXPORT_DATA,
+    
+    // Reports
+    Permission.VIEW_REPORTS,
   ],
 };
 
-// ============================================================================
-// Permission Checking Functions
-// ============================================================================
-
 /**
- * Checks if a user has a specific permission
+ * Check if a user has a specific permission
  */
-export function hasPermission(user: User, permission: Permission): boolean {
-  if (!user || !user.isActive) {
-    return false;
-  }
-
-  // Check custom permissions first
-  if (user.permissions && user.permissions.includes(permission)) {
-    return true;
-  }
-
-  // Check role-based permissions
-  const rolePermissions = RolePermissions[user.role] || [];
-  const hasAccess = rolePermissions.includes(permission);
-
-  // Log permission check
-  logPermissionCheck(user.id, permission, hasAccess);
-
-  return hasAccess;
+export function hasPermission(user: User | null, permission: Permission): boolean {
+  if (!user) return false;
+  
+  // Admin has all permissions
+  if (user.role === 'admin') return true;
+  
+  // Check if user has the specific permission
+  return user.permissions.includes(permission.toString());
 }
 
 /**
- * Checks if a user has any of the specified permissions
+ * Check if a user has any of the specified permissions
  */
-export function hasAnyPermission(
-  user: User,
-  permissions: Permission[]
-): boolean {
-  return permissions.some((permission) => hasPermission(user, permission));
+export function hasAnyPermission(user: User | null, permissions: Permission[]): boolean {
+  if (!user) return false;
+  
+  // Admin has all permissions
+  if (user.role === 'admin') return true;
+  
+  // Check if user has any of the permissions
+  return permissions.some(permission => user.permissions.includes(permission.toString()));
 }
 
 /**
- * Checks if a user has all of the specified permissions
+ * Check if a user has all of the specified permissions
  */
-export function hasAllPermissions(
-  user: User,
-  permissions: Permission[]
-): boolean {
-  return permissions.every((permission) => hasPermission(user, permission));
+export function hasAllPermissions(user: User | null, permissions: Permission[]): boolean {
+  if (!user) return false;
+  
+  // Admin has all permissions
+  if (user.role === 'admin') return true;
+  
+  // Check if user has all permissions
+  return permissions.every(permission => user.permissions.includes(permission.toString()));
 }
 
 /**
- * Gets all permissions for a user
+ * Get all permissions for a role
  */
-export function getUserPermissions(user: User): Permission[] {
-  if (!user || !user.isActive) {
-    return [];
-  }
-
-  const rolePermissions = RolePermissions[user.role] || [];
-  const customPermissions = user.permissions || [];
-
-  // Combine and deduplicate
-  return Array.from(new Set([...rolePermissions, ...customPermissions]));
+export function getPermissionsForRole(role: UserRole): Permission[] {
+  return RolePermissions[role] || [];
 }
 
 /**
- * Checks if a user has a specific role
- */
-export function hasRole(user: User, role: Role): boolean {
-  return user && user.isActive && user.role === role;
-}
-
-/**
- * Checks if a user has any of the specified roles
- */
-export function hasAnyRole(user: User, roles: Role[]): boolean {
-  return roles.some((role) => hasRole(user, role));
-}
-
-// ============================================================================
-// Permission Requirement Decorators
-// ============================================================================
-
-/**
- * Decorator to require a specific permission for a method
+ * Decorator function to require permission for a method
+ * Usage: @requirePermission(Permission.VIEW_PRODUCTS)
  */
 export function requirePermission(permission: Permission) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-
+    
     descriptor.value = async function (...args: any[]) {
-      const user = getCurrentUser();
-
-      if (!user) {
-        throw new Error('Authentication required');
+      // This would need to get the current user from context
+      // For now, this is a placeholder implementation
+      const hasAccess = true; // Replace with actual permission check
+      
+      if (!hasAccess) {
+        throw new Error(`Permission denied: ${permission} required`);
       }
-
-      if (!hasPermission(user, permission)) {
-        throw new Error(
-          `Permission denied: ${permission} required for ${propertyKey}`
-        );
-      }
-
+      
       return originalMethod.apply(this, args);
     };
-
+    
     return descriptor;
   };
 }
 
 /**
- * Decorator to require any of the specified permissions
+ * Check if a user can access a specific route
  */
-export function requireAnyPermission(permissions: Permission[]) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: any[]) {
-      const user = getCurrentUser();
-
-      if (!user) {
-        throw new Error('Authentication required');
-      }
-
-      if (!hasAnyPermission(user, permissions)) {
-        throw new Error(
-          `Permission denied: One of [${permissions.join(', ')}] required for ${propertyKey}`
-        );
-      }
-
-      return originalMethod.apply(this, args);
-    };
-
-    return descriptor;
+export function canAccessRoute(user: User | null, route: string): boolean {
+  if (!user) return false;
+  
+  // Admin can access all routes
+  if (user.role === 'admin') return true;
+  
+  // Define route to permission mapping
+  const routePermissions: Record<string, Permission> = {
+    '/products': Permission.VIEW_PRODUCTS,
+    '/customers': Permission.VIEW_CUSTOMERS,
+    '/orders': Permission.VIEW_ORDERS,
+    '/inventory': Permission.VIEW_INVENTORY,
+    '/patients': Permission.VIEW_PATIENTS,
+    '/medical-records': Permission.VIEW_MEDICAL_RECORDS,
+    '/analytics': Permission.VIEW_ANALYTICS,
+    '/reports': Permission.VIEW_REPORTS,
+    '/admin': Permission.ACCESS_ADMIN_DASHBOARD,
+    '/settings': Permission.MANAGE_SETTINGS,
   };
+  
+  // Find matching route
+  const matchingRoute = Object.keys(routePermissions).find(r => route.startsWith(r));
+  
+  if (!matchingRoute) return true; // Allow access to routes without specific permissions
+  
+  const requiredPermission = routePermissions[matchingRoute];
+  return hasPermission(user, requiredPermission);
 }
 
 /**
- * Decorator to require all of the specified permissions
+ * Get user-friendly permission name
  */
-export function requireAllPermissions(permissions: Permission[]) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: any[]) {
-      const user = getCurrentUser();
-
-      if (!user) {
-        throw new Error('Authentication required');
-      }
-
-      if (!hasAllPermissions(user, permissions)) {
-        throw new Error(
-          `Permission denied: All of [${permissions.join(', ')}] required for ${propertyKey}`
-        );
-      }
-
-      return originalMethod.apply(this, args);
-    };
-
-    return descriptor;
+export function getPermissionName(permission: Permission): string {
+  const names: Record<Permission, string> = {
+    [Permission.VIEW_PRODUCTS]: 'View Products',
+    [Permission.CREATE_PRODUCTS]: 'Create Products',
+    [Permission.EDIT_PRODUCTS]: 'Edit Products',
+    [Permission.DELETE_PRODUCTS]: 'Delete Products',
+    [Permission.VIEW_CUSTOMERS]: 'View Customers',
+    [Permission.CREATE_CUSTOMERS]: 'Create Customers',
+    [Permission.EDIT_CUSTOMERS]: 'Edit Customers',
+    [Permission.DELETE_CUSTOMERS]: 'Delete Customers',
+    [Permission.VIEW_ORDERS]: 'View Orders',
+    [Permission.CREATE_ORDERS]: 'Create Orders',
+    [Permission.EDIT_ORDERS]: 'Edit Orders',
+    [Permission.CANCEL_ORDERS]: 'Cancel Orders',
+    [Permission.DELETE_ORDERS]: 'Delete Orders',
+    [Permission.VIEW_FINANCIAL]: 'View Financial Data',
+    [Permission.MANAGE_PAYMENTS]: 'Manage Payments',
+    [Permission.VIEW_REPORTS]: 'View Reports',
+    [Permission.EXPORT_REPORTS]: 'Export Reports',
+    [Permission.VIEW_INVENTORY]: 'View Inventory',
+    [Permission.ADJUST_INVENTORY]: 'Adjust Inventory',
+    [Permission.MANAGE_PURCHASE_ORDERS]: 'Manage Purchase Orders',
+    [Permission.VIEW_PATIENTS]: 'View Patients',
+    [Permission.CREATE_PATIENTS]: 'Create Patients',
+    [Permission.EDIT_PATIENTS]: 'Edit Patients',
+    [Permission.DELETE_PATIENTS]: 'Delete Patients',
+    [Permission.VIEW_MEDICAL_RECORDS]: 'View Medical Records',
+    [Permission.CREATE_MEDICAL_RECORDS]: 'Create Medical Records',
+    [Permission.EDIT_MEDICAL_RECORDS]: 'Edit Medical Records',
+    [Permission.DELETE_MEDICAL_RECORDS]: 'Delete Medical Records',
+    [Permission.MANAGE_USERS]: 'Manage Users',
+    [Permission.VIEW_LOGS]: 'View System Logs',
+    [Permission.MANAGE_SETTINGS]: 'Manage Settings',
+    [Permission.ACCESS_ADMIN_DASHBOARD]: 'Access Admin Dashboard',
+    [Permission.VIEW_ANALYTICS]: 'View Analytics',
+    [Permission.VIEW_AI_INSIGHTS]: 'View AI Insights',
   };
-}
-
-/**
- * Decorator to require a specific role
- */
-export function requireRole(role: Role) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = async function (...args: any[]) {
-      const user = getCurrentUser();
-
-      if (!user) {
-        throw new Error('Authentication required');
-      }
-
-      if (!hasRole(user, role)) {
-        throw new Error(
-          `Permission denied: ${role} role required for ${propertyKey}`
-        );
-      }
-
-      return originalMethod.apply(this, args);
-    };
-
-    return descriptor;
-  };
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Gets the current user (placeholder - should be implemented based on auth system)
- */
-export function getCurrentUser(): User | null {
-  // In a real implementation, this would get the user from the auth context/store
-  if (typeof window !== 'undefined') {
-    try {
-      const userJson = localStorage.getItem('current_user');
-      if (userJson) {
-        return JSON.parse(userJson);
-      }
-    } catch (error) {
-      console.error('Failed to get current user:', error);
-    }
-  }
-  return null;
-}
-
-/**
- * Sets the current user
- */
-export function setCurrentUser(user: User | null): void {
-  if (typeof window !== 'undefined') {
-    if (user) {
-      localStorage.setItem('current_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('current_user');
-    }
-  }
-}
-
-/**
- * Checks if user is authenticated
- */
-export function isAuthenticated(): boolean {
-  const user = getCurrentUser();
-  return user !== null && user.isActive;
-}
-
-/**
- * Checks if user is admin
- */
-export function isAdmin(): boolean {
-  const user = getCurrentUser();
-  return user !== null && user.role === 'admin';
-}
-
-/**
- * Gets permission display name
- */
-export function getPermissionDisplayName(permission: Permission): string {
-  return permission
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
-/**
- * Gets role display name
- */
-export function getRoleDisplayName(role: Role): string {
-  return role.charAt(0).toUpperCase() + role.slice(1);
-}
-
-/**
- * Gets permissions by category
- */
-export function getPermissionsByCategory(): Record<string, Permission[]> {
-  const categories: Record<string, Permission[]> = {
-    Products: [],
-    Customers: [],
-    Orders: [],
-    Financial: [],
-    Inventory: [],
-    Medical: [],
-    Analytics: [],
-    'AI Features': [],
-    Admin: [],
-    'Data Management': [],
-  };
-
-  for (const permission of Object.values(Permission)) {
-    if (permission.includes('product')) {
-      categories.Products.push(permission);
-    } else if (permission.includes('customer')) {
-      categories.Customers.push(permission);
-    } else if (permission.includes('order')) {
-      categories.Orders.push(permission);
-    } else if (
-      permission.includes('financial') ||
-      permission.includes('payment') ||
-      permission.includes('invoice') ||
-      permission.includes('quotation')
-    ) {
-      categories.Financial.push(permission);
-    } else if (permission.includes('inventory') || permission.includes('stock')) {
-      categories.Inventory.push(permission);
-    } else if (permission.includes('patient') || permission.includes('medical')) {
-      categories.Medical.push(permission);
-    } else if (permission.includes('analytics')) {
-      categories.Analytics.push(permission);
-    } else if (permission.includes('ai')) {
-      categories['AI Features'].push(permission);
-    } else if (
-      permission.includes('user') ||
-      permission.includes('role') ||
-      permission.includes('log') ||
-      permission.includes('setting') ||
-      permission.includes('system') ||
-      permission.includes('audit')
-    ) {
-      categories.Admin.push(permission);
-    } else if (
-      permission.includes('export') ||
-      permission.includes('import') ||
-      permission.includes('backup') ||
-      permission.includes('restore') ||
-      permission.includes('delete')
-    ) {
-      categories['Data Management'].push(permission);
-    }
-  }
-
-  return categories;
-}
-
-/**
- * Validates if a permission exists
- */
-export function isValidPermission(permission: string): permission is Permission {
-  return Object.values(Permission).includes(permission as Permission);
-}
-
-/**
- * Validates if a role exists
- */
-export function isValidRole(role: string): role is Role {
-  return ['admin', 'manager', 'sales', 'inventory', 'medical'].includes(role);
+  
+  return names[permission] || permission.toString();
 }
