@@ -2,7 +2,7 @@
 // Requirements: 3.10, 12.1
 
 import { create } from 'zustand';
-import { Product } from '@/types/database';
+import { Product, Customer } from '@/types/database';
 
 interface CacheEntry<T> {
   value: T;
@@ -13,6 +13,7 @@ interface CacheState {
   searchCache: Map<string, CacheEntry<any>>;
   aiResponseCache: Map<string, CacheEntry<any>>;
   productCache: Map<string, CacheEntry<Product>>;
+  customerCache: Map<string, CacheEntry<Customer>>;
   
   // Actions
   setSearchCache: (key: string, value: any) => void;
@@ -24,10 +25,14 @@ interface CacheState {
   setProductCache: (productId: string, product: Product) => void;
   getProductCache: (productId: string) => Product | null;
   
+  setCustomerCache: (customerId: string, customer: Customer) => void;
+  getCustomerCache: (customerId: string) => Customer | null;
+  
   clearCache: () => void;
   clearSearchCache: () => void;
   clearAIResponseCache: () => void;
   clearProductCache: () => void;
+  clearCustomerCache: () => void;
   
   getCacheStats: () => CacheStats;
 }
@@ -36,6 +41,7 @@ interface CacheStats {
   searchCacheSize: number;
   aiResponseCacheSize: number;
   productCacheSize: number;
+  customerCacheSize: number;
   totalSize: number;
 }
 
@@ -45,6 +51,7 @@ export const useCacheStore = create<CacheState>((set, get) => ({
   searchCache: new Map(),
   aiResponseCache: new Map(),
   productCache: new Map(),
+  customerCache: new Map(),
 
   setSearchCache: (key: string, value: any) => {
     const cache = new Map(get().searchCache);
@@ -139,11 +146,43 @@ export const useCacheStore = create<CacheState>((set, get) => ({
     return cached.value;
   },
 
+  setCustomerCache: (customerId: string, customer: Customer) => {
+    const cache = new Map(get().customerCache);
+    cache.set(customerId, {
+      value: customer,
+      timestamp: Date.now(),
+    });
+    set({ customerCache: cache });
+  },
+
+  getCustomerCache: (customerId: string) => {
+    const cached = get().customerCache.get(customerId);
+    
+    if (!cached) {
+      return null;
+    }
+    
+    // Check if cache has expired
+    const currentTime = Date.now();
+    const elapsedTime = currentTime - cached.timestamp;
+    
+    if (elapsedTime > CACHE_EXPIRATION_TIME) {
+      // Remove expired entry
+      const cache = new Map(get().customerCache);
+      cache.delete(customerId);
+      set({ customerCache: cache });
+      return null;
+    }
+    
+    return cached.value;
+  },
+
   clearCache: () => {
     set({
       searchCache: new Map(),
       aiResponseCache: new Map(),
       productCache: new Map(),
+      customerCache: new Map(),
     });
   },
 
@@ -159,13 +198,18 @@ export const useCacheStore = create<CacheState>((set, get) => ({
     set({ productCache: new Map() });
   },
 
+  clearCustomerCache: () => {
+    set({ customerCache: new Map() });
+  },
+
   getCacheStats: () => {
     const state = get();
     return {
       searchCacheSize: state.searchCache.size,
       aiResponseCacheSize: state.aiResponseCache.size,
       productCacheSize: state.productCache.size,
-      totalSize: state.searchCache.size + state.aiResponseCache.size + state.productCache.size,
+      customerCacheSize: state.customerCache.size,
+      totalSize: state.searchCache.size + state.aiResponseCache.size + state.productCache.size + state.customerCache.size,
     };
   },
 }));
@@ -199,10 +243,19 @@ export const cleanupExpiredCache = () => {
     }
   }
   
+  // Clean customer cache
+  const customerCache = new Map(state.customerCache);
+  for (const [key, entry] of customerCache.entries()) {
+    if (currentTime - entry.timestamp > CACHE_EXPIRATION_TIME) {
+      customerCache.delete(key);
+    }
+  }
+  
   useCacheStore.setState({
     searchCache,
     aiResponseCache,
     productCache,
+    customerCache,
   });
 };
 

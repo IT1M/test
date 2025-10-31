@@ -1,17 +1,24 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { DashboardSkeleton } from '@/components/common/LoadingSkeleton';
-
-// Lazy load the heavy analytics dashboard component
-const AnalyticsDashboard = dynamic(() => import('@/components/analytics/AnalyticsDashboard'), {
-  loading: () => <DashboardSkeleton />,
-  ssr: false
-});
-
-export default function AnalyticsPage() {
-  return <AnalyticsDashboard />;
-}
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select } from '@/components/ui/select';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  ShoppingCart, 
+  Users, 
+  Package,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight
+} from 'lucide-react';
+import { FinancialAnalyticsService } from '@/services/analytics/financial';
+import { SalesAnalyticsService } from '@/services/analytics/sales';
+import { InventoryAnalyticsService } from '@/services/analytics/inventory';
+import { formatCurrency, formatNumber, formatPercentage } from '@/lib/utils/formatters';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 
@@ -60,7 +67,7 @@ function MetricCard({ title, value, change, trend, icon, description }: MetricCa
   );
 }
 
-export default function AnalyticsPage() {
+export default function AnalyticsDashboard() {
   const [period, setPeriod] = useState<Period>('monthly');
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any>(null);

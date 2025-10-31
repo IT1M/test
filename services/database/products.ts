@@ -5,6 +5,7 @@ import { RelationshipManager } from '@/lib/db/relationships';
 import type { Product, StockStatus, PaginatedResult } from '@/types/database';
 import { calculateProfitMargin, calculateStockStatus } from '@/types/database';
 import { v4 as uuidv4 } from 'uuid';
+import { useCacheStore, generateCacheKey } from '@/store/cacheStore';
 
 /**
  * Product filters for search and filtering
@@ -24,10 +25,19 @@ export interface ProductFilters {
  */
 export class ProductService {
   /**
-   * Get all products with optional filters
+   * Get all products with optional filters (with caching)
    */
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
     try {
+      // Generate cache key from filters
+      const cacheKey = generateCacheKey('products', filters || {});
+      
+      // Check cache first
+      const cached = useCacheStore.getState().getSearchCache(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       let query = db.products.toCollection();
 
       // Apply filters
@@ -63,7 +73,12 @@ export class ProductService {
       const products = await query.toArray();
 
       // Calculate computed fields
-      return products.map(p => this.enrichProduct(p));
+      const enrichedProducts = products.map(p => this.enrichProduct(p));
+      
+      // Cache the results
+      useCacheStore.getState().setSearchCache(cacheKey, enrichedProducts);
+      
+      return enrichedProducts;
     } catch (error) {
       console.error('Error getting products:', error);
       throw new Error('Failed to retrieve products');
@@ -99,12 +114,25 @@ export class ProductService {
   }
 
   /**
-   * Get a single product by ID
+   * Get a single product by ID (with caching)
    */
   static async getProductById(id: string): Promise<Product | undefined> {
     try {
+      // Check cache first
+      const cached = useCacheStore.getState().getProductCache(id);
+      if (cached) {
+        return cached;
+      }
+
       const product = await db.products.get(id);
-      return product ? this.enrichProduct(product) : undefined;
+      const enriched = product ? this.enrichProduct(product) : undefined;
+      
+      // Cache the result
+      if (enriched) {
+        useCacheStore.getState().setProductCache(id, enriched);
+      }
+      
+      return enriched;
     } catch (error) {
       console.error('Error getting product by ID:', error);
       throw new Error(`Failed to retrieve product with ID: ${id}`);
@@ -195,6 +223,9 @@ export class ProductService {
       if (!updated) {
         throw new Error('Failed to retrieve updated product');
       }
+
+      // Invalidate cache for this product
+      useCacheStore.getState().clearProductCache();
 
       // Log the action
       await this.logAction('product_updated', id, {

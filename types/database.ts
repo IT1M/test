@@ -298,7 +298,8 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   role: UserRole;
   permissions: string[];
   isActive: boolean;

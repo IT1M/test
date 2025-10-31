@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, createSortableHeader } from "@/components/common/DataTable";
+import { VirtualTable, VirtualTableColumn } from "@/components/common/VirtualTable";
 import { ProductService } from "@/services/database/products";
 import type { Product, StockStatus } from "@/types/database";
 import { formatCurrency, formatDate } from "@/lib/utils/formatters";
@@ -25,6 +26,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
   
   // Filters
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -58,6 +60,9 @@ export default function ProductsPage() {
       }
       
       setProducts(filteredData);
+      
+      // Enable virtual scrolling for large datasets (>100 items)
+      setUseVirtualScrolling(filteredData.length > 100);
     } catch (error) {
       console.error("Error loading products:", error);
     } finally {
@@ -157,6 +162,77 @@ export default function ProductsPage() {
     },
   ];
 
+  // Virtual table columns
+  const virtualColumns: VirtualTableColumn<Product>[] = [
+    {
+      key: "sku",
+      header: "SKU",
+      width: 120,
+      render: (row) => <span className="font-mono text-sm">{row.sku}</span>,
+    },
+    {
+      key: "name",
+      header: "Product Name",
+      width: 250,
+      render: (row) => (
+        <div>
+          <div className="font-medium">{row.name}</div>
+          <div className="text-sm text-muted-foreground">{row.category}</div>
+        </div>
+      ),
+    },
+    {
+      key: "manufacturer",
+      header: "Manufacturer",
+      width: 150,
+    },
+    {
+      key: "unitPrice",
+      header: "Price",
+      width: 100,
+      render: (row) => formatCurrency(row.unitPrice),
+    },
+    {
+      key: "stockQuantity",
+      header: "Stock",
+      width: 100,
+      render: (row) => (
+        <div className="text-center">
+          <div className="font-medium">{row.stockQuantity}</div>
+          <div className="text-xs text-muted-foreground">
+            Reorder: {row.reorderLevel}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "stockStatus",
+      header: "Status",
+      width: 120,
+      render: (row) => getStockStatusBadge(row.stockStatus!),
+    },
+    {
+      key: "expiryDate",
+      header: "Expiry Date",
+      width: 120,
+      render: (row) => (
+        <span className={row.expiryDate ? "" : "text-muted-foreground"}>
+          {row.expiryDate ? formatDate(row.expiryDate) : "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "profitMargin",
+      header: "Margin",
+      width: 80,
+      render: (row) => (
+        <span className="font-medium">
+          {row.profitMargin?.toFixed(1)}%
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -242,6 +318,14 @@ export default function ProductsPage() {
             <div className="flex items-center justify-center py-12">
               <div className="text-muted-foreground">Loading products...</div>
             </div>
+          ) : useVirtualScrolling ? (
+            <VirtualTable
+              columns={virtualColumns}
+              data={products}
+              estimateSize={60}
+              overscan={10}
+              onRowClick={(product) => router.push(`/products/${product.id}`)}
+            />
           ) : (
             <DataTable
               columns={columns}

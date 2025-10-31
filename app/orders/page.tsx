@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
+import { VirtualTable, VirtualTableColumn } from '@/components/common/VirtualTable';
 import {
   Plus,
   Search,
@@ -30,6 +30,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
   
   // Filters
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
@@ -64,6 +65,9 @@ export default function OrdersPage() {
 
       const data = await OrderService.getOrders(filters);
       setOrders(data);
+      
+      // Enable virtual scrolling for large datasets (>100 items)
+      setUseVirtualScrolling(data.length > 100);
     } catch (error) {
       console.error('Error loading orders:', error);
       toast.error('Failed to load orders');
@@ -179,6 +183,92 @@ export default function OrdersPage() {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  // Virtual table columns
+  const virtualColumns: VirtualTableColumn<Order>[] = [
+    {
+      key: "orderId",
+      header: "Order ID",
+      width: 140,
+      render: (row) => (
+        <span className="font-medium text-blue-600">
+          {row.orderId}
+        </span>
+      ),
+    },
+    {
+      key: "customerId",
+      header: "Customer",
+      width: 150,
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <User className="w-4 h-4 text-gray-400" />
+          <span className="text-sm">{row.customerId}</span>
+        </div>
+      ),
+    },
+    {
+      key: "orderDate",
+      header: "Order Date",
+      width: 120,
+      render: (row) => (
+        <span className="text-sm text-gray-600">
+          {format(new Date(row.orderDate), 'MMM dd, yyyy')}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: 120,
+      render: (row) => getStatusBadge(row.status),
+    },
+    {
+      key: "paymentStatus",
+      header: "Payment",
+      width: 130,
+      render: (row) => getPaymentStatusBadge(row.paymentStatus),
+    },
+    {
+      key: "totalAmount",
+      header: "Total Amount",
+      width: 120,
+      render: (row) => (
+        <span className="font-medium">
+          ${row.totalAmount.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      key: "salesPerson",
+      header: "Sales Person",
+      width: 130,
+      render: (row) => (
+        <span className="text-sm text-gray-600">
+          {row.salesPerson}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      width: 100,
+      render: (row) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/orders/${row.id}`);
+          }}
+          className="flex items-center gap-1"
+        >
+          <Eye className="w-4 h-4" />
+          View
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -387,6 +477,14 @@ export default function OrdersPage() {
                 Create First Order
               </Button>
             </div>
+          ) : useVirtualScrolling ? (
+            <VirtualTable
+              columns={virtualColumns}
+              data={orders}
+              estimateSize={60}
+              overscan={10}
+              onRowClick={(order) => router.push(`/orders/${order.id}`)}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

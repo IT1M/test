@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, AlertTriangle, TrendingDown, Calendar, Download } from 'lucide-react';
-import { InventoryAnalyticsService } from '@/services/analytics/inventory';
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils/formatters';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
+import { DashboardSkeleton } from '@/components/common/LoadingSkeleton';
+
+// Lazy load the heavy inventory analytics component
+const InventoryAnalyticsDashboard = dynamic(() => import('@/components/analytics/InventoryAnalyticsDashboard'), {
+  loading: () => <DashboardSkeleton />,
+  ssr: false
+});
 
 export default function InventoryAnalyticsPage() {
+  return <InventoryAnalyticsDashboard />;
+}
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);

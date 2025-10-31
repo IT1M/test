@@ -4,10 +4,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, UserRole } from '@/types/database';
+import { logAuthEvent } from '@/lib/security/audit';
 
 interface AuthState {
   user: User | null;
   sessionStartTime: number | null;
+  lastActivityTime: number | null;
   isAuthenticated: boolean;
   
   // Actions
@@ -18,6 +20,7 @@ interface AuthState {
   checkSessionTimeout: () => boolean;
   hasRole: (role: UserRole) => boolean;
   hasPermission: (permission: string) => boolean;
+  getSessionTimeRemaining: () => number;
 }
 
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -27,23 +30,36 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       sessionStartTime: null,
+      lastActivityTime: null,
       isAuthenticated: false,
 
       login: (user: User) => {
+        const now = Date.now();
         set({
           user: {
             ...user,
             lastLogin: new Date(),
           },
-          sessionStartTime: Date.now(),
+          sessionStartTime: now,
+          lastActivityTime: now,
           isAuthenticated: true,
         });
       },
 
-      logout: () => {
+      logout: async () => {
+        const state = get();
+        if (state.user) {
+          await logAuthEvent('logout', state.user.id, {
+            sessionDuration: state.sessionStartTime 
+              ? Date.now() - state.sessionStartTime 
+              : 0,
+          });
+        }
+        
         set({
           user: null,
           sessionStartTime: null,
+          lastActivityTime: null,
           isAuthenticated: false,
         });
       },
@@ -63,19 +79,19 @@ export const useAuthStore = create<AuthState>()(
       updateLastActivity: () => {
         const state = get();
         if (state.isAuthenticated) {
-          set({ sessionStartTime: Date.now() });
+          set({ lastActivityTime: Date.now() });
         }
       },
 
       checkSessionTimeout: () => {
         const state = get();
         
-        if (!state.sessionStartTime || !state.isAuthenticated) {
+        if (!state.lastActivityTime || !state.isAuthenticated) {
           return false;
         }
         
         const currentTime = Date.now();
-        const elapsedTime = currentTime - state.sessionStartTime;
+        const elapsedTime = currentTime - state.lastActivityTime;
         
         // Return true if session has timed out
         return elapsedTime > SESSION_TIMEOUT;
@@ -90,12 +106,24 @@ export const useAuthStore = create<AuthState>()(
         const state = get();
         return state.user?.permissions.includes(permission) || false;
       },
+
+      getSessionTimeRemaining: () => {
+        const state = get();
+        if (!state.lastActivityTime || !state.isAuthenticated) {
+          return 0;
+        }
+        
+        const elapsed = Date.now() - state.lastActivityTime;
+        const remaining = SESSION_TIMEOUT - elapsed;
+        return Math.max(0, remaining);
+      },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
         sessionStartTime: state.sessionStartTime,
+        lastActivityTime: state.lastActivityTime,
         isAuthenticated: state.isAuthenticated,
       }),
     }

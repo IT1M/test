@@ -1,53 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  TrendingUp, 
-  Package, 
-  Users, 
-  DollarSign, 
-  Activity,
-  Calendar,
-  Download,
-  Clock,
-  Plus
-} from 'lucide-react';
-import Link from 'next/link';
-import { db } from '@/lib/db/schema';
-import { formatDate } from '@/lib/utils/formatters';
+import dynamic from 'next/dynamic';
+import { PageLoadingSkeleton } from '@/components/common/LoadingSkeleton';
 
-interface PredefinedReport {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-  category: string;
-  path: string;
-}
-
-interface GeneratedReport {
-  id: string;
-  name: string;
-  type: string;
-  generatedAt: Date;
-  generatedBy: string;
-  fileSize: string;
-}
-
-interface ScheduledReport {
-  id: string;
-  name: string;
-  frequency: string;
-  nextRun: Date;
-  recipients: string[];
-  isActive: boolean;
-}
+// Lazy load the reports dashboard component
+const ReportsDashboard = dynamic(() => import('@/components/reports/ReportsDashboard'), {
+  loading: () => <PageLoadingSkeleton />,
+  ssr: false
+});
 
 export default function ReportsPage() {
+  return <ReportsDashboard />;
+}
   const [recentReports, setRecentReports] = useState<GeneratedReport[]>([]);
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
   const [loading, setLoading] = useState(true);

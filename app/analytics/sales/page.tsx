@@ -1,34 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Users, 
-  DollarSign,
-  Calendar,
-  Download,
-  Package
-} from 'lucide-react';
-import { SalesAnalyticsService } from '@/services/analytics/sales';
-import { formatCurrency, formatNumber, formatPercentage } from '@/lib/utils/formatters';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import dynamic from 'next/dynamic';
+import { DashboardSkeleton } from '@/components/common/LoadingSkeleton';
 
-type Period = 'monthly' | 'quarterly' | 'yearly';
+// Lazy load the heavy sales analytics component
+const SalesAnalyticsDashboard = dynamic(() => import('@/components/analytics/SalesAnalyticsDashboard'), {
+  loading: () => <DashboardSkeleton />,
+  ssr: false
+});
 
 export default function SalesAnalyticsPage() {
+  return <SalesAnalyticsDashboard />;
+}
   const [period, setPeriod] = useState<Period>('monthly');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);

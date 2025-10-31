@@ -3,6 +3,8 @@
 import { db } from '@/lib/db/schema';
 import type { Customer, CustomerType, CustomerSegment, PaginatedResult } from '@/types/database';
 import { v4 as uuidv4 } from 'uuid';
+import { useCacheStore, generateCacheKey } from '@/store/cacheStore';
+import { DataEncryption } from '@/lib/security/encryption';
 
 /**
  * Customer filters for search and filtering
@@ -21,10 +23,19 @@ export interface CustomerFilters {
  */
 export class CustomerService {
   /**
-   * Get all customers with optional filters
+   * Get all customers with optional filters (with caching)
    */
   static async getCustomers(filters?: CustomerFilters): Promise<Customer[]> {
     try {
+      // Generate cache key from filters
+      const cacheKey = generateCacheKey('customers', filters || {});
+      
+      // Check cache first
+      const cached = useCacheStore.getState().getSearchCache(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       let query = db.customers.toCollection();
 
       // Apply filters
@@ -59,7 +70,17 @@ export class CustomerService {
         );
       }
 
-      return await query.toArray();
+      const customers = await query.toArray();
+      
+      // Decrypt sensitive data for all customers
+      const decryptedCustomers = customers.map(customer => 
+        DataEncryption.decryptCustomerData(customer)
+      );
+      
+      // Cache the decrypted results
+      useCacheStore.getState().setSearchCache(cacheKey, decryptedCustomers);
+      
+      return decryptedCustomers;
     } catch (error) {
       console.error('Error getting customers:', error);
       throw new Error('Failed to retrieve customers');
@@ -95,11 +116,29 @@ export class CustomerService {
   }
 
   /**
-   * Get a single customer by ID
+   * Get a single customer by ID (with caching)
    */
   static async getCustomerById(id: string): Promise<Customer | undefined> {
     try {
-      return await db.customers.get(id);
+      // Check cache first
+      const cached = useCacheStore.getState().getCustomerCache(id);
+      if (cached) {
+        return cached;
+      }
+
+      const customer = await db.customers.get(id);
+      
+      if (!customer) {
+        return undefined;
+      }
+
+      // Decrypt sensitive data
+      const decryptedCustomer = DataEncryption.decryptCustomerData(customer);
+      
+      // Cache the decrypted result
+      useCacheStore.getState().setCustomerCache(id, decryptedCustomer);
+      
+      return decryptedCustomer;
     } catch (error) {
       console.error('Error getting customer by ID:', error);
       throw new Error(`Failed to retrieve customer with ID: ${id}`);
@@ -156,7 +195,10 @@ export class CustomerService {
         updatedAt: new Date(),
       };
 
-      await db.customers.add(customer);
+      // Encrypt sensitive data before storing
+      const encryptedCustomer = DataEncryption.encryptCustomerData(customer);
+
+      await db.customers.add(encryptedCustomer);
 
       // Log the action
       await this.logAction('customer_created', customer.id, {
@@ -165,6 +207,7 @@ export class CustomerService {
         type: customer.type,
       });
 
+      // Return unencrypted data to the caller
       return customer;
     } catch (error) {
       console.error('Error creating customer:', error);
@@ -182,8 +225,11 @@ export class CustomerService {
         throw new Error(`Customer with ID ${id} not found`);
       }
 
+      // Decrypt existing data
+      const decryptedExisting = DataEncryption.decryptCustomerData(existing);
+
       // Check for customer ID uniqueness if being updated
-      if (updates.customerId && updates.customerId !== existing.customerId) {
+      if (updates.customerId && updates.customerId !== decryptedExisting.customerId) {
         const duplicate = await this.getCustomerByCustomerId(updates.customerId);
         if (duplicate) {
           throw new Error(`Customer with ID ${updates.customerId} already exists`);
@@ -191,17 +237,20 @@ export class CustomerService {
       }
 
       // Check for email uniqueness if being updated
-      if (updates.email && updates.email !== existing.email) {
+      if (updates.email && updates.email !== decryptedExisting.email) {
         const duplicate = await this.getCustomerByEmail(updates.email);
         if (duplicate) {
           throw new Error(`Customer with email ${updates.email} already exists`);
         }
       }
 
-      await db.customers.update(id, {
+      // Encrypt sensitive fields in updates
+      const encryptedUpdates = DataEncryption.encryptCustomerData({
         ...updates,
         updatedAt: new Date(),
       });
+
+      await db.customers.update(id, encryptedUpdates);
 
       const updated = await db.customers.get(id);
       if (!updated) {
@@ -210,10 +259,11 @@ export class CustomerService {
 
       // Log the action
       await this.logAction('customer_updated', id, {
-        changes: updates,
+        changes: Object.keys(updates),
       });
 
-      return updated;
+      // Return decrypted data
+      return DataEncryption.decryptCustomerData(updated);
     } catch (error) {
       console.error('Error updating customer:', error);
       throw error;

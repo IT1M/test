@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, X, Eye } from 'lucide-react';
-import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
+import dynamic from 'next/dynamic';
+import { PageLoadingSkeleton } from '@/components/common/LoadingSkeleton';
+
+// Lazy load the report builder component
+const ReportBuilder = dynamic(() => import('@/components/reports/ReportBuilder'), {
+  loading: () => <PageLoadingSkeleton />,
+  ssr: false
+});
+
+export default function ReportBuilderPage() {
+  return <ReportBuilder />;
+}
 
 interface ReportField {
   id: string;

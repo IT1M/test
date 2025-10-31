@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, createSortableHeader } from "@/components/common/DataTable";
+import { VirtualTable, VirtualTableColumn } from "@/components/common/VirtualTable";
 import { CustomerService } from "@/services/database/customers";
 import type { Customer, CustomerType, CustomerSegment, PaymentStatus } from "@/types/database";
 import { formatCurrency, formatDate, formatPhone } from "@/lib/utils/formatters";
@@ -23,6 +24,7 @@ export default function CustomersPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
   
   // Filters
   const [selectedType, setSelectedType] = useState<CustomerType | "all">("all");
@@ -65,6 +67,9 @@ export default function CustomersPage() {
       }
       
       setCustomers(data);
+      
+      // Enable virtual scrolling for large datasets (>100 items)
+      setUseVirtualScrolling(data.length > 100);
     } catch (error) {
       console.error("Error loading customers:", error);
     } finally {
@@ -178,6 +183,77 @@ export default function CustomersPage() {
     },
   ];
 
+  // Virtual table columns
+  const virtualColumns: VirtualTableColumn<Customer>[] = [
+    {
+      key: "customerId",
+      header: "Customer ID",
+      width: 120,
+      render: (row) => <span className="font-mono text-sm">{row.customerId}</span>,
+    },
+    {
+      key: "name",
+      header: "Customer Name",
+      width: 200,
+      render: (row) => (
+        <div>
+          <div className="font-medium">{row.name}</div>
+          <div className="text-sm text-muted-foreground">{row.contactPerson}</div>
+        </div>
+      ),
+    },
+    {
+      key: "type",
+      header: "Type",
+      width: 100,
+      render: (row) => getTypeBadge(row.type),
+    },
+    {
+      key: "segment",
+      header: "Segment",
+      width: 100,
+      render: (row) => row.segment ? getSegmentBadge(row.segment) : <span className="text-muted-foreground">-</span>,
+    },
+    {
+      key: "email",
+      header: "Contact",
+      width: 180,
+      render: (row) => (
+        <div className="text-sm">
+          <div>{row.email}</div>
+          <div className="text-muted-foreground">{formatPhone(row.phone)}</div>
+        </div>
+      ),
+    },
+    {
+      key: "city",
+      header: "Location",
+      width: 150,
+      render: (row) => (
+        <div className="text-sm">
+          <div>{row.city}</div>
+          <div className="text-muted-foreground">{row.country}</div>
+        </div>
+      ),
+    },
+    {
+      key: "lifetimeValue",
+      header: "Lifetime Value",
+      width: 130,
+      render: (row) => (
+        <span className="font-medium">
+          {formatCurrency(row.lifetimeValue || 0)}
+        </span>
+      ),
+    },
+    {
+      key: "paymentTerms",
+      header: "Payment Terms",
+      width: 120,
+      render: (row) => <span className="text-sm">{row.paymentTerms}</span>,
+    },
+  ];
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -260,6 +336,14 @@ export default function CustomersPage() {
             <div className="flex items-center justify-center py-12">
               <div className="text-muted-foreground">Loading customers...</div>
             </div>
+          ) : useVirtualScrolling ? (
+            <VirtualTable
+              columns={virtualColumns}
+              data={customers}
+              estimateSize={60}
+              overscan={10}
+              onRowClick={(customer) => router.push(`/customers/${customer.id}`)}
+            />
           ) : (
             <DataTable
               columns={columns}
