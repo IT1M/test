@@ -1039,6 +1039,402 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Include backup and recovery procedures
     - Document scaling considerations
 
+- [ ] 28. Quality Control and Rejection Management
+  - [ ] 28.1 Create rejection tracking database schema
+    - Add Rejections table with fields: id, rejectionId, itemCode, machineName, lotNumber, batchNumber, quantity, rejectionDate, rejectionReason, rejectionType, inspectorId, productId, supplierId, status, images, correctionActions, createdAt, updatedAt
+    - Add RejectionReasons table for predefined rejection categories
+    - Add QualityInspections table linking to products and orders
+    - Create indexes for itemCode, batchNumber, lotNumber, rejectionDate
+    - _New Feature: Quality Control Management_
+  
+  - [ ] 28.2 Create rejection entry interface
+    - Implement app/quality/rejections/page.tsx with rejections list
+    - Create app/quality/rejections/new/page.tsx for rejection entry form
+    - Add fields: item code (with product lookup), machine name, lot number, batch number, quantity, rejection reason, images upload
+    - Implement barcode/QR code scanner for quick item code entry
+    - Add photo capture functionality for defect documentation
+    - Validate batch numbers against inventory records
+    - _New Feature: Quality Control Management_
+  
+  - [ ] 28.3 Implement AI-powered defect detection
+    - Use Gemini Vision API to analyze uploaded defect images
+    - Automatically categorize defect types (cosmetic, functional, safety)
+    - Suggest rejection reasons based on image analysis
+    - Generate defect severity scores
+    - Link similar historical rejections using AI pattern matching
+    - _New Feature: AI Quality Analysis_
+  
+  - [ ] 28.4 Create rejection analytics dashboard
+    - Implement app/quality/analytics/page.tsx with rejection metrics
+    - Display rejection rate by product, supplier, machine, time period
+    - Show Pareto charts for top rejection reasons
+    - Add trend analysis with AI-powered predictions
+    - Display cost impact of rejections
+    - Generate supplier quality scorecards
+    - _New Feature: Quality Analytics_
+  
+  - [ ] 28.5 Implement corrective action tracking
+    - Create workflow for corrective actions (open → in-progress → resolved → verified)
+    - Link rejections to corrective actions
+    - Track action effectiveness with before/after metrics
+    - Use Gemini AI to suggest corrective actions based on rejection patterns
+    - Generate CAPA (Corrective and Preventive Action) reports
+    - _New Feature: Quality Improvement_
+
+- [ ] 29. Human Resources Management System
+  - [ ] 29.1 Create HR database schema
+    - Add Employees table with fields: id, employeeId, firstName, lastName, nationalId, dateOfBirth, gender, phone, email, address, position, department, hireDate, salary, contractType, status (active/archived/on-leave), emergencyContact, qualifications, certifications, photo, createdAt, updatedAt
+    - Add Departments table with fields: id, departmentId, name, managerId, budget, description
+    - Add Positions table with fields: id, positionId, title, department, level, minSalary, maxSalary, requirements
+    - Add Attendance table with fields: id, employeeId, date, checkIn, checkOut, status, notes
+    - Add Leaves table with fields: id, employeeId, leaveType, startDate, endDate, reason, status, approvedBy
+    - Add Payroll table with fields: id, employeeId, month, year, basicSalary, allowances, deductions, netSalary, paymentDate, status
+    - Add PerformanceReviews table with fields: id, employeeId, reviewDate, reviewerId, rating, strengths, improvements, goals, nextReviewDate
+    - Add Training table with fields: id, trainingId, title, description, startDate, endDate, instructor, attendees, cost, status
+    - _New Feature: HR Management_
+  
+  - [ ] 29.2 Create employees management interface
+    - Implement app/hr/employees/page.tsx with employee directory
+    - Add filters for department, position, status, hire date
+    - Create app/hr/employees/[id]/page.tsx for employee profile
+    - Display employee information, attendance history, leave balance, performance reviews
+    - Implement app/hr/employees/new/page.tsx for employee registration
+    - Add document upload for contracts, certifications, ID copies
+    - Implement employee archiving (no permanent deletion)
+    - _New Feature: HR Management_
+  
+  - [ ] 29.3 Create attendance tracking system
+    - Implement app/hr/attendance/page.tsx with attendance dashboard
+    - Add check-in/check-out interface with timestamp and location
+    - Implement QR code/biometric integration for attendance
+    - Display daily attendance summary with late arrivals, early departures, absences
+    - Generate monthly attendance reports per employee
+    - Use AI to detect attendance patterns and anomalies
+    - _New Feature: Attendance Management_
+  
+  - [ ] 29.4 Create leave management system
+    - Implement app/hr/leaves/page.tsx with leave requests list
+    - Add leave request form with type selection (annual, sick, emergency, unpaid)
+    - Implement approval workflow (pending → approved/rejected)
+    - Display leave balance and calendar view
+    - Send notifications for leave requests and approvals
+    - Use AI to predict leave patterns and suggest optimal staffing
+    - _New Feature: Leave Management_
+  
+  - [ ] 29.5 Create payroll management system
+    - Implement app/hr/payroll/page.tsx with payroll dashboard
+    - Add monthly payroll processing interface
+    - Calculate salaries with allowances, deductions, taxes
+    - Generate payslips with detailed breakdown
+    - Track payment history and pending payments
+    - Export payroll data to accounting systems
+    - _New Feature: Payroll Management_
+  
+  - [ ] 29.6 Create performance management system
+    - Implement app/hr/performance/page.tsx with performance dashboard
+    - Add performance review form with rating scales
+    - Track KPIs and goals for each employee
+    - Display performance trends over time
+    - Generate performance reports by department
+    - Use AI to identify high performers and improvement areas
+    - _New Feature: Performance Management_
+  
+  - [ ] 29.7 Create training management system
+    - Implement app/hr/training/page.tsx with training programs list
+    - Add training scheduling and enrollment interface
+    - Track training completion and certifications
+    - Display training calendar and upcoming sessions
+    - Generate training effectiveness reports
+    - Use AI to recommend training based on performance gaps
+    - _New Feature: Training Management_
+
+- [ ] 30. AI-Powered Smart Recruitment System
+  - [ ] 30.1 Create recruitment database schema
+    - Add JobPostings table with fields: id, jobId, title, department, position, description, requirements, qualifications, salary range, location, status, postedDate, closingDate
+    - Add Applicants table with fields: id, applicantId, jobId, firstName, lastName, email, phone, resume, coverLetter, applicationDate, status, source, rating, notes
+    - Add Interviews table with fields: id, applicantId, interviewDate, interviewers, type, location, feedback, rating, status
+    - Add RecruitmentPipeline table tracking applicant journey stages
+    - _New Feature: Smart Recruitment_
+  
+  - [ ] 30.2 Create job posting management
+    - Implement app/hr/recruitment/jobs/page.tsx with job postings list
+    - Add job posting creation form with rich text editor
+    - Implement job posting templates
+    - Publish jobs to multiple platforms (website, LinkedIn, job boards)
+    - Track job posting performance (views, applications)
+    - _New Feature: Smart Recruitment_
+  
+  - [ ] 30.3 Implement AI-powered resume screening
+    - Use Gemini AI to parse and extract data from resumes (PDF, DOCX)
+    - Automatically extract: name, contact, education, experience, skills
+    - Match applicant qualifications against job requirements
+    - Generate compatibility scores for each applicant
+    - Rank applicants based on AI analysis
+    - Identify red flags or missing qualifications
+    - _New Feature: AI Resume Screening_
+  
+  - [ ] 30.4 Create applicant tracking system (ATS)
+    - Implement app/hr/recruitment/applicants/page.tsx with applicant pipeline
+    - Display Kanban board with stages: Applied → Screening → Interview → Offer → Hired/Rejected
+    - Add drag-and-drop to move applicants between stages
+    - Implement applicant profile with resume viewer and notes
+    - Track communication history with applicants
+    - Send automated emails for status updates
+    - _New Feature: Applicant Tracking_
+  
+  - [ ] 30.5 Implement AI interview assistant
+    - Use Gemini AI to generate interview questions based on job requirements
+    - Suggest behavioral and technical questions
+    - Analyze interview feedback and generate candidate summaries
+    - Compare candidates using AI-powered scoring
+    - Predict candidate success probability
+    - Generate hiring recommendations with reasoning
+    - _New Feature: AI Interview Assistant_
+  
+  - [ ] 30.6 Create recruitment analytics dashboard
+    - Implement app/hr/recruitment/analytics/page.tsx
+    - Display time-to-hire, cost-per-hire, source effectiveness
+    - Show applicant funnel conversion rates
+    - Track diversity metrics
+    - Display hiring manager performance
+    - Use AI to identify bottlenecks and suggest improvements
+    - _New Feature: Recruitment Analytics_
+
+- [ ] 31. Advanced Executive Dashboard and Analytics
+  - [ ] 31.1 Create executive dashboard
+    - Implement app/executive/page.tsx with comprehensive overview
+    - Display real-time KPIs: revenue, profit, orders, inventory value, employee count, customer satisfaction
+    - Add interactive charts with drill-down capabilities
+    - Show alerts and critical notifications
+    - Implement customizable widget layout
+    - Add comparison views (YoY, MoM, QoQ)
+    - _New Feature: Executive Dashboard_
+  
+  - [ ] 31.2 Implement AI-powered business insights
+    - Use Gemini AI to generate daily executive summary
+    - Identify top opportunities and risks
+    - Provide strategic recommendations
+    - Predict quarterly performance
+    - Analyze competitive positioning
+    - Generate what-if scenarios
+    - _New Feature: AI Business Intelligence_
+  
+  - [ ] 31.3 Create predictive analytics module
+    - Implement sales forecasting with multiple models
+    - Predict cash flow for next 6-12 months
+    - Forecast inventory requirements
+    - Predict employee turnover risk
+    - Identify customers at risk of churning
+    - Generate scenario planning reports
+    - _New Feature: Predictive Analytics_
+  
+  - [ ] 31.4 Create comprehensive reporting suite
+    - Implement app/executive/reports/page.tsx
+    - Add board meeting report generator
+    - Create investor reports with financial highlights
+    - Generate compliance reports
+    - Add sustainability and ESG reporting
+    - Implement automated report scheduling and distribution
+    - _New Feature: Executive Reporting_
+
+- [ ] 32. Supply Chain and Supplier Management
+  - [ ] 32.1 Create supplier database schema
+    - Add Suppliers table with fields: id, supplierId, name, type, contactPerson, phone, email, address, country, paymentTerms, rating, status, certifications, createdAt
+    - Add SupplierEvaluations table for performance tracking
+    - Add SupplierContracts table for contract management
+    - Link suppliers to products and purchase orders
+    - _New Feature: Supplier Management_
+  
+  - [ ] 32.2 Create supplier management interface
+    - Implement app/supply-chain/suppliers/page.tsx
+    - Add supplier registration and profile management
+    - Display supplier scorecards with quality, delivery, price metrics
+    - Track supplier certifications and compliance
+    - Implement supplier comparison tools
+    - _New Feature: Supplier Management_
+  
+  - [ ] 32.3 Implement AI-powered supplier selection
+    - Use Gemini AI to analyze supplier performance data
+    - Recommend optimal suppliers for each product
+    - Predict supplier reliability and risk
+    - Suggest alternative suppliers
+    - Optimize supplier portfolio
+    - _New Feature: AI Supplier Intelligence_
+  
+  - [ ] 32.4 Create supply chain analytics
+    - Implement app/supply-chain/analytics/page.tsx
+    - Display lead time analysis
+    - Track on-time delivery rates
+    - Show supply chain costs breakdown
+    - Identify supply chain bottlenecks
+    - Use AI to optimize procurement timing
+    - _New Feature: Supply Chain Analytics_
+
+- [ ] 33. Advanced AI Features and Integrations
+  - [ ] 33.1 Implement conversational AI chatbot
+    - Create AI assistant accessible from all pages
+    - Answer business questions in natural language
+    - Provide data insights on demand
+    - Execute simple tasks via voice commands
+    - Learn from user interactions
+    - _New Feature: AI Chatbot_
+  
+  - [ ] 33.2 Create AI-powered document generation
+    - Generate contracts, agreements, reports automatically
+    - Use templates with AI-powered content filling
+    - Ensure compliance with regulations
+    - Support multiple languages
+    - _New Feature: AI Document Generation_
+  
+  - [ ] 33.3 Implement sentiment analysis
+    - Analyze customer feedback and reviews
+    - Monitor employee satisfaction from surveys
+    - Track social media mentions
+    - Generate sentiment reports
+    - Alert on negative trends
+    - _New Feature: AI Sentiment Analysis_
+  
+  - [ ] 33.4 Create AI-powered workflow automation
+    - Identify repetitive tasks for automation
+    - Suggest process improvements
+    - Automate approval workflows
+    - Optimize resource allocation
+    - _New Feature: AI Workflow Automation_
+
+- [ ] 34. Mobile and Multi-Platform Support
+  - [ ] 34.1 Optimize for mobile devices
+    - Ensure all pages are fully responsive
+    - Implement mobile-specific navigation
+    - Add touch-optimized controls
+    - Optimize performance for mobile networks
+    - _New Feature: Mobile Optimization_
+  
+  - [ ] 34.2 Implement progressive web app features
+    - Add offline functionality for critical features
+    - Implement push notifications
+    - Enable app installation
+    - Add home screen shortcuts
+    - _New Feature: PWA Enhancement_
+  
+  - [ ] 34.3 Create mobile-first features
+    - Implement barcode scanning for inventory
+    - Add photo capture for quality control
+    - Enable GPS tracking for field employees
+    - Implement voice commands
+    - _New Feature: Mobile Features_
+
+- [ ] 35. Compliance and Regulatory Management
+  - [ ] 35.1 Create compliance tracking system
+    - Track regulatory requirements by region
+    - Monitor compliance status
+    - Generate compliance reports
+    - Alert on upcoming deadlines
+    - _New Feature: Compliance Management_
+  
+  - [ ] 35.2 Implement audit trail enhancements
+    - Comprehensive logging of all system activities
+    - Tamper-proof audit logs
+    - Advanced search and filtering
+    - Export audit reports for regulators
+    - _New Feature: Enhanced Audit Trail_
+  
+  - [ ] 35.3 Create data privacy management
+    - Implement GDPR/HIPAA compliance features
+    - Add data retention policies
+    - Enable data export and deletion requests
+    - Track consent management
+    - _New Feature: Data Privacy_
+
+- [ ] 36. System Integration and Database Relationships
+  - [ ] 36.1 Update database schema with new tables
+    - Implement Dexie.js version 2 migration
+    - Add all Quality Control tables (Rejections, QualityInspections, RejectionReasons)
+    - Add all HR tables (Employees, Departments, Positions, Attendance, Leaves, Payroll, PerformanceReviews, Training)
+    - Add all Recruitment tables (JobPostings, Applicants, Interviews)
+    - Add all Supply Chain tables (Suppliers, SupplierEvaluations, SupplierContracts)
+    - Create compound indexes for optimal query performance
+    - Test database migration from version 1 to version 2
+    - _New Feature: Extended Database Schema_
+  
+  - [ ] 36.2 Implement SystemIntegrationManager
+    - Create lib/db/integrations.ts with SystemIntegrationManager class
+    - Implement Quality Control integrations (onRejectionCreated, updateProductQualityScore, updateSupplierQualityScore)
+    - Implement HR integrations (onEmployeeHired, onAttendanceRecorded, onLeaveApproved, onPayrollProcessed)
+    - Implement Recruitment integrations (onApplicationReceived, onInterviewCompleted)
+    - Implement Supply Chain integrations (onSupplierEvaluated, onPurchaseOrderReceived)
+    - Implement cross-module linking (linkEmployeePerformanceToMetrics)
+    - Add comprehensive error handling and logging
+    - _New Feature: System Integration Layer_
+  
+  - [ ] 36.3 Create database service layer for new modules
+    - Implement services/database/rejections.ts with CRUD operations
+    - Implement services/database/quality-inspections.ts
+    - Implement services/database/employees.ts with CRUD and archiving
+    - Implement services/database/departments.ts
+    - Implement services/database/attendance.ts
+    - Implement services/database/leaves.ts
+    - Implement services/database/payroll.ts
+    - Implement services/database/performance-reviews.ts
+    - Implement services/database/training.ts
+    - Implement services/database/job-postings.ts
+    - Implement services/database/applicants.ts
+    - Implement services/database/interviews.ts
+    - Implement services/database/suppliers.ts
+    - Implement services/database/supplier-evaluations.ts
+    - All services should integrate with SystemIntegrationManager
+    - _New Feature: Extended Service Layer_
+  
+  - [ ] 36.4 Update RBAC with new roles and permissions
+    - Update lib/auth/rbac.ts with new Permission enum values
+    - Add permissions for Quality Control (40+ new permissions)
+    - Add permissions for HR Management
+    - Add permissions for Recruitment
+    - Add permissions for Supply Chain
+    - Add permissions for Executive Dashboard
+    - Create role definitions for: executive, quality, hr
+    - Update existing roles with new relevant permissions
+    - Test permission checks across all new modules
+    - _New Feature: Extended RBAC_
+  
+  - [ ] 36.5 Implement cross-module AI analytics
+    - Create services/analytics/cross-module.ts
+    - Implement performCrossModuleAnalysis() using Gemini AI
+    - Analyze correlation between employee satisfaction and quality metrics
+    - Analyze correlation between supplier quality and rejection rates
+    - Analyze correlation between training and performance
+    - Generate executive insights combining all modules
+    - Create predictive models for business outcomes
+    - _New Feature: AI Cross-Module Analytics_
+  
+  - [ ] 36.6 Create unified navigation and routing
+    - Update app/layout.tsx navigation to include all new modules
+    - Add navigation items: Quality Control, HR, Recruitment, Supply Chain, Executive Dashboard
+    - Implement role-based navigation visibility
+    - Add breadcrumbs for deep navigation
+    - Create quick access shortcuts for common tasks
+    - Implement search across all modules
+    - _New Feature: Unified Navigation_
+  
+  - [ ] 36.7 Implement data synchronization and consistency
+    - Create background jobs for data consistency checks
+    - Implement automatic data validation across related tables
+    - Add referential integrity checks
+    - Create data repair utilities for inconsistencies
+    - Implement transaction management for multi-table operations
+    - Add data versioning for critical entities
+    - _New Feature: Data Consistency Layer_
+  
+  - [ ] 36.8 Create comprehensive testing for integrations
+    - Write integration tests for Quality Control ↔ Inventory
+    - Write integration tests for Quality Control ↔ Suppliers
+    - Write integration tests for HR ↔ System Users
+    - Write integration tests for Recruitment ↔ HR
+    - Write integration tests for Suppliers ↔ Quality
+    - Write integration tests for Payroll ↔ Finance
+    - Test cascade operations and data propagation
+    - Test AI-powered cross-module analysis
+    - _New Feature: Integration Testing_
+
 ## Notes
 
 - Tasks marked with `*` are optional and focus on testing and documentation
@@ -1046,3 +1442,71 @@ This implementation plan breaks down the Medical Products Company Management Sys
 - Each task should be completed and tested before moving to the next
 - Refer to the requirements document for detailed acceptance criteria
 - Refer to the design document for implementation details and code examples
+- **New tasks (28-36) add advanced features including Quality Control, HR Management, Smart Recruitment, Executive Analytics, Supply Chain, and AI enhancements**
+- **All new features integrate with Gemini AI for intelligent insights and automation**
+- **Focus on data visualization and analytics for executive decision-making**
+- **Task 36 is CRITICAL - it implements all database integrations and relationships between modules**
+
+## Implementation Priority
+
+### Phase 1: Core Extensions (Tasks 28-35)
+Complete all new feature modules independently:
+1. Quality Control (Task 28)
+2. HR Management (Task 29)
+3. Smart Recruitment (Task 30)
+4. Executive Dashboard (Task 31)
+5. Supply Chain (Task 32)
+6. Advanced AI Features (Task 33)
+7. Mobile Support (Task 34)
+8. Compliance (Task 35)
+
+### Phase 2: System Integration (Task 36) - MUST BE DONE AFTER PHASE 1
+This phase connects everything together:
+1. Database schema migration (36.1)
+2. Integration manager implementation (36.2)
+3. Service layer for all modules (36.3)
+4. RBAC updates (36.4)
+5. Cross-module AI analytics (36.5)
+6. Unified navigation (36.6)
+7. Data synchronization (36.7)
+8. Integration testing (36.8)
+
+### Phase 3: Testing and Deployment (Tasks 26-27)
+Final testing and production deployment
+
+## Database Relationships Summary
+
+### Core Integrations:
+- **Products** ↔ Rejections, QualityInspections, Suppliers, Inventory, Orders
+- **Employees** ↔ Users, Departments, Positions, Attendance, Leaves, Payroll, PerformanceReviews, Training, Rejections, QualityInspections, Sales, StockMovements
+- **Suppliers** ↔ Products, PurchaseOrders, Rejections, SupplierEvaluations, SupplierContracts
+- **Applicants** ↔ JobPostings, Interviews, Employees (when hired)
+- **Orders** ↔ QualityInspections, Rejections, Invoices, Sales, StockMovements
+
+### Automatic Cascade Operations:
+1. **Rejection Created** → Update Product Quality Score, Update Supplier Rating, Adjust Inventory, Notify Quality Manager
+2. **Employee Hired** → Create User Account, Initialize Leave Balances, Enroll in Training, Update Department Stats
+3. **Leave Approved** → Deduct Leave Balance, Create Attendance Records, Notify Team, Reassign Tasks
+4. **Supplier Evaluated** → Update Supplier Score, Flag Low Performers, Update Sourcing Recommendations
+5. **Payroll Processed** → Create Accounting Entry, Update Cash Flow, Generate Payslip, Notify Employee
+
+## AI Integration Points
+
+All modules leverage Gemini AI for:
+- **Quality Control**: Defect detection from images, root cause analysis, corrective action suggestions
+- **HR**: Resume parsing, performance prediction, training recommendations
+- **Recruitment**: Candidate matching, interview question generation, hiring recommendations
+- **Supply Chain**: Supplier selection, risk prediction, alternative sourcing
+- **Executive**: Cross-module insights, predictive analytics, strategic recommendations
+- **Universal**: Natural language queries, automated reporting, anomaly detection
+
+## Total System Scope
+
+- **35+ Database Tables** (15 original + 20 new)
+- **100+ API Endpoints** across all services
+- **50+ UI Pages** covering all modules
+- **60+ Permissions** for granular access control
+- **8 User Roles** (admin, executive, manager, sales, inventory, medical, quality, hr)
+- **Full AI Integration** with Gemini API across all features
+- **Complete Data Relationships** with automatic cascade operations
+- **Comprehensive Analytics** with cross-module insights

@@ -518,11 +518,686 @@ interface User {
   id: string;
   username: string;
   email: string;
-  role: 'admin' | 'manager' | 'sales' | 'inventory' | 'medical';
+  role: 'admin' | 'manager' | 'sales' | 'inventory' | 'medical' | 'hr' | 'quality' | 'executive';
   permissions: string[];
   isActive: boolean;
   lastLogin?: Date;
   createdAt: Date;
+}
+
+// ============================================
+// NEW TABLES FOR EXTENDED FEATURES
+// ============================================
+
+// Quality Control & Rejection Management
+interface Rejection {
+  id: string;
+  rejectionId: string;             // Business-friendly ID (e.g., REJ-2024-001)
+  itemCode: string;                // Product SKU or item identifier
+  productId: string;               // FK to Products
+  machineName: string;             // Machine/equipment that produced the item
+  lotNumber: string;               // Lot number for traceability
+  batchNumber: string;             // Batch number
+  quantity: number;                // Quantity rejected
+  rejectionDate: Date;
+  rejectionReason: string;         // Primary rejection reason
+  rejectionType: 'cosmetic' | 'functional' | 'safety' | 'documentation' | 'other';
+  inspectorId: string;             // FK to Employees
+  supplierId?: string;             // FK to Suppliers (if from supplier)
+  orderId?: string;                // FK to Orders (if related to order)
+  status: 'pending' | 'under-review' | 'corrective-action' | 'resolved' | 'closed';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  images: RejectionImage[];        // Photos of defects
+  correctionActions: CorrectionAction[];
+  costImpact: number;              // Financial impact
+  geminiAnalysis?: {
+    defectType: string;
+    confidence: number;
+    suggestedActions: string[];
+    similarCases: string[];        // IDs of similar rejections
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  resolvedAt?: Date;
+}
+
+interface RejectionImage {
+  id: string;
+  url: string;
+  fileName: string;
+  capturedAt: Date;
+  analysisResults?: {
+    defectType: string;
+    severity: string;
+    confidence: number;
+  };
+}
+
+interface CorrectionAction {
+  id: string;
+  description: string;
+  assignedTo: string;             // Employee ID
+  dueDate: Date;
+  status: 'open' | 'in-progress' | 'completed' | 'verified';
+  completedAt?: Date;
+  effectiveness?: number;          // 0-100 score
+}
+
+interface RejectionReason {
+  id: string;
+  code: string;
+  category: string;
+  description: string;
+  isActive: boolean;
+}
+
+interface QualityInspection {
+  id: string;
+  inspectionId: string;
+  productId: string;               // FK to Products
+  orderId?: string;                // FK to Orders
+  batchNumber: string;
+  inspectionDate: Date;
+  inspectorId: string;             // FK to Employees
+  inspectionType: 'incoming' | 'in-process' | 'final' | 'random';
+  sampleSize: number;
+  passedQuantity: number;
+  failedQuantity: number;
+  status: 'passed' | 'failed' | 'conditional';
+  notes: string;
+  checkpoints: InspectionCheckpoint[];
+  createdAt: Date;
+}
+
+interface InspectionCheckpoint {
+  parameter: string;
+  specification: string;
+  actualValue: string;
+  result: 'pass' | 'fail';
+  notes?: string;
+}
+
+// Human Resources Management
+interface Employee {
+  id: string;
+  employeeId: string;              // Business-friendly ID (e.g., EMP-001)
+  nationalId: string;              // Unique national identifier
+  firstName: string;
+  lastName: string;
+  fullName?: string;               // Computed
+  dateOfBirth: Date;
+  age?: number;                    // Computed
+  gender: 'male' | 'female' | 'other';
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  country: string;
+  
+  // Employment Details
+  departmentId: string;            // FK to Departments
+  positionId: string;              // FK to Positions
+  managerId?: string;              // FK to Employees (direct manager)
+  hireDate: Date;
+  contractType: 'permanent' | 'contract' | 'part-time' | 'intern';
+  contractEndDate?: Date;
+  probationEndDate?: Date;
+  
+  // Compensation
+  basicSalary: number;
+  currency: string;
+  paymentFrequency: 'monthly' | 'bi-weekly' | 'weekly';
+  bankAccount?: string;
+  
+  // Status
+  status: 'active' | 'on-leave' | 'suspended' | 'archived' | 'terminated';
+  terminationDate?: Date;
+  terminationReason?: string;
+  
+  // Personal Details
+  emergencyContact: EmergencyContact;
+  qualifications: Qualification[];
+  certifications: Certification[];
+  languages: Language[];
+  
+  // Documents
+  photo?: string;
+  documents: EmployeeDocument[];
+  
+  // Performance
+  performanceRating?: number;      // Average rating
+  lastReviewDate?: Date;
+  nextReviewDate?: Date;
+  
+  // Leave Balance
+  annualLeaveBalance: number;
+  sickLeaveBalance: number;
+  
+  // System
+  userId?: string;                 // FK to Users (if has system access)
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt?: Date;
+}
+
+interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+  alternatePhone?: string;
+}
+
+interface Qualification {
+  degree: string;
+  institution: string;
+  fieldOfStudy: string;
+  graduationYear: number;
+  grade?: string;
+}
+
+interface Certification {
+  name: string;
+  issuingOrganization: string;
+  issueDate: Date;
+  expiryDate?: Date;
+  credentialId?: string;
+}
+
+interface Language {
+  language: string;
+  proficiency: 'basic' | 'intermediate' | 'advanced' | 'native';
+}
+
+interface EmployeeDocument {
+  id: string;
+  type: 'contract' | 'id-copy' | 'certificate' | 'resume' | 'other';
+  fileName: string;
+  url: string;
+  uploadDate: Date;
+}
+
+interface Department {
+  id: string;
+  departmentId: string;
+  name: string;
+  description?: string;
+  managerId?: string;              // FK to Employees
+  parentDepartmentId?: string;     // For hierarchical structure
+  budget?: number;
+  employeeCount?: number;          // Computed
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Position {
+  id: string;
+  positionId: string;
+  title: string;
+  departmentId: string;            // FK to Departments
+  level: 'entry' | 'junior' | 'mid' | 'senior' | 'lead' | 'manager' | 'director' | 'executive';
+  description: string;
+  responsibilities: string[];
+  requirements: string[];
+  minSalary: number;
+  maxSalary: number;
+  requiredQualifications: string[];
+  requiredSkills: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Attendance {
+  id: string;
+  employeeId: string;              // FK to Employees
+  date: Date;
+  checkIn?: Date;
+  checkOut?: Date;
+  workHours?: number;              // Computed
+  status: 'present' | 'absent' | 'late' | 'half-day' | 'on-leave' | 'holiday';
+  lateMinutes?: number;
+  earlyDepartureMinutes?: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  notes?: string;
+  approvedBy?: string;
+  createdAt: Date;
+}
+
+interface Leave {
+  id: string;
+  leaveId: string;
+  employeeId: string;              // FK to Employees
+  leaveType: 'annual' | 'sick' | 'emergency' | 'unpaid' | 'maternity' | 'paternity' | 'bereavement' | 'other';
+  startDate: Date;
+  endDate: Date;
+  totalDays: number;               // Computed
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  requestDate: Date;
+  approvedBy?: string;             // FK to Employees
+  approvalDate?: Date;
+  rejectionReason?: string;
+  attachments?: string[];          // Medical certificates, etc.
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Payroll {
+  id: string;
+  payrollId: string;
+  employeeId: string;              // FK to Employees
+  month: number;
+  year: number;
+  
+  // Earnings
+  basicSalary: number;
+  allowances: PayrollItem[];
+  overtime: number;
+  bonus: number;
+  totalEarnings: number;           // Computed
+  
+  // Deductions
+  deductions: PayrollItem[];
+  tax: number;
+  insurance: number;
+  totalDeductions: number;         // Computed
+  
+  // Net
+  netSalary: number;               // Computed: totalEarnings - totalDeductions
+  
+  // Payment
+  paymentDate?: Date;
+  paymentMethod: 'bank-transfer' | 'cash' | 'cheque';
+  paymentReference?: string;
+  status: 'draft' | 'approved' | 'paid' | 'cancelled';
+  
+  // Approval
+  approvedBy?: string;
+  approvalDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface PayrollItem {
+  description: string;
+  amount: number;
+  type: 'fixed' | 'variable';
+}
+
+interface PerformanceReview {
+  id: string;
+  reviewId: string;
+  employeeId: string;              // FK to Employees
+  reviewPeriodStart: Date;
+  reviewPeriodEnd: Date;
+  reviewDate: Date;
+  reviewerId: string;              // FK to Employees
+  
+  // Ratings
+  overallRating: number;           // 1-5 scale
+  ratings: PerformanceRating[];
+  
+  // Feedback
+  strengths: string[];
+  areasForImprovement: string[];
+  achievements: string[];
+  goals: PerformanceGoal[];
+  
+  // Next Steps
+  developmentPlan: string;
+  nextReviewDate: Date;
+  
+  // Status
+  status: 'draft' | 'submitted' | 'acknowledged' | 'completed';
+  employeeComments?: string;
+  acknowledgedDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface PerformanceRating {
+  category: string;                // e.g., "Quality of Work", "Communication", "Teamwork"
+  rating: number;                  // 1-5 scale
+  comments?: string;
+}
+
+interface PerformanceGoal {
+  description: string;
+  targetDate: Date;
+  status: 'not-started' | 'in-progress' | 'completed' | 'cancelled';
+  completionDate?: Date;
+}
+
+interface Training {
+  id: string;
+  trainingId: string;
+  title: string;
+  description: string;
+  category: string;
+  type: 'internal' | 'external' | 'online' | 'workshop' | 'certification';
+  
+  // Schedule
+  startDate: Date;
+  endDate: Date;
+  duration: number;                // Hours
+  location?: string;
+  
+  // Instructor
+  instructor?: string;
+  instructorType: 'internal' | 'external';
+  
+  // Participants
+  maxParticipants?: number;
+  attendees: TrainingAttendee[];
+  
+  // Cost
+  costPerParticipant: number;
+  totalCost: number;
+  
+  // Status
+  status: 'planned' | 'ongoing' | 'completed' | 'cancelled';
+  
+  // Materials
+  materials: string[];             // URLs to training materials
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface TrainingAttendee {
+  employeeId: string;
+  enrollmentDate: Date;
+  status: 'enrolled' | 'attended' | 'completed' | 'failed' | 'cancelled';
+  completionDate?: Date;
+  score?: number;
+  certificateUrl?: string;
+  feedback?: string;
+}
+
+// Recruitment Management
+interface JobPosting {
+  id: string;
+  jobId: string;
+  title: string;
+  departmentId: string;            // FK to Departments
+  positionId: string;              // FK to Positions
+  description: string;
+  responsibilities: string[];
+  requirements: string[];
+  qualifications: string[];
+  skills: string[];
+  
+  // Compensation
+  salaryMin?: number;
+  salaryMax?: number;
+  currency: string;
+  benefits: string[];
+  
+  // Location
+  location: string;
+  workType: 'on-site' | 'remote' | 'hybrid';
+  
+  // Dates
+  postedDate: Date;
+  closingDate?: Date;
+  
+  // Status
+  status: 'draft' | 'active' | 'closed' | 'filled' | 'cancelled';
+  
+  // Tracking
+  views: number;
+  applicationsCount: number;
+  
+  // Publishing
+  publishedOn: string[];           // Platforms where job is published
+  
+  // Hiring Manager
+  hiringManagerId: string;         // FK to Employees
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Applicant {
+  id: string;
+  applicantId: string;
+  jobId: string;                   // FK to JobPostings
+  
+  // Personal Info
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address?: string;
+  
+  // Application
+  applicationDate: Date;
+  source: 'website' | 'linkedin' | 'referral' | 'job-board' | 'other';
+  referredBy?: string;
+  
+  // Documents
+  resumeUrl: string;
+  coverLetterUrl?: string;
+  portfolioUrl?: string;
+  
+  // Parsed Resume Data (from AI)
+  parsedData?: {
+    education: Qualification[];
+    experience: WorkExperience[];
+    skills: string[];
+    certifications: string[];
+    summary: string;
+  };
+  
+  // Evaluation
+  aiCompatibilityScore?: number;   // 0-100
+  aiAnalysis?: {
+    strengths: string[];
+    concerns: string[];
+    recommendation: string;
+    confidence: number;
+  };
+  
+  // Status
+  status: 'applied' | 'screening' | 'interview' | 'assessment' | 'offer' | 'hired' | 'rejected' | 'withdrawn';
+  currentStage: string;
+  
+  // Rating
+  overallRating?: number;          // 1-5 scale
+  
+  // Notes
+  notes: ApplicantNote[];
+  
+  // Interviews
+  interviews: string[];            // Interview IDs
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface WorkExperience {
+  company: string;
+  position: string;
+  startDate: string;
+  endDate?: string;
+  description: string;
+  isCurrent: boolean;
+}
+
+interface ApplicantNote {
+  id: string;
+  authorId: string;
+  content: string;
+  createdAt: Date;
+}
+
+interface Interview {
+  id: string;
+  interviewId: string;
+  applicantId: string;             // FK to Applicants
+  jobId: string;                   // FK to JobPostings
+  
+  // Schedule
+  scheduledDate: Date;
+  duration: number;                // Minutes
+  
+  // Type
+  type: 'phone' | 'video' | 'in-person' | 'technical' | 'panel';
+  location?: string;
+  meetingLink?: string;
+  
+  // Interviewers
+  interviewers: InterviewerFeedback[];
+  
+  // Questions (AI-generated)
+  suggestedQuestions?: string[];
+  
+  // Status
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  
+  // Overall Feedback
+  overallRating?: number;          // 1-5 scale
+  recommendation: 'strong-hire' | 'hire' | 'maybe' | 'no-hire';
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface InterviewerFeedback {
+  interviewerId: string;           // FK to Employees
+  rating: number;                  // 1-5 scale
+  feedback: string;
+  strengths: string[];
+  concerns: string[];
+  recommendation: 'strong-hire' | 'hire' | 'maybe' | 'no-hire';
+  submittedAt?: Date;
+}
+
+// Supply Chain Management
+interface Supplier {
+  id: string;
+  supplierId: string;
+  name: string;
+  type: 'manufacturer' | 'distributor' | 'wholesaler' | 'service-provider';
+  
+  // Contact
+  contactPerson: string;
+  phone: string;
+  email: string;
+  website?: string;
+  
+  // Address
+  address: string;
+  city: string;
+  country: string;
+  
+  // Business Terms
+  paymentTerms: string;
+  leadTime: number;                // Days
+  minimumOrderQuantity?: number;
+  currency: string;
+  
+  // Performance
+  rating: number;                  // 0-5 scale
+  qualityScore: number;            // 0-100
+  deliveryScore: number;           // 0-100
+  priceScore: number;              // 0-100
+  overallScore: number;            // Computed average
+  
+  // Compliance
+  certifications: string[];
+  licenses: string[];
+  insuranceExpiry?: Date;
+  
+  // Status
+  status: 'active' | 'inactive' | 'blacklisted';
+  isPreferred: boolean;
+  
+  // Products
+  suppliedProducts: string[];      // Product IDs
+  
+  // Financial
+  totalPurchaseValue?: number;     // Lifetime value
+  outstandingBalance?: number;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface SupplierEvaluation {
+  id: string;
+  supplierId: string;              // FK to Suppliers
+  evaluationDate: Date;
+  evaluatorId: string;             // FK to Employees
+  period: string;                  // e.g., "Q1 2024"
+  
+  // Scores
+  qualityScore: number;
+  deliveryScore: number;
+  priceScore: number;
+  serviceScore: number;
+  complianceScore: number;
+  overallScore: number;
+  
+  // Details
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  
+  // Action Items
+  actionItems: string[];
+  
+  status: 'draft' | 'completed' | 'approved';
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface SupplierContract {
+  id: string;
+  contractId: string;
+  supplierId: string;              // FK to Suppliers
+  
+  // Contract Details
+  title: string;
+  description: string;
+  contractType: 'supply-agreement' | 'service-agreement' | 'framework-agreement';
+  
+  // Dates
+  startDate: Date;
+  endDate: Date;
+  renewalDate?: Date;
+  
+  // Terms
+  paymentTerms: string;
+  deliveryTerms: string;
+  qualityStandards: string;
+  
+  // Products/Services
+  coveredProducts: string[];       // Product IDs
+  
+  // Financial
+  contractValue: number;
+  currency: string;
+  
+  // Documents
+  documentUrl: string;
+  
+  // Status
+  status: 'draft' | 'active' | 'expired' | 'terminated';
+  
+  // Notifications
+  notifyBeforeExpiry: number;      // Days
+  
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
@@ -531,6 +1206,7 @@ interface User {
 
 ```mermaid
 erDiagram
+    %% Core Business Relationships
     CUSTOMERS ||--o{ ORDERS : places
     CUSTOMERS ||--o{ QUOTATIONS : receives
     CUSTOMERS ||--o{ INVOICES : "billed to"
@@ -542,11 +1218,14 @@ erDiagram
     PRODUCTS ||--o{ STOCK_MOVEMENTS : "moved in"
     PRODUCTS ||--o{ PURCHASE_ORDER_ITEMS : "ordered in"
     PRODUCTS ||--o{ MEDICAL_RECORDS : "mentioned in"
+    PRODUCTS ||--o{ REJECTIONS : "rejected from"
+    PRODUCTS ||--o{ QUALITY_INSPECTIONS : "inspected in"
     
     ORDERS ||--o{ ORDER_ITEMS : contains
     ORDERS ||--|| INVOICES : generates
     ORDERS ||--|| SALES : "recorded as"
     ORDERS ||--o{ STOCK_MOVEMENTS : triggers
+    ORDERS ||--o{ QUALITY_INSPECTIONS : "requires inspection"
     
     INVOICES ||--o{ PAYMENTS : "paid by"
     
@@ -556,6 +1235,414 @@ erDiagram
     USERS ||--o{ ORDERS : creates
     USERS ||--o{ SYSTEM_LOGS : generates
     USERS ||--o{ SEARCH_HISTORY : performs
+    
+    %% Quality Control Relationships
+    REJECTIONS }o--|| PRODUCTS : "rejects"
+    REJECTIONS }o--|| EMPLOYEES : "inspected by"
+    REJECTIONS }o--o| SUPPLIERS : "from supplier"
+    REJECTIONS }o--o| ORDERS : "related to"
+    REJECTIONS ||--o{ REJECTION_IMAGES : "has images"
+    REJECTIONS ||--o{ CORRECTION_ACTIONS : "requires actions"
+    
+    QUALITY_INSPECTIONS }o--|| PRODUCTS : inspects
+    QUALITY_INSPECTIONS }o--|| EMPLOYEES : "performed by"
+    QUALITY_INSPECTIONS }o--o| ORDERS : "for order"
+    
+    %% HR Management Relationships
+    EMPLOYEES }o--|| DEPARTMENTS : "works in"
+    EMPLOYEES }o--|| POSITIONS : "holds position"
+    EMPLOYEES }o--o| EMPLOYEES : "reports to"
+    EMPLOYEES ||--o{ ATTENDANCE : "has attendance"
+    EMPLOYEES ||--o{ LEAVES : "requests leave"
+    EMPLOYEES ||--o{ PAYROLL : "receives salary"
+    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "reviewed in"
+    EMPLOYEES ||--o{ TRAINING_ATTENDEES : "attends training"
+    EMPLOYEES }o--o| USERS : "has system access"
+    
+    DEPARTMENTS ||--o{ EMPLOYEES : employs
+    DEPARTMENTS }o--o| EMPLOYEES : "managed by"
+    DEPARTMENTS ||--o{ POSITIONS : "has positions"
+    DEPARTMENTS ||--o{ JOB_POSTINGS : "posts jobs"
+    
+    POSITIONS ||--o{ EMPLOYEES : "filled by"
+    POSITIONS ||--o{ JOB_POSTINGS : "for position"
+    
+    PAYROLL }o--|| EMPLOYEES : "paid to"
+    
+    PERFORMANCE_REVIEWS }o--|| EMPLOYEES : "reviews employee"
+    PERFORMANCE_REVIEWS }o--|| EMPLOYEES : "reviewed by"
+    
+    TRAINING ||--o{ TRAINING_ATTENDEES : "has attendees"
+    TRAINING_ATTENDEES }o--|| EMPLOYEES : "attended by"
+    
+    %% Recruitment Relationships
+    JOB_POSTINGS ||--o{ APPLICANTS : "receives applications"
+    JOB_POSTINGS }o--|| DEPARTMENTS : "for department"
+    JOB_POSTINGS }o--|| POSITIONS : "for position"
+    JOB_POSTINGS }o--|| EMPLOYEES : "hiring manager"
+    
+    APPLICANTS }o--|| JOB_POSTINGS : "applies to"
+    APPLICANTS ||--o{ INTERVIEWS : "participates in"
+    APPLICANTS ||--o{ APPLICANT_NOTES : "has notes"
+    
+    INTERVIEWS }o--|| APPLICANTS : "interviews applicant"
+    INTERVIEWS }o--|| JOB_POSTINGS : "for job"
+    INTERVIEWS ||--o{ INTERVIEWER_FEEDBACK : "receives feedback"
+    INTERVIEWER_FEEDBACK }o--|| EMPLOYEES : "from interviewer"
+    
+    %% Supply Chain Relationships
+    SUPPLIERS ||--o{ PRODUCTS : supplies
+    SUPPLIERS ||--o{ PURCHASE_ORDERS : "receives PO"
+    SUPPLIERS ||--o{ REJECTIONS : "source of rejection"
+    SUPPLIERS ||--o{ SUPPLIER_EVALUATIONS : "evaluated in"
+    SUPPLIERS ||--o{ SUPPLIER_CONTRACTS : "has contracts"
+    
+    SUPPLIER_EVALUATIONS }o--|| SUPPLIERS : evaluates
+    SUPPLIER_EVALUATIONS }o--|| EMPLOYEES : "evaluated by"
+    
+    SUPPLIER_CONTRACTS }o--|| SUPPLIERS : "contracted with"
+    
+    PURCHASE_ORDERS }o--|| SUPPLIERS : "ordered from"
+    
+    %% Cross-Module Integrations
+    SALES }o--|| EMPLOYEES : "sold by"
+    STOCK_MOVEMENTS }o--|| EMPLOYEES : "performed by"
+    CORRECTION_ACTIONS }o--|| EMPLOYEES : "assigned to"
+    LEAVES }o--|| EMPLOYEES : "approved by"
+```
+
+### Comprehensive System Integration Architecture
+
+The system implements a fully integrated architecture where all modules communicate seamlessly:
+
+```typescript
+// lib/db/integrations.ts
+class SystemIntegrationManager {
+  
+  // ============================================
+  // QUALITY CONTROL INTEGRATIONS
+  // ============================================
+  
+  // When rejection is created
+  async onRejectionCreated(rejection: Rejection) {
+    // 1. Update product quality metrics
+    await this.updateProductQualityScore(rejection.productId);
+    
+    // 2. Update supplier rating if from supplier
+    if (rejection.supplierId) {
+      await this.updateSupplierQualityScore(rejection.supplierId);
+    }
+    
+    // 3. Adjust inventory (remove rejected items)
+    await this.adjustInventoryForRejection(rejection);
+    
+    // 4. Create notification for quality manager
+    await this.notifyQualityManager(rejection);
+    
+    // 5. If critical, notify executive team
+    if (rejection.severity === 'critical') {
+      await this.notifyExecutiveTeam('critical_rejection', rejection);
+    }
+    
+    // 6. Link to related order if applicable
+    if (rejection.orderId) {
+      await this.linkRejectionToOrder(rejection);
+    }
+    
+    // 7. Use AI to find similar past rejections
+    const similarCases = await this.findSimilarRejections(rejection);
+    await this.updateRejectionWithSimilarCases(rejection.id, similarCases);
+  }
+  
+  // ============================================
+  // HR INTEGRATIONS
+  // ============================================
+  
+  // When employee is hired
+  async onEmployeeHired(employee: Employee, applicantId?: string) {
+    // 1. Create user account if needed
+    if (employee.positionId) {
+      const position = await db.positions.get(employee.positionId);
+      const role = this.mapPositionToRole(position);
+      await this.createUserAccount(employee, role);
+    }
+    
+    // 2. Initialize leave balances
+    await this.initializeLeaveBalances(employee.id);
+    
+    // 3. Enroll in mandatory training
+    await this.enrollInMandatoryTraining(employee.id);
+    
+    // 4. Update department employee count
+    await this.updateDepartmentStats(employee.departmentId);
+    
+    // 5. If from recruitment, update applicant status
+    if (applicantId) {
+      await db.applicants.update(applicantId, { status: 'hired' });
+    }
+    
+    // 6. Create onboarding checklist
+    await this.createOnboardingChecklist(employee.id);
+    
+    // 7. Notify relevant stakeholders
+    await this.notifyNewHire(employee);
+  }
+  
+  // When employee attendance is recorded
+  async onAttendanceRecorded(attendance: Attendance) {
+    // 1. Calculate work hours
+    if (attendance.checkIn && attendance.checkOut) {
+      const hours = this.calculateWorkHours(attendance.checkIn, attendance.checkOut);
+      await db.attendance.update(attendance.id, { workHours: hours });
+    }
+    
+    // 2. Check if late and notify manager
+    if (attendance.status === 'late') {
+      await this.notifyManagerOfLateArrival(attendance);
+    }
+    
+    // 3. Update monthly attendance summary
+    await this.updateMonthlyAttendanceSummary(attendance.employeeId);
+    
+    // 4. If employee is in quality/production, link to their work output
+    await this.linkAttendanceToProductionMetrics(attendance);
+  }
+  
+  // When leave is approved
+  async onLeaveApproved(leave: Leave) {
+    // 1. Deduct from leave balance
+    await this.deductLeaveBalance(leave);
+    
+    // 2. Create attendance records for leave period
+    await this.createLeaveAttendanceRecords(leave);
+    
+    // 3. Notify team members
+    await this.notifyTeamOfLeave(leave);
+    
+    // 4. Adjust work schedules if needed
+    await this.adjustWorkSchedules(leave);
+    
+    // 5. If employee handles critical tasks, reassign
+    await this.reassignCriticalTasks(leave.employeeId, leave.startDate, leave.endDate);
+  }
+  
+  // When payroll is processed
+  async onPayrollProcessed(payroll: Payroll) {
+    // 1. Update employee salary history
+    await this.updateSalaryHistory(payroll);
+    
+    // 2. Create accounting entry
+    await this.createPayrollAccountingEntry(payroll);
+    
+    // 3. Update cash flow projections
+    await this.updateCashFlowProjections();
+    
+    // 4. Generate payslip
+    await this.generatePayslip(payroll);
+    
+    // 5. Send notification to employee
+    await this.notifyEmployeeOfPayment(payroll);
+  }
+  
+  // ============================================
+  // RECRUITMENT INTEGRATIONS
+  // ============================================
+  
+  // When applicant applies
+  async onApplicationReceived(applicant: Applicant) {
+    // 1. Use AI to parse resume
+    const parsedData = await this.parseResumeWithAI(applicant.resumeUrl);
+    await db.applicants.update(applicant.id, { parsedData });
+    
+    // 2. Calculate compatibility score
+    const job = await db.jobPostings.get(applicant.jobId);
+    const score = await this.calculateCompatibilityScore(applicant, job);
+    await db.applicants.update(applicant.id, { aiCompatibilityScore: score });
+    
+    // 3. Update job posting application count
+    await db.jobPostings.update(applicant.jobId, {
+      applicationsCount: (job.applicationsCount || 0) + 1
+    });
+    
+    // 4. Notify hiring manager
+    await this.notifyHiringManager(applicant);
+    
+    // 5. Send acknowledgment email to applicant
+    await this.sendApplicationAcknowledgment(applicant);
+  }
+  
+  // When interview is completed
+  async onInterviewCompleted(interview: Interview) {
+    // 1. Calculate overall rating from all interviewers
+    const overallRating = this.calculateOverallInterviewRating(interview);
+    await db.interviews.update(interview.id, { overallRating });
+    
+    // 2. Update applicant status
+    await this.updateApplicantAfterInterview(interview);
+    
+    // 3. Use AI to generate interview summary
+    const summary = await this.generateInterviewSummary(interview);
+    
+    // 4. If strong candidate, fast-track to next stage
+    if (interview.recommendation === 'strong-hire') {
+      await this.fastTrackApplicant(interview.applicantId);
+    }
+  }
+  
+  // ============================================
+  // SUPPLY CHAIN INTEGRATIONS
+  // ============================================
+  
+  // When supplier evaluation is completed
+  async onSupplierEvaluated(evaluation: SupplierEvaluation) {
+    // 1. Update supplier overall score
+    await db.suppliers.update(evaluation.supplierId, {
+      rating: evaluation.overallScore / 20, // Convert to 5-point scale
+      qualityScore: evaluation.qualityScore,
+      deliveryScore: evaluation.deliveryScore,
+      priceScore: evaluation.priceScore
+    });
+    
+    // 2. If score is low, flag for review
+    if (evaluation.overallScore < 60) {
+      await this.flagSupplierForReview(evaluation.supplierId);
+    }
+    
+    // 3. Update product sourcing recommendations
+    await this.updateProductSourcingRecommendations(evaluation.supplierId);
+    
+    // 4. Use AI to suggest alternative suppliers if needed
+    if (evaluation.overallScore < 70) {
+      const alternatives = await this.suggestAlternativeSuppliers(evaluation.supplierId);
+      await this.notifyProcurementTeam(alternatives);
+    }
+  }
+  
+  // When purchase order is received
+  async onPurchaseOrderReceived(po: PurchaseOrder) {
+    // 1. Update inventory
+    await this.updateInventoryFromPO(po);
+    
+    // 2. Trigger quality inspection
+    await this.createQualityInspections(po);
+    
+    // 3. Update supplier delivery performance
+    await this.updateSupplierDeliveryMetrics(po);
+    
+    // 4. Create payment obligation
+    await this.createPaymentObligation(po);
+    
+    // 5. Update cash flow projections
+    await this.updateCashFlowProjections();
+  }
+  
+  // ============================================
+  // CROSS-MODULE INTEGRATIONS
+  // ============================================
+  
+  // Link employee performance to business metrics
+  async linkEmployeePerformanceToMetrics(employeeId: string) {
+    const employee = await db.employees.get(employeeId);
+    
+    // If sales employee, link to sales performance
+    if (employee.departmentId === 'sales') {
+      const sales = await db.sales.where({ salesPerson: employeeId }).toArray();
+      const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+      return { totalRevenue, salesCount: sales.length };
+    }
+    
+    // If quality inspector, link to rejection rates
+    if (employee.positionId === 'quality-inspector') {
+      const inspections = await db.qualityInspections
+        .where({ inspectorId: employeeId })
+        .toArray();
+      const rejections = await db.rejections
+        .where({ inspectorId: employeeId })
+        .toArray();
+      return { inspectionsCount: inspections.length, rejectionsFound: rejections.length };
+    }
+    
+    // If inventory manager, link to stock accuracy
+    if (employee.departmentId === 'inventory') {
+      const movements = await db.stockMovements
+        .where({ performedBy: employeeId })
+        .toArray();
+      return { movementsProcessed: movements.length };
+    }
+  }
+  
+  // Generate comprehensive executive dashboard data
+  async generateExecutiveDashboardData() {
+    const [
+      financialMetrics,
+      hrMetrics,
+      qualityMetrics,
+      supplyChainMetrics,
+      salesMetrics
+    ] = await Promise.all([
+      this.getFinancialMetrics(),
+      this.getHRMetrics(),
+      this.getQualityMetrics(),
+      this.getSupplyChainMetrics(),
+      this.getSalesMetrics()
+    ]);
+    
+    // Use AI to generate insights
+    const aiInsights = await this.generateExecutiveInsights({
+      financialMetrics,
+      hrMetrics,
+      qualityMetrics,
+      supplyChainMetrics,
+      salesMetrics
+    });
+    
+    return {
+      financialMetrics,
+      hrMetrics,
+      qualityMetrics,
+      supplyChainMetrics,
+      salesMetrics,
+      aiInsights,
+      alerts: await this.getExecutiveAlerts(),
+      recommendations: await this.getExecutiveRecommendations()
+    };
+  }
+  
+  // AI-powered cross-module analysis
+  async performCrossModuleAnalysis() {
+    // Analyze correlation between employee satisfaction and quality metrics
+    const employeeSatisfaction = await this.getAverageEmployeeSatisfaction();
+    const qualityMetrics = await this.getQualityMetrics();
+    
+    // Analyze correlation between supplier quality and rejection rates
+    const supplierQuality = await this.getAverageSupplierQuality();
+    const rejectionRates = await this.getRejectionRates();
+    
+    // Analyze correlation between training and performance
+    const trainingHours = await this.getAverageTrainingHours();
+    const performanceRatings = await this.getAveragePerformanceRatings();
+    
+    // Use AI to identify patterns and correlations
+    const analysis = await geminiService.generateContent(`
+      Analyze these business metrics and identify correlations:
+      
+      Employee Satisfaction: ${employeeSatisfaction}
+      Quality Metrics: ${JSON.stringify(qualityMetrics)}
+      Supplier Quality: ${supplierQuality}
+      Rejection Rates: ${JSON.stringify(rejectionRates)}
+      Training Hours: ${trainingHours}
+      Performance Ratings: ${performanceRatings}
+      
+      Provide insights on:
+      1. Correlations between metrics
+      2. Root causes of issues
+      3. Recommendations for improvement
+      4. Predicted impact of interventions
+    `);
+    
+    return JSON.parse(analysis);
+  }
+}
 ```
 
 ### Relationship Manager Implementation
@@ -649,6 +1736,7 @@ class RelationshipManager {
 import Dexie, { Table } from 'dexie';
 
 export class MedicalProductsDB extends Dexie {
+  // Core Business Tables
   products!: Table<Product>;
   customers!: Table<Customer>;
   orders!: Table<Order>;
@@ -664,10 +1752,36 @@ export class MedicalProductsDB extends Dexie {
   searchHistory!: Table<SearchHistory>;
   systemLogs!: Table<SystemLog>;
   users!: Table<User>;
+  
+  // Quality Control Tables
+  rejections!: Table<Rejection>;
+  rejectionReasons!: Table<RejectionReason>;
+  qualityInspections!: Table<QualityInspection>;
+  
+  // HR Management Tables
+  employees!: Table<Employee>;
+  departments!: Table<Department>;
+  positions!: Table<Position>;
+  attendance!: Table<Attendance>;
+  leaves!: Table<Leave>;
+  payroll!: Table<Payroll>;
+  performanceReviews!: Table<PerformanceReview>;
+  training!: Table<Training>;
+  
+  // Recruitment Tables
+  jobPostings!: Table<JobPosting>;
+  applicants!: Table<Applicant>;
+  interviews!: Table<Interview>;
+  
+  // Supply Chain Tables
+  suppliers!: Table<Supplier>;
+  supplierEvaluations!: Table<SupplierEvaluation>;
+  supplierContracts!: Table<SupplierContract>;
 
   constructor() {
     super('MedicalProductsDB');
     
+    // Version 1: Original tables
     this.version(1).stores({
       products: 'id, sku, name, category, manufacturer, stockQuantity, expiryDate, isActive, createdAt',
       customers: 'id, customerId, name, type, email, segment, isActive, createdAt',
@@ -684,6 +1798,51 @@ export class MedicalProductsDB extends Dexie {
       searchHistory: 'id, query, entityType, timestamp, userId',
       systemLogs: 'id, action, entityType, timestamp, userId, status',
       users: 'id, username, email, role, isActive'
+    });
+    
+    // Version 2: Add Quality Control, HR, Recruitment, and Supply Chain tables
+    this.version(2).stores({
+      // Keep all existing tables
+      products: 'id, sku, name, category, manufacturer, stockQuantity, expiryDate, isActive, createdAt',
+      customers: 'id, customerId, name, type, email, segment, isActive, createdAt',
+      orders: 'id, orderId, customerId, orderDate, status, paymentStatus, salesPerson, createdAt',
+      inventory: 'id, productId, warehouseLocation, quantity, lastRestocked',
+      sales: 'id, saleId, orderId, customerId, saleDate, salesPerson, createdAt',
+      patients: 'id, patientId, nationalId, firstName, lastName, linkedCustomerId, createdAt',
+      medicalRecords: 'id, recordId, patientId, recordType, visitDate, doctorName, createdAt',
+      quotations: 'id, quotationId, customerId, status, validUntil, createdAt',
+      invoices: 'id, invoiceId, orderId, customerId, dueDate, status, createdAt',
+      payments: 'id, paymentId, invoiceId, customerId, paymentDate, createdAt',
+      stockMovements: 'id, productId, type, timestamp, performedBy',
+      purchaseOrders: 'id, poId, supplierId, orderDate, status, createdAt',
+      searchHistory: 'id, query, entityType, timestamp, userId',
+      systemLogs: 'id, action, entityType, timestamp, userId, status',
+      users: 'id, username, email, role, isActive',
+      
+      // Quality Control Tables
+      rejections: 'id, rejectionId, itemCode, productId, batchNumber, lotNumber, rejectionDate, inspectorId, supplierId, orderId, status, severity, createdAt',
+      rejectionReasons: 'id, code, category, isActive',
+      qualityInspections: 'id, inspectionId, productId, orderId, batchNumber, inspectionDate, inspectorId, inspectionType, status, createdAt',
+      
+      // HR Management Tables
+      employees: 'id, employeeId, nationalId, firstName, lastName, departmentId, positionId, managerId, hireDate, status, userId, createdAt',
+      departments: 'id, departmentId, name, managerId, isActive, createdAt',
+      positions: 'id, positionId, title, departmentId, level, isActive, createdAt',
+      attendance: 'id, employeeId, date, status, createdAt',
+      leaves: 'id, leaveId, employeeId, leaveType, startDate, endDate, status, requestDate, approvedBy, createdAt',
+      payroll: 'id, payrollId, employeeId, month, year, status, paymentDate, createdAt',
+      performanceReviews: 'id, reviewId, employeeId, reviewDate, reviewerId, overallRating, status, createdAt',
+      training: 'id, trainingId, title, category, type, startDate, endDate, status, createdAt',
+      
+      // Recruitment Tables
+      jobPostings: 'id, jobId, title, departmentId, positionId, status, postedDate, closingDate, hiringManagerId, createdAt',
+      applicants: 'id, applicantId, jobId, firstName, lastName, email, applicationDate, status, source, createdAt',
+      interviews: 'id, interviewId, applicantId, jobId, scheduledDate, type, status, createdAt',
+      
+      // Supply Chain Tables
+      suppliers: 'id, supplierId, name, type, country, rating, status, isPreferred, createdAt',
+      supplierEvaluations: 'id, supplierId, evaluationDate, evaluatorId, period, overallScore, status, createdAt',
+      supplierContracts: 'id, contractId, supplierId, contractType, startDate, endDate, status, createdAt'
     });
   }
 }
@@ -1561,6 +2720,55 @@ export enum Permission {
   VIEW_MEDICAL_RECORDS = 'view_medical_records',
   CREATE_MEDICAL_RECORDS = 'create_medical_records',
   
+  // Quality Control permissions
+  VIEW_REJECTIONS = 'view_rejections',
+  CREATE_REJECTIONS = 'create_rejections',
+  EDIT_REJECTIONS = 'edit_rejections',
+  APPROVE_REJECTIONS = 'approve_rejections',
+  VIEW_QUALITY_INSPECTIONS = 'view_quality_inspections',
+  CREATE_QUALITY_INSPECTIONS = 'create_quality_inspections',
+  MANAGE_QUALITY_STANDARDS = 'manage_quality_standards',
+  
+  // HR permissions
+  VIEW_EMPLOYEES = 'view_employees',
+  CREATE_EMPLOYEES = 'create_employees',
+  EDIT_EMPLOYEES = 'edit_employees',
+  ARCHIVE_EMPLOYEES = 'archive_employees',
+  VIEW_ATTENDANCE = 'view_attendance',
+  MANAGE_ATTENDANCE = 'manage_attendance',
+  VIEW_LEAVES = 'view_leaves',
+  APPROVE_LEAVES = 'approve_leaves',
+  VIEW_PAYROLL = 'view_payroll',
+  MANAGE_PAYROLL = 'manage_payroll',
+  VIEW_PERFORMANCE = 'view_performance',
+  MANAGE_PERFORMANCE = 'manage_performance',
+  VIEW_TRAINING = 'view_training',
+  MANAGE_TRAINING = 'manage_training',
+  VIEW_DEPARTMENTS = 'view_departments',
+  MANAGE_DEPARTMENTS = 'manage_departments',
+  
+  // Recruitment permissions
+  VIEW_JOB_POSTINGS = 'view_job_postings',
+  CREATE_JOB_POSTINGS = 'create_job_postings',
+  EDIT_JOB_POSTINGS = 'edit_job_postings',
+  VIEW_APPLICANTS = 'view_applicants',
+  MANAGE_APPLICANTS = 'manage_applicants',
+  SCHEDULE_INTERVIEWS = 'schedule_interviews',
+  CONDUCT_INTERVIEWS = 'conduct_interviews',
+  MAKE_HIRING_DECISIONS = 'make_hiring_decisions',
+  
+  // Supply Chain permissions
+  VIEW_SUPPLIERS = 'view_suppliers',
+  CREATE_SUPPLIERS = 'create_suppliers',
+  EDIT_SUPPLIERS = 'edit_suppliers',
+  EVALUATE_SUPPLIERS = 'evaluate_suppliers',
+  MANAGE_SUPPLIER_CONTRACTS = 'manage_supplier_contracts',
+  
+  // Executive permissions
+  VIEW_EXECUTIVE_DASHBOARD = 'view_executive_dashboard',
+  VIEW_ALL_ANALYTICS = 'view_all_analytics',
+  EXPORT_ALL_DATA = 'export_all_data',
+  
   // Admin permissions
   MANAGE_USERS = 'manage_users',
   VIEW_LOGS = 'view_logs',
@@ -1569,6 +2777,24 @@ export enum Permission {
 
 export const RolePermissions: Record<string, Permission[]> = {
   admin: Object.values(Permission),
+  
+  executive: [
+    Permission.VIEW_EXECUTIVE_DASHBOARD,
+    Permission.VIEW_ALL_ANALYTICS,
+    Permission.VIEW_FINANCIAL,
+    Permission.VIEW_REPORTS,
+    Permission.VIEW_PRODUCTS,
+    Permission.VIEW_CUSTOMERS,
+    Permission.VIEW_ORDERS,
+    Permission.VIEW_INVENTORY,
+    Permission.VIEW_EMPLOYEES,
+    Permission.VIEW_DEPARTMENTS,
+    Permission.VIEW_PERFORMANCE,
+    Permission.VIEW_REJECTIONS,
+    Permission.VIEW_QUALITY_INSPECTIONS,
+    Permission.VIEW_SUPPLIERS,
+    Permission.EXPORT_ALL_DATA
+  ],
   
   manager: [
     Permission.VIEW_PRODUCTS,
@@ -1585,7 +2811,13 @@ export const RolePermissions: Record<string, Permission[]> = {
     Permission.VIEW_INVENTORY,
     Permission.ADJUST_INVENTORY,
     Permission.VIEW_PATIENTS,
-    Permission.VIEW_MEDICAL_RECORDS
+    Permission.VIEW_MEDICAL_RECORDS,
+    Permission.VIEW_EMPLOYEES,
+    Permission.VIEW_ATTENDANCE,
+    Permission.APPROVE_LEAVES,
+    Permission.VIEW_PERFORMANCE,
+    Permission.VIEW_REJECTIONS,
+    Permission.VIEW_QUALITY_INSPECTIONS
   ],
   
   sales: [
@@ -1605,7 +2837,9 @@ export const RolePermissions: Record<string, Permission[]> = {
     Permission.EDIT_PRODUCTS,
     Permission.VIEW_INVENTORY,
     Permission.ADJUST_INVENTORY,
-    Permission.VIEW_ORDERS
+    Permission.VIEW_ORDERS,
+    Permission.VIEW_SUPPLIERS,
+    Permission.VIEW_REJECTIONS
   ],
   
   medical: [
@@ -1614,6 +2848,48 @@ export const RolePermissions: Record<string, Permission[]> = {
     Permission.VIEW_MEDICAL_RECORDS,
     Permission.CREATE_MEDICAL_RECORDS,
     Permission.VIEW_PRODUCTS
+  ],
+  
+  quality: [
+    Permission.VIEW_PRODUCTS,
+    Permission.VIEW_INVENTORY,
+    Permission.VIEW_ORDERS,
+    Permission.VIEW_REJECTIONS,
+    Permission.CREATE_REJECTIONS,
+    Permission.EDIT_REJECTIONS,
+    Permission.APPROVE_REJECTIONS,
+    Permission.VIEW_QUALITY_INSPECTIONS,
+    Permission.CREATE_QUALITY_INSPECTIONS,
+    Permission.MANAGE_QUALITY_STANDARDS,
+    Permission.VIEW_SUPPLIERS,
+    Permission.EVALUATE_SUPPLIERS
+  ],
+  
+  hr: [
+    Permission.VIEW_EMPLOYEES,
+    Permission.CREATE_EMPLOYEES,
+    Permission.EDIT_EMPLOYEES,
+    Permission.ARCHIVE_EMPLOYEES,
+    Permission.VIEW_ATTENDANCE,
+    Permission.MANAGE_ATTENDANCE,
+    Permission.VIEW_LEAVES,
+    Permission.APPROVE_LEAVES,
+    Permission.VIEW_PAYROLL,
+    Permission.MANAGE_PAYROLL,
+    Permission.VIEW_PERFORMANCE,
+    Permission.MANAGE_PERFORMANCE,
+    Permission.VIEW_TRAINING,
+    Permission.MANAGE_TRAINING,
+    Permission.VIEW_DEPARTMENTS,
+    Permission.MANAGE_DEPARTMENTS,
+    Permission.VIEW_JOB_POSTINGS,
+    Permission.CREATE_JOB_POSTINGS,
+    Permission.EDIT_JOB_POSTINGS,
+    Permission.VIEW_APPLICANTS,
+    Permission.MANAGE_APPLICANTS,
+    Permission.SCHEDULE_INTERVIEWS,
+    Permission.CONDUCT_INTERVIEWS,
+    Permission.MAKE_HIRING_DECISIONS
   ]
 };
 
