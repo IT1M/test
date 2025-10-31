@@ -8,3 +8,4 @@ export * from "./label";
 export * from "./select";
 export * from "./table";
 export * from "./tabs";
+export * from "./textarea";
