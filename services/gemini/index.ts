@@ -1,83 +1,49 @@
 // Gemini AI Services - Main Export File
-// Centralized exports for all Gemini AI services
+// Centralized exports for all AI-powered services
 
-import { GeminiService as GeminiServiceClass, getGeminiService as getGeminiServiceFn, resetGeminiService as resetGeminiServiceFn } from './client';
-import { ForecastingService as ForecastingServiceClass } from './forecasting';
-import { PricingService as PricingServiceClass } from './pricing';
-import { InsightsService as InsightsServiceClass } from './insights';
-import { MedicalAnalysisService as MedicalAnalysisServiceClass } from './medical';
-import { OCRService as OCRServiceClass } from './ocr';
-import { SystemOptimizationService as SystemOptimizationServiceClass, getSystemOptimizationService as getSystemOptimizationServiceFn } from './system-optimization';
+// Core client
+export { GeminiService, getGeminiService, resetGeminiService } from './client';
 
-export { GeminiServiceClass as GeminiService, getGeminiServiceFn as getGeminiService, resetGeminiServiceFn as resetGeminiService };
-export { ForecastingServiceClass as ForecastingService };
-export { PricingServiceClass as PricingService };
-export { InsightsServiceClass as InsightsService };
-export { MedicalAnalysisServiceClass as MedicalAnalysisService };
-export { OCRServiceClass as OCRService };
-export { SystemOptimizationServiceClass as SystemOptimizationService, getSystemOptimizationServiceFn as getSystemOptimizationService };
+// Existing services
+export { ForecastingService } from './forecasting';
+export { PricingService } from './pricing';
+export { InsightsService } from './insights';
+export { MedicalAnalysisService } from './medical';
+export { OCRService } from './ocr';
 
-// Re-export types for convenience
-export type {
-  DemandForecast,
-  PricingRecommendation,
-  BundleRecommendation,
-  DailyBriefing,
-  Anomaly,
-  MedicalAnalysis,
-  ProcessedDocument,
-  DemandPrediction,
-} from '@/types/database';
+// New advanced AI services
+export {
+  ChatbotService,
+  getChatbotService,
+  type ChatMessage,
+  type ChatAction,
+  type ChatSession,
+} from './chatbot';
 
-/**
- * Initialize all Gemini services with a single client
- * 
- * @example
- * ```typescript
- * const services = initializeGeminiServices();
- * const forecast = await services.forecasting.forecastDemand('product-id', 30);
- * const pricing = await services.pricing.optimizePricing('product-id');
- * ```
- */
-export function initializeGeminiServices() {
-  const geminiClient = getGeminiServiceFn();
+export {
+  DocumentGenerationService,
+  getDocumentGenerationService,
+  type DocumentTemplate,
+  type GeneratedDocument,
+} from './document-generation';
 
-  return {
-    client: geminiClient,
-    forecasting: new ForecastingServiceClass(geminiClient),
-    pricing: new PricingServiceClass(geminiClient),
-    insights: new InsightsServiceClass(geminiClient),
-    medical: new MedicalAnalysisServiceClass(geminiClient),
-    ocr: new OCRServiceClass(geminiClient),
-    systemOptimization: getSystemOptimizationServiceFn(),
-  };
-}
+export {
+  SentimentAnalysisService,
+  getSentimentAnalysisService,
+  type SentimentScore,
+  type SentimentAnalysis,
+  type FeedbackItem,
+  type SentimentTrend,
+} from './sentiment-analysis';
 
-/**
- * Singleton instance of all services
- */
-let servicesInstance: ReturnType<typeof initializeGeminiServices> | null = null;
-
-/**
- * Get singleton instance of all Gemini services
- * 
- * @example
- * ```typescript
- * const services = getGeminiServices();
- * await services.forecasting.forecastDemand('product-id', 30);
- * ```
- */
-export function getGeminiServices() {
-  if (!servicesInstance) {
-    servicesInstance = initializeGeminiServices();
-  }
-  return servicesInstance;
-}
-
-/**
- * Reset services instance (useful for testing)
- */
-export function resetGeminiServices() {
-  servicesInstance = null;
-  resetGeminiServiceFn();
-}
+export {
+  WorkflowAutomationService,
+  getWorkflowAutomationService,
+  type WorkflowRule,
+  type WorkflowTrigger,
+  type WorkflowCondition,
+  type WorkflowAction,
+  type WorkflowExecutionResult,
+  type TaskPattern,
+  type ProcessImprovement,
+} from './workflow-automation';

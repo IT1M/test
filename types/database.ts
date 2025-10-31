@@ -41,6 +41,11 @@ export type InterviewType = 'phone' | 'video' | 'in-person' | 'technical' | 'pan
 export type InterviewStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
 export type HiringRecommendation = 'strong-hire' | 'hire' | 'maybe' | 'no-hire';
 export type WorkType = 'on-site' | 'remote' | 'hybrid';
+export type SupplierType = 'manufacturer' | 'distributor' | 'wholesaler' | 'service-provider';
+export type SupplierStatus = 'active' | 'inactive' | 'blacklisted';
+export type SupplierEvaluationStatus = 'draft' | 'completed' | 'approved';
+export type SupplierContractType = 'supply-agreement' | 'service-agreement' | 'framework-agreement';
+export type SupplierContractStatus = 'draft' | 'active' | 'expired' | 'terminated';
 
 // ============================================================================
 // SUPPORTING TYPES
@@ -1058,4 +1063,127 @@ export interface RecruitmentPipeline {
   exitedAt?: Date;
   durationDays?: number;
   notes?: string;
+}
+
+// ============================================================================
+// SUPPLY CHAIN AND SUPPLIER MANAGEMENT
+// ============================================================================
+
+export interface Supplier {
+  id: string;
+  supplierId: string;
+  name: string;
+  type: SupplierType;
+  
+  // Contact
+  contactPerson: string;
+  phone: string;
+  email: string;
+  website?: string;
+  
+  // Address
+  address: string;
+  city: string;
+  country: string;
+  
+  // Business Terms
+  paymentTerms: string;
+  leadTime: number; // Days
+  minimumOrderQuantity?: number;
+  currency: string;
+  
+  // Performance
+  rating: number; // 0-5 scale
+  qualityScore: number; // 0-100
+  deliveryScore: number; // 0-100
+  priceScore: number; // 0-100
+  overallScore: number; // Computed average
+  
+  // Compliance
+  certifications: string[];
+  licenses: string[];
+  insuranceExpiry?: Date;
+  
+  // Status
+  status: SupplierStatus;
+  isPreferred: boolean;
+  
+  // Products
+  suppliedProducts: string[]; // Product IDs
+  
+  // Financial
+  totalPurchaseValue?: number; // Lifetime value
+  outstandingBalance?: number;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SupplierEvaluation {
+  id: string;
+  supplierId: string;
+  evaluationDate: Date;
+  evaluatorId: string;
+  period: string; // e.g., "Q1 2024"
+  
+  // Scores
+  qualityScore: number;
+  deliveryScore: number;
+  priceScore: number;
+  serviceScore: number;
+  complianceScore: number;
+  overallScore: number;
+  
+  // Details
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  
+  // Action Items
+  actionItems: string[];
+  
+  status: SupplierEvaluationStatus;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SupplierContract {
+  id: string;
+  contractId: string;
+  supplierId: string;
+  
+  // Contract Details
+  title: string;
+  description: string;
+  contractType: SupplierContractType;
+  
+  // Dates
+  startDate: Date;
+  endDate: Date;
+  renewalDate?: Date;
+  
+  // Terms
+  paymentTerms: string;
+  deliveryTerms: string;
+  qualityStandards: string;
+  
+  // Products/Services
+  coveredProducts: string[]; // Product IDs
+  
+  // Financial
+  contractValue: number;
+  currency: string;
+  
+  // Documents
+  documentUrl: string;
+  
+  // Status
+  status: SupplierContractStatus;
+  
+  // Notifications
+  notifyBeforeExpiry: number; // Days
+  
+  createdAt: Date;
+  updatedAt: Date;
 }

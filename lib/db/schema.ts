@@ -32,6 +32,9 @@ import type {
   Applicant,
   Interview,
   RecruitmentPipeline,
+  Supplier,
+  SupplierEvaluation,
+  SupplierContract,
 } from '@/types/database';
 
 /**
@@ -72,6 +75,9 @@ export class MedicalProductsDB extends Dexie {
   applicants!: Table<Applicant, string>;
   interviews!: Table<Interview, string>;
   recruitmentPipeline!: Table<RecruitmentPipeline, string>;
+  suppliers!: Table<Supplier, string>;
+  supplierEvaluations!: Table<SupplierEvaluation, string>;
+  supplierContracts!: Table<SupplierContract, string>;
 
   constructor() {
     super('MedicalProductsDB');
@@ -169,6 +175,16 @@ export class MedicalProductsDB extends Dexie {
       
       // Recruitment pipeline table for tracking applicant journey
       recruitmentPipeline: 'id, applicantId, jobId, stage, enteredAt, exitedAt, [applicantId+stage], [jobId+stage], [stage+enteredAt]',
+      
+      // Supply Chain Management tables
+      // Suppliers table with indexes for supplier management
+      suppliers: 'id, supplierId, name, type, email, phone, country, status, isPreferred, rating, createdAt, [type+status], [status+isPreferred], [country+status], [rating+status]',
+      
+      // Supplier evaluations table with indexes for performance tracking
+      supplierEvaluations: 'id, supplierId, evaluationDate, evaluatorId, period, status, overallScore, createdAt, [supplierId+evaluationDate], [supplierId+status], [evaluatorId+evaluationDate], [status+evaluationDate]',
+      
+      // Supplier contracts table with indexes for contract management
+      supplierContracts: 'id, contractId, supplierId, contractType, startDate, endDate, status, renewalDate, createdAt, [supplierId+status], [status+endDate], [contractType+status], [endDate+status]',
     });
 
     // Add hooks for automatic field updates
@@ -379,6 +395,44 @@ export class MedicalProductsDB extends Dexie {
     this.recruitmentPipeline.hook('creating', (primKey, obj) => {
       if (!obj.enteredAt) obj.enteredAt = new Date();
     });
+
+    // Supply Chain Management hooks
+    this.suppliers.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+      if (obj.isPreferred === undefined) obj.isPreferred = false;
+      if (obj.rating === undefined) obj.rating = 0;
+      if (obj.qualityScore === undefined) obj.qualityScore = 0;
+      if (obj.deliveryScore === undefined) obj.deliveryScore = 0;
+      if (obj.priceScore === undefined) obj.priceScore = 0;
+      if (obj.overallScore === undefined) obj.overallScore = 0;
+    });
+
+    this.suppliers.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.supplierEvaluations.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.evaluationDate) obj.evaluationDate = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+    });
+
+    this.supplierEvaluations.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.supplierContracts.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+    });
+
+    this.supplierContracts.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
   }
 
   /**
@@ -416,6 +470,9 @@ export class MedicalProductsDB extends Dexie {
       this.applicants,
       this.interviews,
       this.recruitmentPipeline,
+      this.suppliers,
+      this.supplierEvaluations,
+      this.supplierContracts,
     ], async () => {
       await Promise.all([
         this.products.clear(),
@@ -448,6 +505,9 @@ export class MedicalProductsDB extends Dexie {
         this.applicants.clear(),
         this.interviews.clear(),
         this.recruitmentPipeline.clear(),
+        this.suppliers.clear(),
+        this.supplierEvaluations.clear(),
+        this.supplierContracts.clear(),
       ]);
     });
   }
@@ -467,6 +527,7 @@ export class MedicalProductsDB extends Dexie {
     departments: number;
     jobPostings: number;
     applicants: number;
+    suppliers: number;
     totalSize: number;
   }> {
     const [
@@ -481,6 +542,7 @@ export class MedicalProductsDB extends Dexie {
       departmentsCount,
       jobPostingsCount,
       applicantsCount,
+      suppliersCount,
     ] = await Promise.all([
       this.products.count(),
       this.customers.count(),
@@ -493,6 +555,7 @@ export class MedicalProductsDB extends Dexie {
       this.departments.count(),
       this.jobPostings.count(),
       this.applicants.count(),
+      this.suppliers.count(),
     ]);
 
     // Estimate database size (rough calculation)
@@ -510,6 +573,7 @@ export class MedicalProductsDB extends Dexie {
       departments: departmentsCount,
       jobPostings: jobPostingsCount,
       applicants: applicantsCount,
+      suppliers: suppliersCount,
       totalSize,
     };
   }
@@ -562,6 +626,9 @@ export class MedicalProductsDB extends Dexie {
       applicants,
       interviews,
       recruitmentPipeline,
+      suppliers,
+      supplierEvaluations,
+      supplierContracts,
     ] = await Promise.all([
       this.products.toArray(),
       this.customers.toArray(),
@@ -593,6 +660,9 @@ export class MedicalProductsDB extends Dexie {
       this.applicants.toArray(),
       this.interviews.toArray(),
       this.recruitmentPipeline.toArray(),
+      this.suppliers.toArray(),
+      this.supplierEvaluations.toArray(),
+      this.supplierContracts.toArray(),
     ]);
 
     return {
@@ -629,6 +699,9 @@ export class MedicalProductsDB extends Dexie {
         applicants,
         interviews,
         recruitmentPipeline,
+        suppliers,
+        supplierEvaluations,
+        supplierContracts,
       },
     };
   }
@@ -668,6 +741,9 @@ export class MedicalProductsDB extends Dexie {
       this.applicants,
       this.interviews,
       this.recruitmentPipeline,
+      this.suppliers,
+      this.supplierEvaluations,
+      this.supplierContracts,
     ], async () => {
       const data = backup.data;
 
@@ -701,6 +777,9 @@ export class MedicalProductsDB extends Dexie {
       if (data.applicants) await this.applicants.bulkPut(data.applicants);
       if (data.interviews) await this.interviews.bulkPut(data.interviews);
       if (data.recruitmentPipeline) await this.recruitmentPipeline.bulkPut(data.recruitmentPipeline);
+      if (data.suppliers) await this.suppliers.bulkPut(data.suppliers);
+      if (data.supplierEvaluations) await this.supplierEvaluations.bulkPut(data.supplierEvaluations);
+      if (data.supplierContracts) await this.supplierContracts.bulkPut(data.supplierContracts);
     });
   }
 }
