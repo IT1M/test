@@ -247,7 +247,7 @@ export function canAccessRoute(user: User | null, route: string): boolean {
     '/patients': Permission.VIEW_PATIENTS,
     '/medical-records': Permission.VIEW_MEDICAL_RECORDS,
     '/analytics': Permission.VIEW_ANALYTICS,
-    '/reports': Permission.VIEW_REPORTS,
+    '/executive/reports': Permission.VIEW_REPORTS,
     '/admin': Permission.ACCESS_ADMIN_DASHBOARD,
     '/settings': Permission.MANAGE_SETTINGS,
   };

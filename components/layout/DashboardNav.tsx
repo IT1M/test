@@ -21,7 +21,9 @@ import {
   Clock,
   DollarSign,
   TrendingUp,
-  BookOpen
+  BookOpen,
+  LineChart,
+  PieChart
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -57,8 +59,17 @@ const navItems = [
       { href: "/hr/training", label: "Training", icon: BookOpen },
     ]
   },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/reports", label: "Reports", icon: FileText },
+  { 
+    href: "/executive", 
+    label: "Executive", 
+    icon: TrendingUp,
+    hasDropdown: true,
+    dropdownItems: [
+      { href: "/executive", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/executive/analytics", label: "Advanced Analytics", icon: LineChart },
+      { href: "/executive/reports", label: "Reports", icon: FileText },
+    ]
+  },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
