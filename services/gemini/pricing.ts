@@ -216,7 +216,7 @@ Return ONLY the JSON array, no additional text.
     reasoning: string;
   }>> {
     // 1. Get slow-moving products
-    const products = await db.products.where('isActive').equals(true).toArray();
+    const products = await db.products.where('isActive').equals(1).toArray();
 
     const slowMoving = await Promise.all(
       products.map(async (product) => {

@@ -49,7 +49,7 @@ export class PatientService {
           p.nationalId.includes(searchLower) ||
           p.patientId.toLowerCase().includes(searchLower) ||
           p.phone.includes(searchLower) ||
-          p.email?.toLowerCase().includes(searchLower)
+          (p.email?.toLowerCase().includes(searchLower) ?? false)
         );
       }
 

@@ -1,12 +1,19 @@
 // Gemini AI Services - Main Export File
 // Centralized exports for all Gemini AI services
 
-export { GeminiService, getGeminiService, resetGeminiService } from './client';
-export { ForecastingService } from './forecasting';
-export { PricingService } from './pricing';
-export { InsightsService } from './insights';
-export { MedicalAnalysisService } from './medical';
-export { OCRService } from './ocr';
+import { GeminiService as GeminiServiceClass, getGeminiService as getGeminiServiceFn, resetGeminiService as resetGeminiServiceFn } from './client';
+import { ForecastingService as ForecastingServiceClass } from './forecasting';
+import { PricingService as PricingServiceClass } from './pricing';
+import { InsightsService as InsightsServiceClass } from './insights';
+import { MedicalAnalysisService as MedicalAnalysisServiceClass } from './medical';
+import { OCRService as OCRServiceClass } from './ocr';
+
+export { GeminiServiceClass as GeminiService, getGeminiServiceFn as getGeminiService, resetGeminiServiceFn as resetGeminiService };
+export { ForecastingServiceClass as ForecastingService };
+export { PricingServiceClass as PricingService };
+export { InsightsServiceClass as InsightsService };
+export { MedicalAnalysisServiceClass as MedicalAnalysisService };
+export { OCRServiceClass as OCRService };
 
 // Re-export types for convenience
 export type {
@@ -31,15 +38,15 @@ export type {
  * ```
  */
 export function initializeGeminiServices() {
-  const geminiClient = getGeminiService();
+  const geminiClient = getGeminiServiceFn();
 
   return {
     client: geminiClient,
-    forecasting: new ForecastingService(geminiClient),
-    pricing: new PricingService(geminiClient),
-    insights: new InsightsService(geminiClient),
-    medical: new MedicalAnalysisService(geminiClient),
-    ocr: new OCRService(geminiClient),
+    forecasting: new ForecastingServiceClass(geminiClient),
+    pricing: new PricingServiceClass(geminiClient),
+    insights: new InsightsServiceClass(geminiClient),
+    medical: new MedicalAnalysisServiceClass(geminiClient),
+    ocr: new OCRServiceClass(geminiClient),
   };
 }
 
@@ -69,5 +76,5 @@ export function getGeminiServices() {
  */
 export function resetGeminiServices() {
   servicesInstance = null;
-  resetGeminiService();
+  resetGeminiServiceFn();
 }

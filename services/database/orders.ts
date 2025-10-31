@@ -75,7 +75,7 @@ export class OrderService {
         const searchLower = filters.searchTerm.toLowerCase();
         query = query.filter(o => 
           o.orderId.toLowerCase().includes(searchLower) ||
-          o.notes?.toLowerCase().includes(searchLower)
+          (o.notes?.toLowerCase().includes(searchLower) ?? false)
         );
       }
 

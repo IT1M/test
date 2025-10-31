@@ -173,7 +173,7 @@ Return ONLY the JSON object, no additional text.
     intent: any,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
-    let productsQuery = db.products.where('isActive').equals(true);
+    let productsQuery = db.products.where('isActive').equals(1);
 
     // Apply filters
     if (filters.category) {
@@ -194,7 +194,7 @@ Return ONLY the JSON object, no additional text.
     const keywords = intent.keywords.map((k: string) => k.toLowerCase());
     const matchedProducts = products.filter(product => {
       const searchText = `${product.name} ${product.sku} ${product.category} ${product.manufacturer} ${product.description}`.toLowerCase();
-      return keywords.some(keyword => searchText.includes(keyword));
+      return keywords.some((keyword: string) => searchText.includes(keyword));
     });
 
     return matchedProducts.map(product => ({
@@ -213,7 +213,7 @@ Return ONLY the JSON object, no additional text.
     intent: any,
     filters: SearchFilters
   ): Promise<SearchResult[]> {
-    let customersQuery = db.customers.where('isActive').equals(true);
+    let customersQuery = db.customers.where('isActive').equals(1);
 
     const customers = await customersQuery.toArray();
 
@@ -221,7 +221,7 @@ Return ONLY the JSON object, no additional text.
     const keywords = intent.keywords.map((k: string) => k.toLowerCase());
     const matchedCustomers = customers.filter(customer => {
       const searchText = `${customer.name} ${customer.customerId} ${customer.email} ${customer.phone} ${customer.city} ${customer.type}`.toLowerCase();
-      return keywords.some(keyword => searchText.includes(keyword));
+      return keywords.some((keyword: string) => searchText.includes(keyword));
     });
 
     return matchedCustomers.map(customer => ({
@@ -262,7 +262,7 @@ Return ONLY the JSON object, no additional text.
     const keywords = intent.keywords.map((k: string) => k.toLowerCase());
     const matchedOrders = orders.filter(order => {
       const searchText = `${order.orderId} ${order.status} ${order.salesPerson}`.toLowerCase();
-      return keywords.some(keyword => searchText.includes(keyword));
+      return keywords.some((keyword: string) => searchText.includes(keyword));
     });
 
     return matchedOrders.map(order => ({
@@ -287,7 +287,7 @@ Return ONLY the JSON object, no additional text.
     const keywords = intent.keywords.map((k: string) => k.toLowerCase());
     const matchedPatients = patients.filter(patient => {
       const searchText = `${patient.firstName} ${patient.lastName} ${patient.nationalId} ${patient.phone} ${patient.email}`.toLowerCase();
-      return keywords.some(keyword => searchText.includes(keyword));
+      return keywords.some((keyword: string) => searchText.includes(keyword));
     });
 
     return matchedPatients.map(patient => ({
@@ -323,7 +323,7 @@ Return ONLY the JSON object, no additional text.
     const keywords = intent.keywords.map((k: string) => k.toLowerCase());
     const matchedRecords = records.filter(record => {
       const searchText = `${record.title} ${record.content} ${record.diagnosis} ${record.recordType}`.toLowerCase();
-      return keywords.some(keyword => searchText.includes(keyword));
+      return keywords.some((keyword: string) => searchText.includes(keyword));
     });
 
     return matchedRecords.map(record => ({

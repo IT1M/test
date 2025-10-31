@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MedicalRecordForm } from "@/components/medical-records/MedicalRecordForm";
 
-export default function NewMedicalRecordPage() {
+function NewMedicalRecordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const patientId = searchParams.get("patientId");
@@ -28,5 +29,13 @@ export default function NewMedicalRecordPage() {
       {/* Form */}
       <MedicalRecordForm preselectedPatientId={patientId || undefined} />
     </div>
+  );
+}
+
+export default function NewMedicalRecordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewMedicalRecordContent />
+    </Suspense>
   );
 }

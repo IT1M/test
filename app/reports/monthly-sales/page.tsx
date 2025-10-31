@@ -190,7 +190,7 @@ export default function MonthlySalesReportPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={(entry) => `${entry.category}: ${formatPercentage(entry.percentage)}`}
+                    label={(entry: any) => `${entry.category}: ${formatPercentage(entry.percentage)}`}
                   >
                     {report.salesByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

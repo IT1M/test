@@ -106,7 +106,7 @@ export default function InventoryDashboardPage() {
           (item.batch.expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
         );
 
-        const severity = 
+        const severity: 'critical' | 'warning' | 'info' = 
           daysUntilExpiry <= 30 ? 'critical' :
           daysUntilExpiry <= 60 ? 'warning' :
           'info';

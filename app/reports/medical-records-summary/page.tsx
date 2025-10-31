@@ -121,7 +121,7 @@ export default function MedicalRecordsSummaryReportPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={(entry) => `${entry.gender}: ${formatPercentage(entry.percentage)}`}
+                    label={(entry: any) => `${entry.gender}: ${formatPercentage(entry.percentage)}`}
                   >
                     {report.patientDemographics.byGender.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

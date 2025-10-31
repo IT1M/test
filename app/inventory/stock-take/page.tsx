@@ -202,7 +202,7 @@ export default function StockTakePage() {
   const cancelSession = () => {
     if (confirm('Are you sure you want to cancel this stock take session? All counts will be lost.')) {
       setCurrentSession(null);
-      toast.info('Stock take session cancelled');
+      toast('Stock take session cancelled');
     }
   };
 

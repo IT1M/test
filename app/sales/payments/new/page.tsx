@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PaymentsService } from '@/services/database/payments';
 import { db } from '@/lib/db/schema';
@@ -13,7 +13,7 @@ import { ArrowLeft, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
-export default function NewPaymentPage() {
+function NewPaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedInvoiceId = searchParams.get('invoiceId');
@@ -324,5 +324,13 @@ export default function NewPaymentPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function NewPaymentPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewPaymentContent />
+    </Suspense>
   );
 }

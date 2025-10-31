@@ -249,7 +249,7 @@ Return ONLY the JSON object, no additional text.
     overallRank: number;
     insights: string[];
   }>> {
-    const products = await db.products.where('isActive').equals(true).toArray();
+    const products = await db.products.where('isActive').equals(1).toArray();
     const orders = await db.orders.toArray();
 
     // Calculate metrics for each product
@@ -485,7 +485,7 @@ Return ONLY the JSON object, no additional text.
   }>> {
     const products = await db.products
       .where('isActive')
-      .equals(true)
+      .equals(1)
       .and(p => p.stockQuantity <= p.reorderLevel)
       .toArray();
 
@@ -544,7 +544,7 @@ Return ONLY the JSON object, no additional text.
 
     const products = await db.products
       .where('isActive')
-      .equals(true)
+      .equals(1)
       .and(p => p.expiryDate !== undefined && p.expiryDate <= futureDate)
       .toArray();
 

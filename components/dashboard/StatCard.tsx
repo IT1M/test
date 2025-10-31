@@ -49,7 +49,7 @@ export function StatCard({
           <CardTitle className="text-sm font-medium">
             <div className="h-4 w-24 bg-muted animate-pulse rounded" />
           </CardTitle>
-          {Icon && (
+          {icon && (
             <div className="h-4 w-4 bg-muted animate-pulse rounded" />
           )}
         </CardHeader>

@@ -40,34 +40,43 @@ export class InventoryService {
     try {
       let query = db.inventory.toCollection();
 
-      // Apply filters
+      // Apply synchronous filters
       if (filters?.warehouseLocation) {
         query = query.filter(i => i.warehouseLocation === filters.warehouseLocation);
-      }
-
-      if (filters?.lowStock) {
-        query = query.filter(async i => {
-          const product = await db.products.get(i.productId);
-          return product ? i.quantity <= product.reorderLevel : false;
-        });
       }
 
       if (filters?.outOfStock) {
         query = query.filter(i => i.quantity === 0);
       }
 
-      if (filters?.searchTerm) {
-        const searchLower = filters.searchTerm.toLowerCase();
-        query = query.filter(async i => {
-          const product = await db.products.get(i.productId);
-          return product ? (
-            product.name.toLowerCase().includes(searchLower) ||
-            product.sku.toLowerCase().includes(searchLower)
-          ) : false;
-        });
+      let results = await query.toArray();
+
+      // Apply async filters after fetching
+      if (filters?.lowStock) {
+        const filtered = await Promise.all(
+          results.map(async i => {
+            const product = await db.products.get(i.productId);
+            return product && i.quantity <= product.reorderLevel ? i : null;
+          })
+        );
+        results = filtered.filter((i): i is Inventory => i !== null);
       }
 
-      return await query.toArray();
+      if (filters?.searchTerm) {
+        const searchLower = filters.searchTerm.toLowerCase();
+        const filtered = await Promise.all(
+          results.map(async i => {
+            const product = await db.products.get(i.productId);
+            return product && (
+              product.name.toLowerCase().includes(searchLower) ||
+              product.sku.toLowerCase().includes(searchLower)
+            ) ? i : null;
+          })
+        );
+        results = filtered.filter((i): i is Inventory => i !== null);
+      }
+
+      return results;
     } catch (error) {
       console.error('Error getting inventory:', error);
       throw new Error('Failed to retrieve inventory');

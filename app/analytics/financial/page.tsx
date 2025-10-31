@@ -353,7 +353,7 @@ export default function FinancialAnalyticsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={(entry) => `${entry.category}: ${formatPercentage(entry.percentage / 100)}`}
+                    label={(entry: any) => `${entry.category}: ${formatPercentage(entry.percentage / 100)}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="revenue"

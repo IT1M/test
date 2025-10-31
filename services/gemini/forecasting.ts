@@ -119,7 +119,7 @@ Return ONLY the JSON object, no additional text.
    */
   async detectTrendingProducts(minGrowthRate: number = 0.2): Promise<TrendingProduct[]> {
     // 1. Get all active products
-    const products = await db.products.where('isActive').equals(true).toArray();
+    const products = await db.products.where('isActive').equals(1).toArray();
 
     // 2. Calculate growth rate for each product
     const productsWithGrowth = await Promise.all(
@@ -201,7 +201,7 @@ Return insights as JSON:
    * Identify slow-moving products
    */
   async identifySlowMovingProducts(daysThreshold: number = 90): Promise<Product[]> {
-    const products = await db.products.where('isActive').equals(true).toArray();
+    const products = await db.products.where('isActive').equals(1).toArray();
 
     const slowMoving = await Promise.all(
       products.map(async (product) => {
@@ -228,7 +228,7 @@ Return insights as JSON:
    * Calculate optimal stock levels for all products
    */
   async calculateOptimalStockLevels(): Promise<Map<string, { reorderPoint: number; reorderQuantity: number }>> {
-    const products = await db.products.where('isActive').equals(true).toArray();
+    const products = await db.products.where('isActive').equals(1).toArray();
     const stockLevels = new Map<string, { reorderPoint: number; reorderQuantity: number }>();
 
     for (const product of products) {
@@ -258,7 +258,7 @@ Return insights as JSON:
   }>> {
     const products = await db.products
       .where('isActive')
-      .equals(true)
+      .equals(1)
       .and(p => p.expiryDate !== undefined)
       .toArray();
 
