@@ -23,7 +23,10 @@ import {
   TrendingUp,
   BookOpen,
   LineChart,
-  PieChart
+  PieChart,
+  UserPlus,
+  ClipboardList,
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -57,6 +60,9 @@ const navItems = [
       { href: "/hr/payroll", label: "Payroll", icon: DollarSign },
       { href: "/hr/performance", label: "Performance", icon: TrendingUp },
       { href: "/hr/training", label: "Training", icon: BookOpen },
+      { href: "/hr/recruitment/jobs", label: "Job Postings", icon: ClipboardList },
+      { href: "/hr/recruitment/applicants", label: "Applicants", icon: UserPlus },
+      { href: "/hr/recruitment/analytics", label: "Recruitment Analytics", icon: BarChart3 },
     ]
   },
   { 

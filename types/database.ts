@@ -46,6 +46,17 @@ export type SupplierStatus = 'active' | 'inactive' | 'blacklisted';
 export type SupplierEvaluationStatus = 'draft' | 'completed' | 'approved';
 export type SupplierContractType = 'supply-agreement' | 'service-agreement' | 'framework-agreement';
 export type SupplierContractStatus = 'draft' | 'active' | 'expired' | 'terminated';
+export type ComplianceStatus = 'compliant' | 'non-compliant' | 'pending-review' | 'at-risk' | 'expired';
+export type ComplianceCategory = 'regulatory' | 'quality' | 'safety' | 'environmental' | 'data-privacy' | 'financial' | 'operational';
+export type CompliancePriority = 'low' | 'medium' | 'high' | 'critical';
+export type AuditType = 'internal' | 'external' | 'regulatory' | 'supplier' | 'customer';
+export type AuditStatus = 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+export type AuditFindingSeverity = 'minor' | 'major' | 'critical';
+export type AuditFindingStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
+export type DataRetentionAction = 'retain' | 'archive' | 'delete' | 'anonymize';
+export type ConsentStatus = 'granted' | 'denied' | 'withdrawn' | 'expired';
+export type DataSubjectRequestType = 'access' | 'rectification' | 'erasure' | 'portability' | 'restriction' | 'objection';
+export type DataSubjectRequestStatus = 'pending' | 'in-progress' | 'completed' | 'rejected';
 
 // ============================================================================
 // SUPPORTING TYPES
@@ -1186,4 +1197,623 @@ export interface SupplierContract {
   
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ============================================================================
+// COMPLIANCE AND REGULATORY MANAGEMENT
+// ============================================================================
+
+export interface ComplianceRequirement {
+  id: string;
+  requirementId: string;
+  title: string;
+  description: string;
+  category: ComplianceCategory;
+  priority: CompliancePriority;
+  
+  // Regulatory Details
+  regulatoryBody: string; // e.g., "FDA", "HIPAA", "GDPR", "ISO"
+  regulationReference: string; // e.g., "21 CFR Part 820", "GDPR Article 32"
+  region: string; // e.g., "US", "EU", "Global"
+  applicableCountries: string[];
+  
+  // Compliance Details
+  status: ComplianceStatus;
+  complianceDeadline?: Date;
+  lastReviewDate?: Date;
+  nextReviewDate: Date;
+  reviewFrequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annually';
+  
+  // Responsible Parties
+  ownerId: string; // Employee ID
+  reviewerId?: string; // Employee ID
+  approvedBy?: string; // Employee ID
+  
+  // Evidence and Documentation
+  evidenceDocuments: string[]; // Document URLs
+  complianceNotes: string;
+  
+  // Tracking
+  lastComplianceDate?: Date;
+  nonComplianceCount: number;
+  
+  // Alerts
+  alertDaysBefore: number; // Days before deadline to alert
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ComplianceReport {
+  id: string;
+  reportId: string;
+  title: string;
+  reportType: 'status' | 'audit' | 'incident' | 'periodic' | 'regulatory-submission';
+  
+  // Report Details
+  reportingPeriodStart: Date;
+  reportingPeriodEnd: Date;
+  generatedDate: Date;
+  generatedBy: string; // Employee ID
+  
+  // Content
+  summary: string;
+  findings: ComplianceFinding[];
+  recommendations: string[];
+  actionItems: ComplianceActionItem[];
+  
+  // Metrics
+  totalRequirements: number;
+  compliantCount: number;
+  nonCompliantCount: number;
+  atRiskCount: number;
+  complianceRate: number; // Percentage
+  
+  // Documents
+  reportDocumentUrl?: string;
+  attachments: string[];
+  
+  // Status
+  status: 'draft' | 'submitted' | 'approved' | 'published';
+  submittedDate?: Date;
+  approvedBy?: string;
+  approvalDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ComplianceFinding {
+  id: string;
+  requirementId: string;
+  severity: AuditFindingSeverity;
+  description: string;
+  evidence: string;
+  recommendation: string;
+  status: AuditFindingStatus;
+}
+
+export interface ComplianceActionItem {
+  id: string;
+  description: string;
+  assignedTo: string; // Employee ID
+  dueDate: Date;
+  priority: CompliancePriority;
+  status: 'open' | 'in-progress' | 'completed' | 'overdue';
+  completedDate?: Date;
+}
+
+export interface ComplianceAlert {
+  id: string;
+  requirementId: string;
+  alertType: 'deadline-approaching' | 'overdue' | 'status-change' | 'review-required' | 'non-compliance';
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  dueDate?: Date;
+  acknowledgedBy?: string;
+  acknowledgedAt?: Date;
+  resolvedAt?: Date;
+  createdAt: Date;
+}
+
+// ============================================================================
+// ENHANCED AUDIT TRAIL
+// ============================================================================
+
+export interface AuditLog {
+  id: string;
+  logId: string;
+  
+  // Event Details
+  timestamp: Date;
+  eventType: string; // e.g., "CREATE", "UPDATE", "DELETE", "ACCESS", "EXPORT"
+  entityType: string; // e.g., "Product", "Customer", "Order", "Patient"
+  entityId: string;
+  
+  // User Information
+  userId: string;
+  username: string;
+  userRole: string;
+  ipAddress: string;
+  userAgent: string;
+  
+  // Change Details
+  action: string; // Human-readable description
+  beforeData?: any; // JSON snapshot before change
+  afterData?: any; // JSON snapshot after change
+  changes?: AuditChange[]; // Detailed field-level changes
+  
+  // Context
+  sessionId: string;
+  requestId?: string;
+  source: 'web' | 'api' | 'mobile' | 'system';
+  
+  // Security
+  isSecurityEvent: boolean;
+  isCriticalOperation: boolean;
+  requiresApproval: boolean;
+  approvedBy?: string;
+  
+  // Compliance
+  complianceRelevant: boolean;
+  regulatoryCategory?: string;
+  retentionPeriod: number; // Days
+  
+  // Integrity
+  checksum: string; // Hash of log entry for tamper detection
+  previousChecksum?: string; // Chain to previous log
+  
+  // Status
+  status: 'success' | 'failure' | 'partial';
+  errorMessage?: string;
+  
+  createdAt: Date;
+}
+
+export interface AuditChange {
+  field: string;
+  oldValue: any;
+  newValue: any;
+  dataType: string;
+}
+
+export interface AuditTrailExport {
+  id: string;
+  exportId: string;
+  requestedBy: string;
+  requestDate: Date;
+  
+  // Export Parameters
+  startDate: Date;
+  endDate: Date;
+  entityTypes?: string[];
+  userIds?: string[];
+  eventTypes?: string[];
+  
+  // Export Details
+  totalRecords: number;
+  fileFormat: 'json' | 'csv' | 'pdf' | 'xml';
+  fileUrl: string;
+  fileSize: number;
+  
+  // Purpose
+  purpose: string; // e.g., "Regulatory Audit", "Internal Review", "Legal Request"
+  
+  // Security
+  encryptionEnabled: boolean;
+  accessPassword?: string;
+  expiryDate: Date;
+  
+  // Status
+  status: 'pending' | 'completed' | 'failed';
+  completedAt?: Date;
+  
+  createdAt: Date;
+}
+
+export interface AuditSchedule {
+  id: string;
+  scheduleId: string;
+  auditType: AuditType;
+  title: string;
+  description: string;
+  
+  // Schedule
+  scheduledDate: Date;
+  estimatedDuration: number; // Hours
+  frequency: 'one-time' | 'monthly' | 'quarterly' | 'annually';
+  nextScheduledDate?: Date;
+  
+  // Scope
+  scopeDescription: string;
+  entitiesInScope: string[];
+  departmentsInScope: string[];
+  
+  // Team
+  leadAuditorId: string;
+  auditTeam: string[]; // Employee IDs
+  
+  // Status
+  status: AuditStatus;
+  
+  // Results
+  completedDate?: Date;
+  auditReportId?: string;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AuditFinding {
+  id: string;
+  findingId: string;
+  auditScheduleId: string;
+  
+  // Finding Details
+  title: string;
+  description: string;
+  severity: AuditFindingSeverity;
+  category: string;
+  
+  // Evidence
+  evidence: string[];
+  affectedEntities: string[];
+  
+  // Recommendation
+  recommendation: string;
+  correctiveAction: string;
+  
+  // Responsible Party
+  assignedTo: string; // Employee ID
+  dueDate: Date;
+  
+  // Status
+  status: AuditFindingStatus;
+  resolvedDate?: Date;
+  resolutionNotes?: string;
+  verifiedBy?: string;
+  verificationDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================================
+// DATA PRIVACY MANAGEMENT (GDPR/HIPAA)
+// ============================================================================
+
+export interface DataRetentionPolicy {
+  id: string;
+  policyId: string;
+  name: string;
+  description: string;
+  
+  // Scope
+  entityType: string; // e.g., "Patient", "MedicalRecord", "Order"
+  dataCategory: string; // e.g., "PHI", "PII", "Financial", "Operational"
+  
+  // Retention Rules
+  retentionPeriod: number; // Days
+  retentionStartEvent: string; // e.g., "creation", "last_access", "patient_discharge"
+  
+  // Actions
+  actionAfterRetention: DataRetentionAction;
+  archiveLocation?: string;
+  
+  // Legal Basis
+  legalBasis: string; // e.g., "HIPAA requirement", "GDPR Article 5", "Business need"
+  regulatoryReference: string;
+  
+  // Exceptions
+  exceptions: string[];
+  legalHoldOverride: boolean;
+  
+  // Status
+  isActive: boolean;
+  effectiveDate: Date;
+  reviewDate: Date;
+  
+  // Approval
+  approvedBy: string;
+  approvalDate: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DataRetentionExecution {
+  id: string;
+  executionId: string;
+  policyId: string;
+  
+  // Execution Details
+  executionDate: Date;
+  executedBy: string; // System or User ID
+  
+  // Results
+  recordsProcessed: number;
+  recordsRetained: number;
+  recordsArchived: number;
+  recordsDeleted: number;
+  recordsAnonymized: number;
+  
+  // Status
+  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+  errorMessage?: string;
+  
+  // Audit
+  auditLogIds: string[];
+  
+  createdAt: Date;
+  completedAt?: Date;
+}
+
+export interface ConsentRecord {
+  id: string;
+  consentId: string;
+  
+  // Subject
+  subjectType: 'patient' | 'customer' | 'employee' | 'supplier';
+  subjectId: string;
+  
+  // Consent Details
+  consentType: string; // e.g., "data_processing", "marketing", "data_sharing", "research"
+  purpose: string;
+  description: string;
+  
+  // Status
+  status: ConsentStatus;
+  grantedDate?: Date;
+  withdrawnDate?: Date;
+  expiryDate?: Date;
+  
+  // Legal Basis
+  legalBasis: string; // e.g., "GDPR Article 6(1)(a)", "HIPAA Authorization"
+  
+  // Evidence
+  consentMethod: 'written' | 'electronic' | 'verbal' | 'implied';
+  evidenceDocumentUrl?: string;
+  ipAddress?: string;
+  
+  // Scope
+  dataCategories: string[]; // e.g., ["PHI", "Contact Information", "Medical History"]
+  processingActivities: string[];
+  
+  // Third Parties
+  thirdPartySharing: boolean;
+  thirdParties?: string[];
+  
+  // Audit
+  recordedBy: string;
+  lastModifiedBy?: string;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DataSubjectRequest {
+  id: string;
+  requestId: string;
+  
+  // Subject
+  subjectType: 'patient' | 'customer' | 'employee' | 'supplier';
+  subjectId: string;
+  subjectName: string;
+  subjectEmail: string;
+  
+  // Request Details
+  requestType: DataSubjectRequestType;
+  requestDate: Date;
+  description: string;
+  
+  // Verification
+  identityVerified: boolean;
+  verificationMethod?: string;
+  verifiedBy?: string;
+  verificationDate?: Date;
+  
+  // Processing
+  status: DataSubjectRequestStatus;
+  assignedTo?: string;
+  dueDate: Date; // Typically 30 days from request
+  
+  // Response
+  responseDate?: Date;
+  responseMethod?: 'email' | 'postal' | 'in-person' | 'secure-portal';
+  responseNotes?: string;
+  
+  // Data Provided (for access/portability requests)
+  dataExportUrl?: string;
+  dataFormat?: 'json' | 'csv' | 'pdf' | 'xml';
+  
+  // Actions Taken (for erasure/rectification requests)
+  actionsTaken: DataSubjectRequestAction[];
+  
+  // Rejection (if applicable)
+  rejectionReason?: string;
+  legalBasisForRejection?: string;
+  
+  // Audit
+  auditLogIds: string[];
+  
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+}
+
+export interface DataSubjectRequestAction {
+  entityType: string;
+  entityId: string;
+  action: 'deleted' | 'anonymized' | 'rectified' | 'restricted' | 'exported';
+  performedBy: string;
+  performedAt: Date;
+  notes?: string;
+}
+
+export interface DataBreachIncident {
+  id: string;
+  incidentId: string;
+  
+  // Incident Details
+  title: string;
+  description: string;
+  discoveredDate: Date;
+  occurredDate?: Date;
+  reportedDate?: Date;
+  
+  // Classification
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  breachType: 'unauthorized-access' | 'data-loss' | 'data-theft' | 'accidental-disclosure' | 'ransomware' | 'other';
+  
+  // Affected Data
+  dataCategories: string[]; // e.g., ["PHI", "PII", "Financial"]
+  affectedRecordCount: number;
+  affectedIndividuals: string[]; // IDs of affected subjects
+  
+  // Impact Assessment
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  potentialHarm: string;
+  mitigatingFactors: string[];
+  
+  // Response
+  containmentActions: string[];
+  containmentDate?: Date;
+  remediationActions: string[];
+  remediationDate?: Date;
+  
+  // Notifications
+  regulatoryNotificationRequired: boolean;
+  regulatoryNotificationDate?: Date;
+  regulatoryBodies: string[];
+  
+  individualNotificationRequired: boolean;
+  individualNotificationDate?: Date;
+  notificationMethod?: string;
+  
+  // Investigation
+  investigationStatus: 'open' | 'in-progress' | 'completed' | 'closed';
+  rootCause?: string;
+  investigationNotes?: string;
+  
+  // Team
+  incidentLeadId: string;
+  responseTeam: string[]; // Employee IDs
+  
+  // Documentation
+  evidenceDocuments: string[];
+  reportDocumentUrl?: string;
+  
+  // Status
+  status: 'open' | 'contained' | 'resolved' | 'closed';
+  closedDate?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DataProcessingActivity {
+  id: string;
+  activityId: string;
+  
+  // Activity Details
+  name: string;
+  description: string;
+  purpose: string;
+  legalBasis: string;
+  
+  // Data
+  dataCategories: string[];
+  dataSubjects: string[]; // e.g., ["patients", "customers", "employees"]
+  
+  // Processing
+  processingOperations: string[]; // e.g., ["collection", "storage", "analysis", "sharing"]
+  automatedDecisionMaking: boolean;
+  profiling: boolean;
+  
+  // Parties
+  dataController: string;
+  dataProcessors: string[];
+  
+  // Transfers
+  internationalTransfers: boolean;
+  transferCountries?: string[];
+  transferSafeguards?: string;
+  
+  // Security
+  securityMeasures: string[];
+  encryptionEnabled: boolean;
+  accessControls: string[];
+  
+  // Retention
+  retentionPeriod: number; // Days
+  retentionJustification: string;
+  
+  // Risk Assessment
+  riskLevel: 'low' | 'medium' | 'high';
+  dpia Required: boolean; // Data Protection Impact Assessment
+  dpiaDocumentUrl?: string;
+  
+  // Review
+  lastReviewDate?: Date;
+  nextReviewDate: Date;
+  reviewedBy?: string;
+  
+  // Status
+  isActive: boolean;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PrivacyImpactAssessment {
+  id: string;
+  assessmentId: string;
+  
+  // Assessment Details
+  title: string;
+  description: string;
+  assessmentDate: Date;
+  assessorId: string;
+  
+  // Scope
+  dataProcessingActivityId?: string;
+  systemsInScope: string[];
+  dataTypesInScope: string[];
+  
+  // Risk Assessment
+  identifiedRisks: PrivacyRisk[];
+  overallRiskLevel: 'low' | 'medium' | 'high' | 'critical';
+  
+  // Mitigation
+  mitigationMeasures: string[];
+  residualRiskLevel: 'low' | 'medium' | 'high' | 'critical';
+  
+  // Consultation
+  stakeholdersConsulted: string[];
+  dpoConsulted: boolean; // Data Protection Officer
+  dpoComments?: string;
+  
+  // Approval
+  status: 'draft' | 'under-review' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvalDate?: Date;
+  
+  // Review
+  nextReviewDate: Date;
+  
+  // Documentation
+  documentUrl?: string;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PrivacyRisk {
+  id: string;
+  description: string;
+  likelihood: 'low' | 'medium' | 'high';
+  impact: 'low' | 'medium' | 'high';
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  affectedDataSubjects: string[];
+  mitigationMeasures: string[];
 }

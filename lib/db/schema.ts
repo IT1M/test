@@ -35,6 +35,20 @@ import type {
   Supplier,
   SupplierEvaluation,
   SupplierContract,
+  ComplianceRequirement,
+  ComplianceReport,
+  ComplianceAlert,
+  AuditLog,
+  AuditTrailExport,
+  AuditSchedule,
+  AuditFinding,
+  DataRetentionPolicy,
+  DataRetentionExecution,
+  ConsentRecord,
+  DataSubjectRequest,
+  DataBreachIncident,
+  DataProcessingActivity,
+  PrivacyImpactAssessment,
 } from '@/types/database';
 
 /**
@@ -78,6 +92,20 @@ export class MedicalProductsDB extends Dexie {
   suppliers!: Table<Supplier, string>;
   supplierEvaluations!: Table<SupplierEvaluation, string>;
   supplierContracts!: Table<SupplierContract, string>;
+  complianceRequirements!: Table<ComplianceRequirement, string>;
+  complianceReports!: Table<ComplianceReport, string>;
+  complianceAlerts!: Table<ComplianceAlert, string>;
+  auditLogs!: Table<AuditLog, string>;
+  auditTrailExports!: Table<AuditTrailExport, string>;
+  auditSchedules!: Table<AuditSchedule, string>;
+  auditFindings!: Table<AuditFinding, string>;
+  dataRetentionPolicies!: Table<DataRetentionPolicy, string>;
+  dataRetentionExecutions!: Table<DataRetentionExecution, string>;
+  consentRecords!: Table<ConsentRecord, string>;
+  dataSubjectRequests!: Table<DataSubjectRequest, string>;
+  dataBreachIncidents!: Table<DataBreachIncident, string>;
+  dataProcessingActivities!: Table<DataProcessingActivity, string>;
+  privacyImpactAssessments!: Table<PrivacyImpactAssessment, string>;
 
   constructor() {
     super('MedicalProductsDB');
@@ -185,6 +213,49 @@ export class MedicalProductsDB extends Dexie {
       
       // Supplier contracts table with indexes for contract management
       supplierContracts: 'id, contractId, supplierId, contractType, startDate, endDate, status, renewalDate, createdAt, [supplierId+status], [status+endDate], [contractType+status], [endDate+status]',
+      
+      // Compliance and Regulatory Management tables
+      // Compliance requirements table with indexes for tracking
+      complianceRequirements: 'id, requirementId, title, category, priority, regulatoryBody, region, status, complianceDeadline, nextReviewDate, ownerId, createdAt, [category+status], [priority+status], [regulatoryBody+status], [region+status], [status+complianceDeadline], [ownerId+status], [nextReviewDate+status]',
+      
+      // Compliance reports table with indexes for reporting
+      complianceReports: 'id, reportId, reportType, reportingPeriodStart, reportingPeriodEnd, generatedDate, generatedBy, status, createdAt, [reportType+status], [generatedDate+status], [generatedBy+generatedDate], [status+generatedDate]',
+      
+      // Compliance alerts table with indexes for notifications
+      complianceAlerts: 'id, requirementId, alertType, severity, dueDate, acknowledgedBy, createdAt, [requirementId+alertType], [alertType+severity], [severity+dueDate], [acknowledgedBy+createdAt]',
+      
+      // Enhanced audit logs table with indexes for comprehensive tracking
+      auditLogs: 'id, logId, timestamp, eventType, entityType, entityId, userId, username, userRole, ipAddress, source, isSecurityEvent, isCriticalOperation, complianceRelevant, status, createdAt, [timestamp+entityType], [entityType+entityId], [userId+timestamp], [eventType+timestamp], [isSecurityEvent+timestamp], [isCriticalOperation+timestamp], [complianceRelevant+timestamp], [status+timestamp]',
+      
+      // Audit trail exports table with indexes for export management
+      auditTrailExports: 'id, exportId, requestedBy, requestDate, startDate, endDate, status, createdAt, [requestedBy+requestDate], [status+requestDate], [startDate+endDate]',
+      
+      // Audit schedules table with indexes for audit planning
+      auditSchedules: 'id, scheduleId, auditType, scheduledDate, leadAuditorId, status, createdAt, [auditType+status], [scheduledDate+status], [leadAuditorId+scheduledDate], [status+scheduledDate]',
+      
+      // Audit findings table with indexes for tracking
+      auditFindings: 'id, findingId, auditScheduleId, severity, category, assignedTo, dueDate, status, createdAt, [auditScheduleId+status], [severity+status], [assignedTo+dueDate], [status+dueDate]',
+      
+      // Data retention policies table with indexes for policy management
+      dataRetentionPolicies: 'id, policyId, name, entityType, dataCategory, retentionPeriod, actionAfterRetention, isActive, effectiveDate, reviewDate, createdAt, [entityType+isActive], [dataCategory+isActive], [isActive+reviewDate]',
+      
+      // Data retention executions table with indexes for tracking
+      dataRetentionExecutions: 'id, executionId, policyId, executionDate, executedBy, status, createdAt, [policyId+executionDate], [executionDate+status], [executedBy+executionDate]',
+      
+      // Consent records table with indexes for consent management
+      consentRecords: 'id, consentId, subjectType, subjectId, consentType, status, grantedDate, withdrawnDate, expiryDate, createdAt, [subjectType+subjectId], [subjectId+consentType], [consentType+status], [status+expiryDate]',
+      
+      // Data subject requests table with indexes for GDPR/HIPAA compliance
+      dataSubjectRequests: 'id, requestId, subjectType, subjectId, requestType, requestDate, status, dueDate, assignedTo, createdAt, [subjectType+subjectId], [subjectId+requestType], [requestType+status], [status+dueDate], [assignedTo+status]',
+      
+      // Data breach incidents table with indexes for incident management
+      dataBreachIncidents: 'id, incidentId, discoveredDate, occurredDate, severity, breachType, riskLevel, investigationStatus, status, incidentLeadId, createdAt, [severity+status], [breachType+status], [riskLevel+status], [investigationStatus+status], [incidentLeadId+discoveredDate]',
+      
+      // Data processing activities table with indexes for GDPR compliance
+      dataProcessingActivities: 'id, activityId, name, entityType, purpose, legalBasis, isActive, lastReviewDate, nextReviewDate, createdAt, [entityType+isActive], [purpose+isActive], [isActive+nextReviewDate]',
+      
+      // Privacy impact assessments table with indexes for risk management
+      privacyImpactAssessments: 'id, assessmentId, title, assessmentDate, assessorId, overallRiskLevel, residualRiskLevel, status, nextReviewDate, createdAt, [assessorId+assessmentDate], [overallRiskLevel+status], [status+nextReviewDate]',
     });
 
     // Add hooks for automatic field updates
@@ -433,6 +504,151 @@ export class MedicalProductsDB extends Dexie {
     this.supplierContracts.hook('updating', (modifications, primKey, obj) => {
       return { ...modifications, updatedAt: new Date() };
     });
+
+    // Compliance and Regulatory Management hooks
+    this.complianceRequirements.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'pending-review';
+      if (obj.nonComplianceCount === undefined) obj.nonComplianceCount = 0;
+    });
+
+    this.complianceRequirements.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.complianceReports.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.generatedDate) obj.generatedDate = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+    });
+
+    this.complianceReports.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.complianceAlerts.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+    });
+
+    this.auditLogs.hook('creating', (primKey, obj) => {
+      if (!obj.timestamp) obj.timestamp = new Date();
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (obj.isSecurityEvent === undefined) obj.isSecurityEvent = false;
+      if (obj.isCriticalOperation === undefined) obj.isCriticalOperation = false;
+      if (obj.complianceRelevant === undefined) obj.complianceRelevant = false;
+      if (obj.status === undefined) obj.status = 'success';
+    });
+
+    this.auditTrailExports.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.requestDate) obj.requestDate = new Date();
+      if (obj.status === undefined) obj.status = 'pending';
+    });
+
+    this.auditSchedules.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'scheduled';
+    });
+
+    this.auditSchedules.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.auditFindings.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'open';
+    });
+
+    this.auditFindings.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.dataRetentionPolicies.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.isActive === undefined) obj.isActive = true;
+    });
+
+    this.dataRetentionPolicies.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.dataRetentionExecutions.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.executionDate) obj.executionDate = new Date();
+      if (obj.status === undefined) obj.status = 'pending';
+    });
+
+    this.consentRecords.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'granted';
+    });
+
+    this.consentRecords.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.dataSubjectRequests.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.requestDate) obj.requestDate = new Date();
+      if (obj.status === undefined) obj.status = 'pending';
+      if (obj.identityVerified === undefined) obj.identityVerified = false;
+      // Set due date to 30 days from request date (GDPR requirement)
+      if (!obj.dueDate) {
+        const dueDate = new Date(obj.requestDate);
+        dueDate.setDate(dueDate.getDate() + 30);
+        obj.dueDate = dueDate;
+      }
+    });
+
+    this.dataSubjectRequests.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.dataBreachIncidents.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.discoveredDate) obj.discoveredDate = new Date();
+      if (obj.status === undefined) obj.status = 'open';
+      if (obj.investigationStatus === undefined) obj.investigationStatus = 'open';
+    });
+
+    this.dataBreachIncidents.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.dataProcessingActivities.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.isActive === undefined) obj.isActive = true;
+      if (obj.automatedDecisionMaking === undefined) obj.automatedDecisionMaking = false;
+      if (obj.profiling === undefined) obj.profiling = false;
+      if (obj.internationalTransfers === undefined) obj.internationalTransfers = false;
+      if (obj.encryptionEnabled === undefined) obj.encryptionEnabled = false;
+      if (obj.dpiaRequired === undefined) obj.dpiaRequired = false;
+    });
+
+    this.dataProcessingActivities.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.privacyImpactAssessments.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.assessmentDate) obj.assessmentDate = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+      if (obj.dpoConsulted === undefined) obj.dpoConsulted = false;
+    });
+
+    this.privacyImpactAssessments.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
   }
 
   /**
@@ -473,6 +689,20 @@ export class MedicalProductsDB extends Dexie {
       this.suppliers,
       this.supplierEvaluations,
       this.supplierContracts,
+      this.complianceRequirements,
+      this.complianceReports,
+      this.complianceAlerts,
+      this.auditLogs,
+      this.auditTrailExports,
+      this.auditSchedules,
+      this.auditFindings,
+      this.dataRetentionPolicies,
+      this.dataRetentionExecutions,
+      this.consentRecords,
+      this.dataSubjectRequests,
+      this.dataBreachIncidents,
+      this.dataProcessingActivities,
+      this.privacyImpactAssessments,
     ], async () => {
       await Promise.all([
         this.products.clear(),
@@ -508,6 +738,20 @@ export class MedicalProductsDB extends Dexie {
         this.suppliers.clear(),
         this.supplierEvaluations.clear(),
         this.supplierContracts.clear(),
+        this.complianceRequirements.clear(),
+        this.complianceReports.clear(),
+        this.complianceAlerts.clear(),
+        this.auditLogs.clear(),
+        this.auditTrailExports.clear(),
+        this.auditSchedules.clear(),
+        this.auditFindings.clear(),
+        this.dataRetentionPolicies.clear(),
+        this.dataRetentionExecutions.clear(),
+        this.consentRecords.clear(),
+        this.dataSubjectRequests.clear(),
+        this.dataBreachIncidents.clear(),
+        this.dataProcessingActivities.clear(),
+        this.privacyImpactAssessments.clear(),
       ]);
     });
   }
@@ -528,6 +772,9 @@ export class MedicalProductsDB extends Dexie {
     jobPostings: number;
     applicants: number;
     suppliers: number;
+    complianceRequirements: number;
+    auditLogs: number;
+    dataSubjectRequests: number;
     totalSize: number;
   }> {
     const [
@@ -543,6 +790,9 @@ export class MedicalProductsDB extends Dexie {
       jobPostingsCount,
       applicantsCount,
       suppliersCount,
+      complianceRequirementsCount,
+      auditLogsCount,
+      dataSubjectRequestsCount,
     ] = await Promise.all([
       this.products.count(),
       this.customers.count(),
@@ -556,6 +806,9 @@ export class MedicalProductsDB extends Dexie {
       this.jobPostings.count(),
       this.applicants.count(),
       this.suppliers.count(),
+      this.complianceRequirements.count(),
+      this.auditLogs.count(),
+      this.dataSubjectRequests.count(),
     ]);
 
     // Estimate database size (rough calculation)
@@ -574,6 +827,9 @@ export class MedicalProductsDB extends Dexie {
       jobPostings: jobPostingsCount,
       applicants: applicantsCount,
       suppliers: suppliersCount,
+      complianceRequirements: complianceRequirementsCount,
+      auditLogs: auditLogsCount,
+      dataSubjectRequests: dataSubjectRequestsCount,
       totalSize,
     };
   }
@@ -629,6 +885,20 @@ export class MedicalProductsDB extends Dexie {
       suppliers,
       supplierEvaluations,
       supplierContracts,
+      complianceRequirements,
+      complianceReports,
+      complianceAlerts,
+      auditLogs,
+      auditTrailExports,
+      auditSchedules,
+      auditFindings,
+      dataRetentionPolicies,
+      dataRetentionExecutions,
+      consentRecords,
+      dataSubjectRequests,
+      dataBreachIncidents,
+      dataProcessingActivities,
+      privacyImpactAssessments,
     ] = await Promise.all([
       this.products.toArray(),
       this.customers.toArray(),
@@ -663,6 +933,20 @@ export class MedicalProductsDB extends Dexie {
       this.suppliers.toArray(),
       this.supplierEvaluations.toArray(),
       this.supplierContracts.toArray(),
+      this.complianceRequirements.toArray(),
+      this.complianceReports.toArray(),
+      this.complianceAlerts.toArray(),
+      this.auditLogs.toArray(),
+      this.auditTrailExports.toArray(),
+      this.auditSchedules.toArray(),
+      this.auditFindings.toArray(),
+      this.dataRetentionPolicies.toArray(),
+      this.dataRetentionExecutions.toArray(),
+      this.consentRecords.toArray(),
+      this.dataSubjectRequests.toArray(),
+      this.dataBreachIncidents.toArray(),
+      this.dataProcessingActivities.toArray(),
+      this.privacyImpactAssessments.toArray(),
     ]);
 
     return {
@@ -702,6 +986,20 @@ export class MedicalProductsDB extends Dexie {
         suppliers,
         supplierEvaluations,
         supplierContracts,
+        complianceRequirements,
+        complianceReports,
+        complianceAlerts,
+        auditLogs,
+        auditTrailExports,
+        auditSchedules,
+        auditFindings,
+        dataRetentionPolicies,
+        dataRetentionExecutions,
+        consentRecords,
+        dataSubjectRequests,
+        dataBreachIncidents,
+        dataProcessingActivities,
+        privacyImpactAssessments,
       },
     };
   }
@@ -744,6 +1042,20 @@ export class MedicalProductsDB extends Dexie {
       this.suppliers,
       this.supplierEvaluations,
       this.supplierContracts,
+      this.complianceRequirements,
+      this.complianceReports,
+      this.complianceAlerts,
+      this.auditLogs,
+      this.auditTrailExports,
+      this.auditSchedules,
+      this.auditFindings,
+      this.dataRetentionPolicies,
+      this.dataRetentionExecutions,
+      this.consentRecords,
+      this.dataSubjectRequests,
+      this.dataBreachIncidents,
+      this.dataProcessingActivities,
+      this.privacyImpactAssessments,
     ], async () => {
       const data = backup.data;
 
@@ -779,6 +1091,21 @@ export class MedicalProductsDB extends Dexie {
       if (data.recruitmentPipeline) await this.recruitmentPipeline.bulkPut(data.recruitmentPipeline);
       if (data.suppliers) await this.suppliers.bulkPut(data.suppliers);
       if (data.supplierEvaluations) await this.supplierEvaluations.bulkPut(data.supplierEvaluations);
+      if (data.supplierContracts) await this.supplierContracts.bulkPut(data.supplierContracts);
+      if (data.complianceRequirements) await this.complianceRequirements.bulkPut(data.complianceRequirements);
+      if (data.complianceReports) await this.complianceReports.bulkPut(data.complianceReports);
+      if (data.complianceAlerts) await this.complianceAlerts.bulkPut(data.complianceAlerts);
+      if (data.auditLogs) await this.auditLogs.bulkPut(data.auditLogs);
+      if (data.auditTrailExports) await this.auditTrailExports.bulkPut(data.auditTrailExports);
+      if (data.auditSchedules) await this.auditSchedules.bulkPut(data.auditSchedules);
+      if (data.auditFindings) await this.auditFindings.bulkPut(data.auditFindings);
+      if (data.dataRetentionPolicies) await this.dataRetentionPolicies.bulkPut(data.dataRetentionPolicies);
+      if (data.dataRetentionExecutions) await this.dataRetentionExecutions.bulkPut(data.dataRetentionExecutions);
+      if (data.consentRecords) await this.consentRecords.bulkPut(data.consentRecords);
+      if (data.dataSubjectRequests) await this.dataSubjectRequests.bulkPut(data.dataSubjectRequests);
+      if (data.dataBreachIncidents) await this.dataBreachIncidents.bulkPut(data.dataBreachIncidents);
+      if (data.dataProcessingActivities) await this.dataProcessingActivities.bulkPut(data.dataProcessingActivities);
+      if (data.privacyImpactAssessments) await this.privacyImpactAssessments.bulkPut(data.privacyImpactAssessments); await this.supplierEvaluations.bulkPut(data.supplierEvaluations);
       if (data.supplierContracts) await this.supplierContracts.bulkPut(data.supplierContracts);
     });
   }
