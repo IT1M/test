@@ -58,6 +58,11 @@ import type {
   AIAlert,
   AIAlertRule,
   AICostBudget,
+  Machine,
+  ProductionRun,
+  MachineDowntime,
+  MaintenanceSchedule,
+  MachineMetrics,
 } from '@/types/database';
 
 /**
@@ -126,6 +131,13 @@ export class MedicalProductsDB extends Dexie {
   aiAlerts!: Table<AIAlert, string>;
   aiAlertRules!: Table<AIAlertRule, string>;
   aiCostBudgets!: Table<AICostBudget, string>;
+  
+  // Manufacturing Operations tables
+  machines!: Table<Machine, string>;
+  productionRuns!: Table<ProductionRun, string>;
+  machineDowntime!: Table<MachineDowntime, string>;
+  maintenanceSchedule!: Table<MaintenanceSchedule, string>;
+  machineMetrics!: Table<MachineMetrics, string>;
 
   constructor() {
     super('MedicalProductsDB');
@@ -304,6 +316,22 @@ export class MedicalProductsDB extends Dexie {
       
       // AI cost budgets table with indexes for budget tracking
       aiCostBudgets: 'id, budgetName, periodType, periodStart, periodEnd, scope, status, percentageUsed, createdAt, updatedAt, [periodType+status], [scope+periodStart], [status+percentageUsed], [periodEnd+status]',
+      
+      // Manufacturing Operations tables
+      // Machines table with indexes for machine management
+      machines: 'id, machineId, name, type, manufacturer, model, serialNumber, location, status, operatorId, installDate, lastMaintenanceDate, nextMaintenanceDate, createdAt, updatedAt, [type+status], [location+status], [status+operatorId], [nextMaintenanceDate+status]',
+      
+      // Production runs table with indexes for production tracking
+      productionRuns: 'id, runId, machineId, productId, orderId, startTime, endTime, status, operatorId, createdAt, [machineId+status], [productId+startTime], [orderId+status], [operatorId+startTime], [status+startTime], [machineId+startTime]',
+      
+      // Machine downtime table with indexes for downtime analysis
+      machineDowntime: 'id, machineId, startTime, endTime, category, resolvedBy, createdAt, [machineId+startTime], [category+startTime], [machineId+category], [resolvedBy+startTime]',
+      
+      // Maintenance schedule table with indexes for maintenance planning
+      maintenanceSchedule: 'id, machineId, maintenanceType, scheduledDate, completedDate, technician, status, createdAt, [machineId+status], [maintenanceType+status], [scheduledDate+status], [technician+scheduledDate], [status+scheduledDate]',
+      
+      // Machine metrics table with indexes for performance tracking
+      machineMetrics: 'id, machineId, timestamp, oee, availability, performance, quality, createdAt, [machineId+timestamp], [timestamp+machineId], [machineId+oee]',
     });
 
     // Add hooks for automatic field updates
@@ -780,6 +808,43 @@ export class MedicalProductsDB extends Dexie {
     this.aiCostBudgets.hook('updating', (modifications, primKey, obj) => {
       return { ...modifications, updatedAt: new Date() };
     });
+
+    // Manufacturing Operations hooks
+    this.machines.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'idle';
+      if (!obj.installDate) obj.installDate = new Date();
+    });
+
+    this.machines.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.productionRuns.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.startTime) obj.startTime = new Date();
+      if (obj.status === undefined) obj.status = 'scheduled';
+      if (obj.actualQuantity === undefined) obj.actualQuantity = 0;
+      if (obj.goodQuantity === undefined) obj.goodQuantity = 0;
+      if (obj.rejectedQuantity === undefined) obj.rejectedQuantity = 0;
+    });
+
+    this.machineDowntime.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.startTime) obj.startTime = new Date();
+    });
+
+    this.maintenanceSchedule.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (obj.status === undefined) obj.status = 'scheduled';
+      if (!obj.tasks) obj.tasks = [];
+    });
+
+    this.machineMetrics.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.timestamp) obj.timestamp = new Date();
+    });
   }
 
   /**
@@ -843,6 +908,11 @@ export class MedicalProductsDB extends Dexie {
       this.aiAlerts,
       this.aiAlertRules,
       this.aiCostBudgets,
+      this.machines,
+      this.productionRuns,
+      this.machineDowntime,
+      this.maintenanceSchedule,
+      this.machineMetrics,
     ], async () => {
       await Promise.all([
         this.products.clear(),
@@ -901,6 +971,11 @@ export class MedicalProductsDB extends Dexie {
         this.aiAlerts.clear(),
         this.aiAlertRules.clear(),
         this.aiCostBudgets.clear(),
+        this.machines.clear(),
+        this.productionRuns.clear(),
+        this.machineDowntime.clear(),
+        this.maintenanceSchedule.clear(),
+        this.machineMetrics.clear(),
       ]);
     });
   }
@@ -927,6 +1002,11 @@ export class MedicalProductsDB extends Dexie {
     aiActivityLogs: number;
     aiAutomationRules: number;
     aiAlerts: number;
+    machines: number;
+    productionRuns: number;
+    machineDowntime: number;
+    maintenanceSchedule: number;
+    machineMetrics: number;
     totalSize: number;
   }> {
     const [
@@ -948,6 +1028,11 @@ export class MedicalProductsDB extends Dexie {
       aiActivityLogsCount,
       aiAutomationRulesCount,
       aiAlertsCount,
+      machinesCount,
+      productionRunsCount,
+      machineDowntimeCount,
+      maintenanceScheduleCount,
+      machineMetricsCount,
     ] = await Promise.all([
       this.products.count(),
       this.customers.count(),
@@ -967,6 +1052,11 @@ export class MedicalProductsDB extends Dexie {
       this.aiActivityLogs.count(),
       this.aiAutomationRules.count(),
       this.aiAlerts.count(),
+      this.machines.count(),
+      this.productionRuns.count(),
+      this.machineDowntime.count(),
+      this.maintenanceSchedule.count(),
+      this.machineMetrics.count(),
     ]);
 
     // Estimate database size (rough calculation)
@@ -991,6 +1081,11 @@ export class MedicalProductsDB extends Dexie {
       aiActivityLogs: aiActivityLogsCount,
       aiAutomationRules: aiAutomationRulesCount,
       aiAlerts: aiAlertsCount,
+      machines: machinesCount,
+      productionRuns: productionRunsCount,
+      machineDowntime: machineDowntimeCount,
+      maintenanceSchedule: maintenanceScheduleCount,
+      machineMetrics: machineMetricsCount,
       totalSize,
     };
   }
@@ -1069,6 +1164,11 @@ export class MedicalProductsDB extends Dexie {
       aiAlerts,
       aiAlertRules,
       aiCostBudgets,
+      machines,
+      productionRuns,
+      machineDowntime,
+      maintenanceSchedule,
+      machineMetrics,
     ] = await Promise.all([
       this.products.toArray(),
       this.customers.toArray(),
@@ -1126,6 +1226,11 @@ export class MedicalProductsDB extends Dexie {
       this.aiAlerts.toArray(),
       this.aiAlertRules.toArray(),
       this.aiCostBudgets.toArray(),
+      this.machines.toArray(),
+      this.productionRuns.toArray(),
+      this.machineDowntime.toArray(),
+      this.maintenanceSchedule.toArray(),
+      this.machineMetrics.toArray(),
     ]);
 
     return {
@@ -1188,6 +1293,11 @@ export class MedicalProductsDB extends Dexie {
         aiAlerts,
         aiAlertRules,
         aiCostBudgets,
+        machines,
+        productionRuns,
+        machineDowntime,
+        maintenanceSchedule,
+        machineMetrics,
       },
     };
   }
@@ -1253,6 +1363,11 @@ export class MedicalProductsDB extends Dexie {
       this.aiAlerts,
       this.aiAlertRules,
       this.aiCostBudgets,
+      this.machines,
+      this.productionRuns,
+      this.machineDowntime,
+      this.maintenanceSchedule,
+      this.machineMetrics,
     ], async () => {
       const data = backup.data;
 
@@ -1312,6 +1427,11 @@ export class MedicalProductsDB extends Dexie {
       if (data.aiAlerts) await this.aiAlerts.bulkPut(data.aiAlerts);
       if (data.aiAlertRules) await this.aiAlertRules.bulkPut(data.aiAlertRules);
       if (data.aiCostBudgets) await this.aiCostBudgets.bulkPut(data.aiCostBudgets);
+      if (data.machines) await this.machines.bulkPut(data.machines);
+      if (data.productionRuns) await this.productionRuns.bulkPut(data.productionRuns);
+      if (data.machineDowntime) await this.machineDowntime.bulkPut(data.machineDowntime);
+      if (data.maintenanceSchedule) await this.maintenanceSchedule.bulkPut(data.maintenanceSchedule);
+      if (data.machineMetrics) await this.machineMetrics.bulkPut(data.machineMetrics);
     });
   }
 }

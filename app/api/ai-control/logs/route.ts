@@ -1,44 +1,124 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AIActivityLogger, ActivityLogFilter } from '@/services/ai/activity-logger';
 
-// Mock data for demonstration - replace with actual database queries
+/**
+ * GET /api/ai-control/logs
+ * Get AI activity logs with filtering and pagination
+ */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    
+    // Parse pagination parameters
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
+    const offset = (page - 1) * pageSize;
 
-    // In production, this would fetch from database
-    const mockLogs = Array.from({ length: 10 }, (_, i) => ({
-      id: `log-${Date.now()}-${i}`,
-      timestamp: new Date(Date.now() - i * 5 * 60 * 1000).toISOString(),
-      model_name: ['Document Classifier', 'OCR Extractor', 'Medical NLP'][i % 3],
-      model_version: ['2.1.0', '1.5.0', '3.0.1'][i % 3],
-      operation_type: ['classify', 'extract', 'analyze'][i % 3],
-      user_id: `user-${100 + i}`,
-      input_hash: `sha256:${Math.random().toString(36).substring(7)}`,
-      output_summary: 'Operation completed successfully',
-      confidence_score: 0.75 + Math.random() * 0.2,
-      execution_time: 100 + Math.floor(Math.random() * 400),
-      status: i % 10 === 0 ? 'error' : 'success',
-      sensitive_flag: false,
-      cost_estimate: 0.001 + Math.random() * 0.005
-    }));
+    // Parse filter parameters
+    const filter: ActivityLogFilter = {
+      limit: pageSize,
+      offset,
+    };
+
+    // Date range filters
+    const startDate = searchParams.get('start_date');
+    if (startDate) {
+      filter.startDate = new Date(startDate);
+    }
+
+    const endDate = searchParams.get('end_date');
+    if (endDate) {
+      filter.endDate = new Date(endDate);
+    }
+
+    // Model and operation filters
+    const modelName = searchParams.get('model_name');
+    if (modelName) {
+      filter.modelName = modelName;
+    }
+
+    const operationType = searchParams.get('operation_type');
+    if (operationType) {
+      filter.operationType = operationType;
+    }
+
+    const userId = searchParams.get('user_id');
+    if (userId) {
+      filter.userId = userId;
+    }
+
+    const status = searchParams.get('status');
+    if (status && ['success', 'error', 'timeout', 'rate-limited'].includes(status)) {
+      filter.status = status as any;
+    }
+
+    // Confidence range filters
+    const minConfidence = searchParams.get('min_confidence');
+    if (minConfidence) {
+      filter.minConfidence = parseFloat(minConfidence);
+    }
+
+    const maxConfidence = searchParams.get('max_confidence');
+    if (maxConfidence) {
+      filter.maxConfidence = parseFloat(maxConfidence);
+    }
+
+    // Entity filters
+    const entityType = searchParams.get('entity_type');
+    if (entityType) {
+      filter.entityType = entityType;
+    }
+
+    const entityId = searchParams.get('entity_id');
+    if (entityId) {
+      filter.entityId = entityId;
+    }
+
+    // Fetch logs
+    const logs = await AIActivityLogger.getActivityLogs(filter);
+    
+    // Get total count for pagination
+    const totalCount = await AIActivityLogger.getLogCount(filter.startDate, filter.endDate);
 
     return NextResponse.json({
-      logs: mockLogs,
+      success: true,
+      logs: logs.map(log => ({
+        id: log.id,
+        timestamp: log.timestamp.toISOString(),
+        model_name: log.modelName,
+        model_version: log.modelVersion,
+        operation_type: log.operationType,
+        operation_description: log.operationDescription,
+        user_id: log.userId,
+        confidence_score: log.confidenceScore,
+        execution_time: log.executionTime,
+        status: log.status,
+        error_message: log.errorMessage,
+        error_code: log.errorCode,
+        entity_type: log.entityType,
+        entity_id: log.entityId,
+        input_tokens: log.inputTokens,
+        output_tokens: log.outputTokens,
+        cost_estimate: log.estimatedCost,
+        metadata: log.metadata,
+      })),
       pagination: {
-        total: 1523,
+        total: totalCount,
         page,
         page_size: pageSize,
-        total_pages: Math.ceil(1523 / pageSize),
-        has_next: page < Math.ceil(1523 / pageSize),
-        has_prev: page > 1
-      }
+        total_pages: Math.ceil(totalCount / pageSize),
+        has_next: page < Math.ceil(totalCount / pageSize),
+        has_prev: page > 1,
+      },
     });
   } catch (error) {
     console.error('Error fetching AI logs:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch logs' },
+      { 
+        success: false,
+        error: 'Failed to fetch logs',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

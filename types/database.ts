@@ -2181,3 +2181,167 @@ export interface AICostBudget {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// ============================================================================
+// MANUFACTURING OPERATIONS TYPES
+// ============================================================================
+
+export type MachineStatus = 'running' | 'idle' | 'maintenance' | 'down' | 'offline';
+export type ProductionRunStatus = 'scheduled' | 'in-progress' | 'paused' | 'completed' | 'cancelled';
+export type DowntimeCategory = 'planned' | 'unplanned' | 'breakdown' | 'changeover' | 'no-operator';
+export type MaintenanceType = 'preventive' | 'corrective' | 'predictive' | 'emergency';
+export type MaintenanceStatus = 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+
+/**
+ * Machine - Manufacturing equipment and machinery
+ * Tracks all production machines and their specifications
+ */
+export interface Machine {
+  id: string;
+  machineId: string; // Unique machine identifier
+  name: string;
+  type: string; // e.g., 'packaging', 'filling', 'labeling', 'mixing'
+  manufacturer: string;
+  model: string;
+  serialNumber: string;
+  location: string; // Production line or area
+  status: MachineStatus;
+  
+  // Capacity
+  capacity: number; // Units per hour
+  currentSpeed: number; // Current units per hour
+  targetSpeed: number; // Target units per hour
+  
+  // Dates
+  installDate: Date;
+  lastMaintenanceDate?: Date;
+  nextMaintenanceDate?: Date;
+  
+  // Assignment
+  operatorId?: string; // Current operator employee ID
+  
+  // Specifications
+  specifications?: {
+    powerRating?: string;
+    dimensions?: string;
+    weight?: string;
+    operatingTemperature?: string;
+    [key: string]: any;
+  };
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * ProductionRun - Individual production runs on machines
+ * Tracks production execution and output
+ */
+export interface ProductionRun {
+  id: string;
+  runId: string; // Unique run identifier
+  machineId: string;
+  productId: string;
+  orderId?: string; // Optional link to sales order
+  
+  // Timing
+  startTime: Date;
+  endTime?: Date;
+  
+  // Quantities
+  targetQuantity: number;
+  actualQuantity: number;
+  goodQuantity: number; // Passed quality
+  rejectedQuantity: number; // Failed quality
+  
+  // Status
+  status: ProductionRunStatus;
+  
+  // Personnel
+  operatorId: string; // Employee ID
+  
+  // Notes
+  notes?: string;
+  
+  createdAt: Date;
+}
+
+/**
+ * MachineDowntime - Tracks machine downtime events
+ * Critical for OEE calculation and maintenance planning
+ */
+export interface MachineDowntime {
+  id: string;
+  machineId: string;
+  
+  // Timing
+  startTime: Date;
+  endTime?: Date;
+  
+  // Classification
+  reason: string;
+  category: DowntimeCategory;
+  
+  // Impact
+  impact: string; // Description of production impact
+  
+  // Resolution
+  resolvedBy?: string; // Employee ID
+  notes?: string;
+  
+  createdAt: Date;
+}
+
+/**
+ * MaintenanceSchedule - Planned and executed maintenance activities
+ * Tracks preventive and corrective maintenance
+ */
+export interface MaintenanceSchedule {
+  id: string;
+  machineId: string;
+  maintenanceType: MaintenanceType;
+  
+  // Scheduling
+  scheduledDate: Date;
+  completedDate?: Date;
+  
+  // Personnel
+  technician?: string; // Employee ID or name
+  
+  // Details
+  tasks: string[]; // List of maintenance tasks
+  parts?: string[]; // Parts used or replaced
+  cost?: number;
+  
+  // Status
+  status: MaintenanceStatus;
+  notes?: string;
+  
+  createdAt: Date;
+}
+
+/**
+ * MachineMetrics - Real-time and historical machine performance metrics
+ * Used for OEE calculation and performance analysis
+ */
+export interface MachineMetrics {
+  id: string;
+  machineId: string;
+  timestamp: Date;
+  
+  // OEE Components
+  oee: number; // Overall Equipment Effectiveness (0-100%)
+  availability: number; // Percentage (0-100%)
+  performance: number; // Percentage (0-100%)
+  quality: number; // Percentage (0-100%)
+  
+  // Performance Metrics
+  cycleTime: number; // Seconds per unit
+  downtime: number; // Minutes
+  output: number; // Units produced
+  
+  // Additional Metrics
+  energyConsumption?: number; // kWh
+  
+  createdAt: Date;
+}
