@@ -1258,8 +1258,5 @@ function CustomReportBuilder({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         </div>
       </DialogContent>
     </Dialog>
-
-    {/* Floating Help Button */}
-    <FloatingHelpButton />
   );
 }

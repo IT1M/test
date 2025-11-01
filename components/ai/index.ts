@@ -3,12 +3,7 @@
 
 // Existing components
 export { AIInsights } from './AIInsights';
-export { ConversationalAI } from './ConversationalAI';
 export { DemandForecast } from './DemandForecast';
-export { PricingRecommendations } from './PricingRecommendations';
 
-// New advanced AI components
-export { Chatbot, ChatbotButton } from './Chatbot';
-export { DocumentGenerator } from './DocumentGenerator';
-export { SentimentDashboard } from './SentimentDashboard';
+// Advanced AI components
 export { WorkflowAutomation } from './WorkflowAutomation';

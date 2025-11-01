@@ -120,7 +120,12 @@ export function DashboardNav() {
   const pathname = usePathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ left: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
   const user = useAuthStore((state) => state.getCurrentUser());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Filter navigation items based on user permissions
   const visibleNavItems = navItems.filter((item) => {
@@ -146,15 +151,18 @@ export function DashboardNav() {
                   key={item.href}
                   className="relative group"
                   onMouseEnter={(e) => {
-                    setOpenDropdown(item.label);
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setDropdownPosition({ left: rect.left });
+                    if (mounted) {
+                      setOpenDropdown(item.label);
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setDropdownPosition({ left: rect.left });
+                    }
                   }}
                   onMouseLeave={() => {
-                    setOpenDropdown(null);
-                    setDropdownPosition(null);
+                    if (mounted) {
+                      setOpenDropdown(null);
+                      setDropdownPosition(null);
+                    }
                   }}
-                  data-nav-item={item.label}
                 >
                   <Link
                     href={item.href}
@@ -174,7 +182,7 @@ export function DashboardNav() {
                   </Link>
                   
                   {/* Dropdown Menu */}
-                  {openDropdown === item.label && dropdownPosition && (
+                  {mounted && openDropdown === item.label && dropdownPosition && (
                     <div 
                       className="fixed mt-0 w-64 bg-white rounded-b-lg shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                       style={{

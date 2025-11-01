@@ -63,6 +63,19 @@ import type {
   MachineDowntime,
   MaintenanceSchedule,
   MachineMetrics,
+  // Enterprise Enhancement - New Types
+  EmployeeOnboarding,
+  EmployeePerformanceGoal,
+  EmployeeCompensationHistory,
+  EmployeeSkillMatrix,
+  CompanyHealthScore,
+  ExecutiveKPI,
+  StrategicGoal,
+  ExecutiveAlert,
+  MachinePerformanceAnalytics,
+  ProductionScheduleOptimization,
+  MachineProfitabilityAnalysis,
+  OperatorPerformanceMetrics,
 } from '@/types/database';
 
 /**
@@ -138,6 +151,24 @@ export class MedicalProductsDB extends Dexie {
   machineDowntime!: Table<MachineDowntime, string>;
   maintenanceSchedule!: Table<MaintenanceSchedule, string>;
   machineMetrics!: Table<MachineMetrics, string>;
+  
+  // Enterprise Enhancement - HR System tables
+  employeeOnboarding!: Table<EmployeeOnboarding, string>;
+  employeePerformanceGoals!: Table<EmployeePerformanceGoal, string>;
+  employeeCompensationHistory!: Table<EmployeeCompensationHistory, string>;
+  employeeSkillMatrix!: Table<EmployeeSkillMatrix, string>;
+  
+  // Enterprise Enhancement - Executive Dashboard tables
+  companyHealthScores!: Table<CompanyHealthScore, string>;
+  executiveKPIs!: Table<ExecutiveKPI, string>;
+  strategicGoals!: Table<StrategicGoal, string>;
+  executiveAlerts!: Table<ExecutiveAlert, string>;
+  
+  // Enterprise Enhancement - Manufacturing Analytics tables
+  machinePerformanceAnalytics!: Table<MachinePerformanceAnalytics, string>;
+  productionScheduleOptimizations!: Table<ProductionScheduleOptimization, string>;
+  machineProfitabilityAnalysis!: Table<MachineProfitabilityAnalysis, string>;
+  operatorPerformanceMetrics!: Table<OperatorPerformanceMetrics, string>;
 
   constructor() {
     super('MedicalProductsDB');
@@ -332,6 +363,91 @@ export class MedicalProductsDB extends Dexie {
       
       // Machine metrics table with indexes for performance tracking
       machineMetrics: 'id, machineId, timestamp, oee, availability, performance, quality, createdAt, [machineId+timestamp], [timestamp+machineId], [machineId+oee]',
+    });
+    
+    // Define database schema version 2 - Enterprise Enhancement
+    this.version(2).stores({
+      // Keep all existing tables from version 1
+      products: 'id, sku, name, category, manufacturer, stockQuantity, expiryDate, isActive, createdAt, [category+isActive], [manufacturer+isActive], [stockQuantity+isActive]',
+      customers: 'id, customerId, name, type, email, phone, segment, isActive, createdAt, [type+isActive], [segment+isActive]',
+      orders: 'id, orderId, customerId, orderDate, status, paymentStatus, salesPerson, createdAt, [customerId+status], [customerId+orderDate], [status+orderDate], [salesPerson+orderDate]',
+      inventory: 'id, productId, warehouseLocation, quantity, lastRestocked, [productId+warehouseLocation], [quantity+productId]',
+      sales: 'id, saleId, orderId, customerId, saleDate, salesPerson, createdAt, [customerId+saleDate], [salesPerson+saleDate], [saleDate+salesPerson]',
+      patients: 'id, patientId, nationalId, firstName, lastName, linkedCustomerId, createdAt, [firstName+lastName], [linkedCustomerId+createdAt]',
+      medicalRecords: 'id, recordId, patientId, recordType, visitDate, doctorName, hospitalName, createdAt, [patientId+visitDate], [patientId+recordType], [recordType+visitDate]',
+      quotations: 'id, quotationId, customerId, status, validUntil, createdAt, [customerId+status], [status+validUntil]',
+      invoices: 'id, invoiceId, orderId, customerId, dueDate, status, createdAt, [customerId+status], [status+dueDate], [orderId+status]',
+      payments: 'id, paymentId, invoiceId, customerId, paymentDate, createdAt, [invoiceId+paymentDate], [customerId+paymentDate]',
+      stockMovements: 'id, productId, type, timestamp, performedBy, [productId+timestamp], [type+timestamp], [performedBy+timestamp]',
+      purchaseOrders: 'id, poId, supplierId, orderDate, status, expectedDeliveryDate, createdAt, [supplierId+status], [status+orderDate]',
+      searchHistory: 'id, query, entityType, timestamp, userId, [userId+timestamp], [entityType+timestamp]',
+      systemLogs: 'id, action, entityType, entityId, timestamp, userId, status, [entityType+timestamp], [userId+timestamp], [status+timestamp], [action+timestamp]',
+      users: 'id, username, email, role, isActive, lastLogin, createdAt, [role+isActive]',
+      rejections: 'id, rejectionId, itemCode, productId, machineName, lotNumber, batchNumber, rejectionDate, rejectionType, inspectorId, supplierId, status, severity, createdAt, [productId+rejectionDate], [batchNumber+rejectionDate], [lotNumber+rejectionDate], [itemCode+rejectionDate], [status+rejectionDate], [severity+status], [inspectorId+rejectionDate], [supplierId+rejectionDate]',
+      rejectionReasons: 'id, code, category, isActive, [category+isActive]',
+      qualityInspections: 'id, inspectionId, productId, orderId, batchNumber, inspectionDate, inspectorId, inspectionType, status, createdAt, [productId+inspectionDate], [batchNumber+inspectionDate], [inspectorId+inspectionDate], [status+inspectionDate], [inspectionType+inspectionDate]',
+      employees: 'id, employeeId, nationalId, firstName, lastName, departmentId, positionId, managerId, hireDate, status, userId, createdAt, [departmentId+status], [positionId+status], [managerId+status], [status+hireDate], [firstName+lastName]',
+      departments: 'id, departmentId, name, managerId, parentDepartmentId, isActive, createdAt, [managerId+isActive], [parentDepartmentId+isActive]',
+      positions: 'id, positionId, title, departmentId, level, isActive, createdAt, [departmentId+isActive], [level+isActive]',
+      attendance: 'id, employeeId, date, status, createdAt, [employeeId+date], [employeeId+status], [date+status]',
+      leaves: 'id, leaveId, employeeId, leaveType, startDate, endDate, status, requestDate, approvedBy, createdAt, [employeeId+status], [employeeId+startDate], [status+requestDate], [approvedBy+status]',
+      payroll: 'id, payrollId, employeeId, month, year, status, paymentDate, createdAt, [employeeId+month+year], [employeeId+status], [status+paymentDate]',
+      performanceReviews: 'id, reviewId, employeeId, reviewDate, reviewerId, status, createdAt, [employeeId+reviewDate], [reviewerId+reviewDate], [status+reviewDate]',
+      training: 'id, trainingId, title, category, type, startDate, endDate, status, createdAt, [category+status], [type+status], [startDate+status]',
+      jobPostings: 'id, jobId, title, departmentId, positionId, status, postedDate, closingDate, hiringManagerId, createdAt, [departmentId+status], [positionId+status], [status+postedDate], [hiringManagerId+status]',
+      applicants: 'id, applicantId, jobId, firstName, lastName, email, phone, applicationDate, status, source, createdAt, [jobId+status], [jobId+applicationDate], [status+applicationDate], [source+status], [firstName+lastName]',
+      interviews: 'id, interviewId, applicantId, jobId, scheduledDate, type, status, createdAt, [applicantId+scheduledDate], [jobId+scheduledDate], [status+scheduledDate], [type+status]',
+      recruitmentPipeline: 'id, applicantId, jobId, stage, enteredAt, exitedAt, [applicantId+stage], [jobId+stage], [stage+enteredAt]',
+      suppliers: 'id, supplierId, name, type, email, phone, country, status, isPreferred, rating, createdAt, [type+status], [status+isPreferred], [country+status], [rating+status]',
+      supplierEvaluations: 'id, supplierId, evaluationDate, evaluatorId, period, status, overallScore, createdAt, [supplierId+evaluationDate], [supplierId+status], [evaluatorId+evaluationDate], [status+evaluationDate]',
+      supplierContracts: 'id, contractId, supplierId, contractType, startDate, endDate, status, renewalDate, createdAt, [supplierId+status], [status+endDate], [contractType+status], [endDate+status]',
+      complianceRequirements: 'id, requirementId, title, category, priority, regulatoryBody, region, status, complianceDeadline, nextReviewDate, ownerId, createdAt, [category+status], [priority+status], [regulatoryBody+status], [region+status], [status+complianceDeadline], [ownerId+status], [nextReviewDate+status]',
+      complianceReports: 'id, reportId, reportType, reportingPeriodStart, reportingPeriodEnd, generatedDate, generatedBy, status, createdAt, [reportType+status], [generatedDate+status], [generatedBy+generatedDate], [status+generatedDate]',
+      complianceAlerts: 'id, requirementId, alertType, severity, dueDate, acknowledgedBy, createdAt, [requirementId+alertType], [alertType+severity], [severity+dueDate], [acknowledgedBy+createdAt]',
+      auditLogs: 'id, logId, timestamp, eventType, entityType, entityId, userId, username, userRole, ipAddress, source, isSecurityEvent, isCriticalOperation, complianceRelevant, status, createdAt, [timestamp+entityType], [entityType+entityId], [userId+timestamp], [eventType+timestamp], [isSecurityEvent+timestamp], [isCriticalOperation+timestamp], [complianceRelevant+timestamp], [status+timestamp]',
+      auditTrailExports: 'id, exportId, requestedBy, requestDate, startDate, endDate, status, createdAt, [requestedBy+requestDate], [status+requestDate], [startDate+endDate]',
+      auditSchedules: 'id, scheduleId, auditType, scheduledDate, leadAuditorId, status, createdAt, [auditType+status], [scheduledDate+status], [leadAuditorId+scheduledDate], [status+scheduledDate]',
+      auditFindings: 'id, findingId, auditScheduleId, severity, category, assignedTo, dueDate, status, createdAt, [auditScheduleId+status], [severity+status], [assignedTo+dueDate], [status+dueDate]',
+      dataRetentionPolicies: 'id, policyId, name, entityType, dataCategory, retentionPeriod, actionAfterRetention, isActive, effectiveDate, reviewDate, createdAt, [entityType+isActive], [dataCategory+isActive], [isActive+reviewDate]',
+      dataRetentionExecutions: 'id, executionId, policyId, executionDate, executedBy, status, createdAt, [policyId+executionDate], [executionDate+status], [executedBy+executionDate]',
+      consentRecords: 'id, consentId, subjectType, subjectId, consentType, status, grantedDate, withdrawnDate, expiryDate, createdAt, [subjectType+subjectId], [subjectId+consentType], [consentType+status], [status+expiryDate]',
+      dataSubjectRequests: 'id, requestId, subjectType, subjectId, requestType, requestDate, status, dueDate, assignedTo, createdAt, [subjectType+subjectId], [subjectId+requestType], [requestType+status], [status+dueDate], [assignedTo+status]',
+      dataBreachIncidents: 'id, incidentId, discoveredDate, occurredDate, severity, breachType, riskLevel, investigationStatus, status, incidentLeadId, createdAt, [severity+status], [breachType+status], [riskLevel+status], [investigationStatus+status], [incidentLeadId+discoveredDate]',
+      dataProcessingActivities: 'id, activityId, name, entityType, purpose, legalBasis, isActive, lastReviewDate, nextReviewDate, createdAt, [entityType+isActive], [purpose+isActive], [isActive+nextReviewDate]',
+      privacyImpactAssessments: 'id, assessmentId, title, assessmentDate, assessorId, overallRiskLevel, residualRiskLevel, status, nextReviewDate, createdAt, [assessorId+assessmentDate], [overallRiskLevel+status], [status+nextReviewDate]',
+      aiActivityLogs: 'id, timestamp, userId, modelName, operationType, status, confidenceScore, executionTime, entityType, entityId, createdAt, [timestamp+modelName], [modelName+operationType], [userId+timestamp], [operationType+status], [status+timestamp], [modelName+status], [entityType+entityId]',
+      aiConfigurationHistory: 'id, timestamp, userId, settingName, settingCategory, impactLevel, approvedBy, createdAt, [timestamp+settingName], [userId+timestamp], [settingCategory+timestamp], [settingName+timestamp]',
+      aiConfigurationSnapshots: 'id, snapshotName, createdAt, createdBy, isAutomatic, restoredAt, [createdAt+isAutomatic], [createdBy+createdAt]',
+      aiAutomationRules: 'id, ruleName, triggerType, aiOperation, modelName, status, isActive, lastExecution, successRate, createdAt, updatedAt, [status+isActive], [triggerType+isActive], [modelName+isActive], [lastExecution+status], [successRate+isActive]',
+      aiModelMetrics: 'id, modelName, date, totalCalls, successfulCalls, failedCalls, avgResponseTime, avgConfidence, totalCost, createdAt, [modelName+date], [date+modelName], [modelName+totalCalls]',
+      securityAuditLogs: 'id, timestamp, userId, username, userRole, action, actionCategory, resourceType, outcome, isSuspicious, requiresMFA, createdAt, [timestamp+userId], [userId+action], [action+outcome], [actionCategory+timestamp], [resourceType+action], [outcome+timestamp], [isSuspicious+timestamp]',
+      aiAlerts: 'id, alertId, alertType, severity, status, modelName, createdAt, updatedAt, acknowledgedAt, resolvedAt, snoozedUntil, [alertType+status], [severity+status], [status+createdAt], [modelName+alertType], [createdAt+severity]',
+      aiAlertRules: 'id, ruleName, conditionType, alertType, severity, isActive, lastTriggered, triggerCount, createdAt, updatedAt, [isActive+conditionType], [alertType+isActive], [lastTriggered+isActive]',
+      aiCostBudgets: 'id, budgetName, periodType, periodStart, periodEnd, scope, status, percentageUsed, createdAt, updatedAt, [periodType+status], [scope+periodStart], [status+percentageUsed], [periodEnd+status]',
+      machines: 'id, machineId, name, type, manufacturer, model, serialNumber, location, status, operatorId, installDate, lastMaintenanceDate, nextMaintenanceDate, createdAt, updatedAt, [type+status], [location+status], [status+operatorId], [nextMaintenanceDate+status]',
+      productionRuns: 'id, runId, machineId, productId, orderId, startTime, endTime, status, operatorId, createdAt, [machineId+status], [productId+startTime], [orderId+status], [operatorId+startTime], [status+startTime], [machineId+startTime]',
+      machineDowntime: 'id, machineId, startTime, endTime, category, resolvedBy, createdAt, [machineId+startTime], [category+startTime], [machineId+category], [resolvedBy+startTime]',
+      maintenanceSchedule: 'id, machineId, maintenanceType, scheduledDate, completedDate, technician, status, createdAt, [machineId+status], [maintenanceType+status], [scheduledDate+status], [technician+scheduledDate], [status+scheduledDate]',
+      machineMetrics: 'id, machineId, timestamp, oee, availability, performance, quality, createdAt, [machineId+timestamp], [timestamp+machineId], [machineId+oee]',
+      
+      // NEW TABLES - Enterprise Enhancement
+      // HR System tables with compound indexes for optimal query performance
+      employeeOnboarding: 'id, employeeId, status, startDate, completionDate, createdAt, updatedAt, [employeeId+status], [status+startDate], [employeeId+startDate]',
+      employeePerformanceGoals: 'id, employeeId, reviewId, category, status, startDate, targetDate, createdAt, updatedAt, [employeeId+status], [employeeId+category], [status+targetDate], [category+status]',
+      employeeCompensationHistory: 'id, employeeId, effectiveDate, changeType, approvedBy, createdAt, [employeeId+effectiveDate], [changeType+effectiveDate], [approvedBy+effectiveDate]',
+      employeeSkillMatrix: 'id, employeeId, updatedAt, [employeeId+updatedAt]',
+      
+      // Executive Dashboard tables with indexes for fast dashboard rendering
+      companyHealthScores: 'id, timestamp, overallScore, trend, createdAt, [timestamp+overallScore], [trend+timestamp]',
+      executiveKPIs: 'id, date, period, revenue, netProfit, oee, createdAt, [date+period], [period+date], [date+revenue]',
+      strategicGoals: 'id, goalId, category, priority, status, owner, targetDate, createdAt, updatedAt, [category+status], [priority+status], [owner+status], [status+targetDate]',
+      executiveAlerts: 'id, alertId, type, severity, status, assignedTo, dueDate, createdAt, updatedAt, [type+status], [severity+status], [status+createdAt], [assignedTo+status], [severity+dueDate]',
+      
+      // Manufacturing Analytics tables with indexes for real-time analytics
+      machinePerformanceAnalytics: 'id, machineId, date, shift, oee, performanceRating, createdAt, [machineId+date], [date+machineId], [machineId+oee], [machineId+shift+date], [performanceRating+date]',
+      productionScheduleOptimizations: 'id, scheduleId, status, createdBy, approvedBy, createdAt, updatedAt, [status+createdAt], [createdBy+createdAt], [approvedBy+createdAt]',
+      machineProfitabilityAnalysis: 'id, machineId, createdAt, [machineId+createdAt]',
+      operatorPerformanceMetrics: 'id, employeeId, machineId, date, shift, performanceCategory, createdAt, [employeeId+date], [machineId+date], [employeeId+machineId+date], [performanceCategory+date], [shift+date]',
     });
 
     // Add hooks for automatic field updates
@@ -845,6 +961,118 @@ export class MedicalProductsDB extends Dexie {
       if (!obj.createdAt) obj.createdAt = new Date();
       if (!obj.timestamp) obj.timestamp = new Date();
     });
+    
+    // Enterprise Enhancement - HR System hooks
+    this.employeeOnboarding.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.startDate) obj.startDate = new Date();
+      if (obj.status === undefined) obj.status = 'pending';
+    });
+
+    this.employeeOnboarding.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.employeePerformanceGoals.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.startDate) obj.startDate = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+      if (obj.currentValue === undefined) obj.currentValue = 0;
+    });
+
+    this.employeePerformanceGoals.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.employeeCompensationHistory.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.effectiveDate) obj.effectiveDate = new Date();
+    });
+
+    this.employeeSkillMatrix.hook('creating', (primKey, obj) => {
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.technicalSkills) obj.technicalSkills = [];
+      if (!obj.softSkills) obj.softSkills = [];
+      if (!obj.machineOperations) obj.machineOperations = [];
+      if (!obj.trainingNeeds) obj.trainingNeeds = [];
+    });
+
+    this.employeeSkillMatrix.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    // Enterprise Enhancement - Executive Dashboard hooks
+    this.companyHealthScores.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.timestamp) obj.timestamp = new Date();
+      if (obj.trend === undefined) obj.trend = 'stable';
+    });
+
+    this.executiveKPIs.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.date) obj.date = new Date();
+    });
+
+    this.strategicGoals.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (!obj.startDate) obj.startDate = new Date();
+      if (obj.status === undefined) obj.status = 'not-started';
+      if (obj.currentValue === undefined) obj.currentValue = 0;
+      if (!obj.stakeholders) obj.stakeholders = [];
+      if (!obj.milestones) obj.milestones = [];
+      if (!obj.kpis) obj.kpis = [];
+      if (!obj.updates) obj.updates = [];
+    });
+
+    this.strategicGoals.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.executiveAlerts.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+    });
+
+    this.executiveAlerts.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    // Enterprise Enhancement - Manufacturing Analytics hooks
+    this.machinePerformanceAnalytics.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.date) obj.date = new Date();
+      if (!obj.downtimeEvents) obj.downtimeEvents = [];
+    });
+
+    this.productionScheduleOptimizations.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'draft';
+      if (!obj.orders) obj.orders = [];
+      if (!obj.machineAssignments) obj.machineAssignments = [];
+      if (!obj.aiRecommendations) obj.aiRecommendations = [];
+    });
+
+    this.productionScheduleOptimizations.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.machineProfitabilityAnalysis.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.revenueByProduct) obj.revenueByProduct = [];
+    });
+
+    this.operatorPerformanceMetrics.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.date) obj.date = new Date();
+      if (!obj.certifications) obj.certifications = [];
+      if (!obj.trainingCompleted) obj.trainingCompleted = [];
+      if (obj.safetyIncidents === undefined) obj.safetyIncidents = 0;
+    });
   }
 
   /**
@@ -913,6 +1141,18 @@ export class MedicalProductsDB extends Dexie {
       this.machineDowntime,
       this.maintenanceSchedule,
       this.machineMetrics,
+      this.employeeOnboarding,
+      this.employeePerformanceGoals,
+      this.employeeCompensationHistory,
+      this.employeeSkillMatrix,
+      this.companyHealthScores,
+      this.executiveKPIs,
+      this.strategicGoals,
+      this.executiveAlerts,
+      this.machinePerformanceAnalytics,
+      this.productionScheduleOptimizations,
+      this.machineProfitabilityAnalysis,
+      this.operatorPerformanceMetrics,
     ], async () => {
       await Promise.all([
         this.products.clear(),
@@ -976,6 +1216,18 @@ export class MedicalProductsDB extends Dexie {
         this.machineDowntime.clear(),
         this.maintenanceSchedule.clear(),
         this.machineMetrics.clear(),
+        this.employeeOnboarding.clear(),
+        this.employeePerformanceGoals.clear(),
+        this.employeeCompensationHistory.clear(),
+        this.employeeSkillMatrix.clear(),
+        this.companyHealthScores.clear(),
+        this.executiveKPIs.clear(),
+        this.strategicGoals.clear(),
+        this.executiveAlerts.clear(),
+        this.machinePerformanceAnalytics.clear(),
+        this.productionScheduleOptimizations.clear(),
+        this.machineProfitabilityAnalysis.clear(),
+        this.operatorPerformanceMetrics.clear(),
       ]);
     });
   }
@@ -1007,6 +1259,18 @@ export class MedicalProductsDB extends Dexie {
     machineDowntime: number;
     maintenanceSchedule: number;
     machineMetrics: number;
+    employeeOnboarding: number;
+    employeePerformanceGoals: number;
+    employeeCompensationHistory: number;
+    employeeSkillMatrix: number;
+    companyHealthScores: number;
+    executiveKPIs: number;
+    strategicGoals: number;
+    executiveAlerts: number;
+    machinePerformanceAnalytics: number;
+    productionScheduleOptimizations: number;
+    machineProfitabilityAnalysis: number;
+    operatorPerformanceMetrics: number;
     totalSize: number;
   }> {
     const [
@@ -1033,6 +1297,18 @@ export class MedicalProductsDB extends Dexie {
       machineDowntimeCount,
       maintenanceScheduleCount,
       machineMetricsCount,
+      employeeOnboardingCount,
+      employeePerformanceGoalsCount,
+      employeeCompensationHistoryCount,
+      employeeSkillMatrixCount,
+      companyHealthScoresCount,
+      executiveKPIsCount,
+      strategicGoalsCount,
+      executiveAlertsCount,
+      machinePerformanceAnalyticsCount,
+      productionScheduleOptimizationsCount,
+      machineProfitabilityAnalysisCount,
+      operatorPerformanceMetricsCount,
     ] = await Promise.all([
       this.products.count(),
       this.customers.count(),
@@ -1057,6 +1333,18 @@ export class MedicalProductsDB extends Dexie {
       this.machineDowntime.count(),
       this.maintenanceSchedule.count(),
       this.machineMetrics.count(),
+      this.employeeOnboarding.count(),
+      this.employeePerformanceGoals.count(),
+      this.employeeCompensationHistory.count(),
+      this.employeeSkillMatrix.count(),
+      this.companyHealthScores.count(),
+      this.executiveKPIs.count(),
+      this.strategicGoals.count(),
+      this.executiveAlerts.count(),
+      this.machinePerformanceAnalytics.count(),
+      this.productionScheduleOptimizations.count(),
+      this.machineProfitabilityAnalysis.count(),
+      this.operatorPerformanceMetrics.count(),
     ]);
 
     // Estimate database size (rough calculation)
@@ -1086,6 +1374,18 @@ export class MedicalProductsDB extends Dexie {
       machineDowntime: machineDowntimeCount,
       maintenanceSchedule: maintenanceScheduleCount,
       machineMetrics: machineMetricsCount,
+      employeeOnboarding: employeeOnboardingCount,
+      employeePerformanceGoals: employeePerformanceGoalsCount,
+      employeeCompensationHistory: employeeCompensationHistoryCount,
+      employeeSkillMatrix: employeeSkillMatrixCount,
+      companyHealthScores: companyHealthScoresCount,
+      executiveKPIs: executiveKPIsCount,
+      strategicGoals: strategicGoalsCount,
+      executiveAlerts: executiveAlertsCount,
+      machinePerformanceAnalytics: machinePerformanceAnalyticsCount,
+      productionScheduleOptimizations: productionScheduleOptimizationsCount,
+      machineProfitabilityAnalysis: machineProfitabilityAnalysisCount,
+      operatorPerformanceMetrics: operatorPerformanceMetricsCount,
       totalSize,
     };
   }
@@ -1169,6 +1469,18 @@ export class MedicalProductsDB extends Dexie {
       machineDowntime,
       maintenanceSchedule,
       machineMetrics,
+      employeeOnboarding,
+      employeePerformanceGoals,
+      employeeCompensationHistory,
+      employeeSkillMatrix,
+      companyHealthScores,
+      executiveKPIs,
+      strategicGoals,
+      executiveAlerts,
+      machinePerformanceAnalytics,
+      productionScheduleOptimizations,
+      machineProfitabilityAnalysis,
+      operatorPerformanceMetrics,
     ] = await Promise.all([
       this.products.toArray(),
       this.customers.toArray(),
@@ -1231,6 +1543,18 @@ export class MedicalProductsDB extends Dexie {
       this.machineDowntime.toArray(),
       this.maintenanceSchedule.toArray(),
       this.machineMetrics.toArray(),
+      this.employeeOnboarding.toArray(),
+      this.employeePerformanceGoals.toArray(),
+      this.employeeCompensationHistory.toArray(),
+      this.employeeSkillMatrix.toArray(),
+      this.companyHealthScores.toArray(),
+      this.executiveKPIs.toArray(),
+      this.strategicGoals.toArray(),
+      this.executiveAlerts.toArray(),
+      this.machinePerformanceAnalytics.toArray(),
+      this.productionScheduleOptimizations.toArray(),
+      this.machineProfitabilityAnalysis.toArray(),
+      this.operatorPerformanceMetrics.toArray(),
     ]);
 
     return {
@@ -1298,6 +1622,18 @@ export class MedicalProductsDB extends Dexie {
         machineDowntime,
         maintenanceSchedule,
         machineMetrics,
+        employeeOnboarding,
+        employeePerformanceGoals,
+        employeeCompensationHistory,
+        employeeSkillMatrix,
+        companyHealthScores,
+        executiveKPIs,
+        strategicGoals,
+        executiveAlerts,
+        machinePerformanceAnalytics,
+        productionScheduleOptimizations,
+        machineProfitabilityAnalysis,
+        operatorPerformanceMetrics,
       },
     };
   }
@@ -1368,6 +1704,18 @@ export class MedicalProductsDB extends Dexie {
       this.machineDowntime,
       this.maintenanceSchedule,
       this.machineMetrics,
+      this.employeeOnboarding,
+      this.employeePerformanceGoals,
+      this.employeeCompensationHistory,
+      this.employeeSkillMatrix,
+      this.companyHealthScores,
+      this.executiveKPIs,
+      this.strategicGoals,
+      this.executiveAlerts,
+      this.machinePerformanceAnalytics,
+      this.productionScheduleOptimizations,
+      this.machineProfitabilityAnalysis,
+      this.operatorPerformanceMetrics,
     ], async () => {
       const data = backup.data;
 
@@ -1432,6 +1780,18 @@ export class MedicalProductsDB extends Dexie {
       if (data.machineDowntime) await this.machineDowntime.bulkPut(data.machineDowntime);
       if (data.maintenanceSchedule) await this.maintenanceSchedule.bulkPut(data.maintenanceSchedule);
       if (data.machineMetrics) await this.machineMetrics.bulkPut(data.machineMetrics);
+      if (data.employeeOnboarding) await this.employeeOnboarding.bulkPut(data.employeeOnboarding);
+      if (data.employeePerformanceGoals) await this.employeePerformanceGoals.bulkPut(data.employeePerformanceGoals);
+      if (data.employeeCompensationHistory) await this.employeeCompensationHistory.bulkPut(data.employeeCompensationHistory);
+      if (data.employeeSkillMatrix) await this.employeeSkillMatrix.bulkPut(data.employeeSkillMatrix);
+      if (data.companyHealthScores) await this.companyHealthScores.bulkPut(data.companyHealthScores);
+      if (data.executiveKPIs) await this.executiveKPIs.bulkPut(data.executiveKPIs);
+      if (data.strategicGoals) await this.strategicGoals.bulkPut(data.strategicGoals);
+      if (data.executiveAlerts) await this.executiveAlerts.bulkPut(data.executiveAlerts);
+      if (data.machinePerformanceAnalytics) await this.machinePerformanceAnalytics.bulkPut(data.machinePerformanceAnalytics);
+      if (data.productionScheduleOptimizations) await this.productionScheduleOptimizations.bulkPut(data.productionScheduleOptimizations);
+      if (data.machineProfitabilityAnalysis) await this.machineProfitabilityAnalysis.bulkPut(data.machineProfitabilityAnalysis);
+      if (data.operatorPerformanceMetrics) await this.operatorPerformanceMetrics.bulkPut(data.operatorPerformanceMetrics);
     });
   }
 }

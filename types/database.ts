@@ -2345,3 +2345,643 @@ export interface MachineMetrics {
   
   createdAt: Date;
 }
+
+// ============================================================================
+// ENTERPRISE ENHANCEMENT - NEW TYPES
+// ============================================================================
+
+// HR System Types
+export type OnboardingStatus = 'pending' | 'in-progress' | 'completed';
+export type OnboardingTaskStatus = 'pending' | 'completed';
+export type OnboardingDocumentStatus = 'pending' | 'approved' | 'rejected';
+export type PerformanceGoalCategory = 'productivity' | 'quality' | 'leadership' | 'innovation' | 'teamwork';
+export type PerformanceGoalStatus = 'active' | 'achieved' | 'missed' | 'cancelled';
+export type CompensationChangeType = 'salary-increase' | 'promotion' | 'bonus' | 'adjustment';
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+export type TrainingPriority = 'low' | 'medium' | 'high';
+
+// Executive Dashboard Types
+export type HealthTrend = 'improving' | 'stable' | 'declining';
+export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type AlertStatus = 'active' | 'acknowledged' | 'resolved' | 'dismissed';
+export type GoalCategory = 'financial' | 'operational' | 'customer' | 'hr' | 'innovation';
+export type GoalPriority = 'critical' | 'high' | 'medium' | 'low';
+export type GoalStatus = 'not-started' | 'on-track' | 'at-risk' | 'delayed' | 'completed' | 'cancelled';
+export type MilestoneStatus = 'pending' | 'completed' | 'missed';
+export type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+
+// Manufacturing Analytics Types
+export type MachinePerformanceRating = 'excellent' | 'good' | 'fair' | 'poor';
+export type ScheduleAlgorithm = 'ai-optimized' | 'manual' | 'rule-based';
+export type ScheduleStatus = 'draft' | 'optimized' | 'approved' | 'in-progress' | 'completed';
+export type OptimizationType = 'resequence' | 'reassign' | 'split' | 'delay';
+export type OperatorPerformanceCategory = 'excellent' | 'good' | 'average' | 'needs-improvement';
+
+// ============================================================================
+// HR SYSTEM INTERFACES
+// ============================================================================
+
+export interface EmployeeOnboarding {
+  id: string;
+  employeeId: string;
+  status: OnboardingStatus;
+  startDate: Date;
+  completionDate?: Date;
+  
+  tasks: Array<{
+    id: string;
+    title: string;
+    description: string;
+    assignedTo: string; // userId
+    dueDate: Date;
+    status: OnboardingTaskStatus;
+    completedAt?: Date;
+  }>;
+  
+  documents: Array<{
+    id: string;
+    name: string;
+    type: string;
+    url: string;
+    uploadedAt: Date;
+    status: OnboardingDocumentStatus;
+  }>;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EmployeePerformanceGoal {
+  id: string;
+  employeeId: string;
+  reviewId?: string;
+  
+  title: string;
+  description: string;
+  category: PerformanceGoalCategory;
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  
+  startDate: Date;
+  targetDate: Date;
+  status: PerformanceGoalStatus;
+  
+  milestones: Array<{
+    title: string;
+    targetDate: Date;
+    status: MilestoneStatus;
+    completedAt?: Date;
+  }>;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EmployeeCompensationHistory {
+  id: string;
+  employeeId: string;
+  
+  effectiveDate: Date;
+  changeType: CompensationChangeType;
+  previousSalary: number;
+  newSalary: number;
+  changePercentage: number;
+  
+  reason: string;
+  approvedBy: string;
+  notes?: string;
+  
+  createdAt: Date;
+}
+
+export interface EmployeeSkillMatrix {
+  id: string;
+  employeeId: string;
+  
+  technicalSkills: Array<{
+    skill: string;
+    level: number; // 1-5
+    lastAssessed: Date;
+    certifications: string[];
+  }>;
+  
+  softSkills: Array<{
+    skill: string;
+    level: number; // 1-5
+    lastAssessed: Date;
+  }>;
+  
+  machineOperations: Array<{
+    machineType: string;
+    certified: boolean;
+    certificationDate?: Date;
+    expiryDate?: Date;
+  }>;
+  
+  trainingNeeds: Array<{
+    skill: string;
+    priority: TrainingPriority;
+    targetDate: Date;
+  }>;
+  
+  updatedAt: Date;
+}
+
+// ============================================================================
+// EXECUTIVE DASHBOARD INTERFACES
+// ============================================================================
+
+export interface CompanyHealthScore {
+  id: string;
+  timestamp: Date;
+  
+  // Overall Score (0-100)
+  overallScore: number;
+  trend: HealthTrend;
+  
+  // Component Scores
+  financialHealth: {
+    score: number;
+    weight: number; // 30%
+    metrics: {
+      revenue: number;
+      profitMargin: number;
+      cashFlow: number;
+      debtRatio: number;
+    };
+  };
+  
+  operationalHealth: {
+    score: number;
+    weight: number; // 25%
+    metrics: {
+      oee: number;
+      orderFulfillmentRate: number;
+      inventoryTurnover: number;
+      onTimeDelivery: number;
+    };
+  };
+  
+  qualityHealth: {
+    score: number;
+    weight: number; // 15%
+    metrics: {
+      defectRate: number;
+      customerComplaints: number;
+      supplierQuality: number;
+      complianceScore: number;
+    };
+  };
+  
+  hrHealth: {
+    score: number;
+    weight: number; // 15%
+    metrics: {
+      employeeSatisfaction: number;
+      turnoverRate: number;
+      attendanceRate: number;
+      productivityScore: number;
+    };
+  };
+  
+  customerHealth: {
+    score: number;
+    weight: number; // 15%
+    metrics: {
+      satisfaction: number;
+      retentionRate: number;
+      nps: number;
+      lifetimeValue: number;
+    };
+  };
+  
+  // AI Analysis
+  aiInsights: string[];
+  recommendations: Array<{
+    priority: AlertSeverity;
+    category: string;
+    recommendation: string;
+    expectedImpact: string;
+  }>;
+  
+  // Alerts
+  criticalAlerts: Array<{
+    type: string;
+    severity: AlertSeverity;
+    message: string;
+    affectedArea: string;
+    actionRequired: string;
+  }>;
+  
+  createdAt: Date;
+}
+
+export interface ExecutiveKPI {
+  id: string;
+  date: Date;
+  period: Period;
+  
+  // Financial KPIs
+  revenue: number;
+  grossProfit: number;
+  netProfit: number;
+  profitMargin: number;
+  ebitda: number;
+  cashFlow: number;
+  
+  // Operational KPIs
+  totalOrders: number;
+  orderValue: number;
+  productionOutput: number;
+  oee: number;
+  inventoryValue: number;
+  
+  // HR KPIs
+  totalEmployees: number;
+  activeEmployees: number;
+  turnoverRate: number;
+  attendanceRate: number;
+  avgSalary: number;
+  
+  // Customer KPIs
+  totalCustomers: number;
+  activeCustomers: number;
+  newCustomers: number;
+  customerSatisfaction: number;
+  nps: number;
+  
+  // Quality KPIs
+  defectRate: number;
+  rejectionRate: number;
+  customerComplaints: number;
+  capaOpen: number;
+  
+  // Comparisons
+  previousPeriod: {
+    revenue: number;
+    profit: number;
+    orders: number;
+  };
+  
+  growthRates: {
+    revenueGrowth: number;
+    profitGrowth: number;
+    orderGrowth: number;
+  };
+  
+  createdAt: Date;
+}
+
+export interface StrategicGoal {
+  id: string;
+  goalId: string;
+  
+  title: string;
+  description: string;
+  category: GoalCategory;
+  priority: GoalPriority;
+  
+  owner: string; // userId
+  stakeholders: string[]; // userIds
+  
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  
+  startDate: Date;
+  targetDate: Date;
+  status: GoalStatus;
+  
+  milestones: Array<{
+    id: string;
+    title: string;
+    targetDate: Date;
+    status: MilestoneStatus;
+    completedAt?: Date;
+  }>;
+  
+  kpis: Array<{
+    name: string;
+    currentValue: number;
+    targetValue: number;
+    unit: string;
+  }>;
+  
+  updates: Array<{
+    date: Date;
+    userId: string;
+    update: string;
+    progress: number;
+  }>;
+  
+  aiAnalysis: {
+    probabilityOfSuccess: number;
+    riskFactors: string[];
+    recommendations: string[];
+    lastAnalyzed: Date;
+  };
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ExecutiveAlert {
+  id: string;
+  alertId: string;
+  
+  type: 'financial' | 'operational' | 'quality' | 'hr' | 'customer' | 'compliance';
+  severity: AlertSeverity;
+  status: AlertStatus;
+  
+  title: string;
+  description: string;
+  affectedArea: string;
+  
+  metrics: {
+    current: number;
+    threshold: number;
+    unit: string;
+  };
+  
+  impact: {
+    financial?: number;
+    operational?: string;
+    reputation?: string;
+  };
+  
+  recommendations: Array<{
+    action: string;
+    priority: number;
+    estimatedImpact: string;
+  }>;
+  
+  assignedTo?: string;
+  dueDate?: Date;
+  
+  acknowledgedBy?: string;
+  acknowledgedAt?: Date;
+  resolvedBy?: string;
+  resolvedAt?: Date;
+  resolution?: string;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================================
+// MANUFACTURING ANALYTICS INTERFACES
+// ============================================================================
+
+export interface MachinePerformanceAnalytics {
+  id: string;
+  machineId: string;
+  date: Date;
+  shift?: 'morning' | 'afternoon' | 'night';
+  
+  // OEE Components
+  availability: number; // %
+  performance: number; // %
+  quality: number; // %
+  oee: number; // %
+  
+  // Time Breakdown (minutes)
+  plannedProductionTime: number;
+  actualRunTime: number;
+  downtime: number;
+  setupTime: number;
+  breakTime: number;
+  
+  // Production Metrics
+  targetOutput: number;
+  actualOutput: number;
+  goodOutput: number;
+  rejectedOutput: number;
+  
+  // Performance vs Target
+  oeeTarget: number;
+  oeeVariance: number;
+  performanceRating: MachinePerformanceRating;
+  
+  // Downtime Analysis
+  downtimeEvents: Array<{
+    startTime: Date;
+    endTime: Date;
+    duration: number;
+    category: string;
+    reason: string;
+    impact: number;
+  }>;
+  
+  // Quality Metrics
+  defectRate: number;
+  scrapRate: number;
+  reworkRate: number;
+  
+  // Cost Analysis
+  productionCost: number;
+  energyCost: number;
+  maintenanceCost: number;
+  laborCost: number;
+  totalCost: number;
+  costPerUnit: number;
+  
+  // AI Insights
+  aiInsights: {
+    performanceTrend: HealthTrend;
+    predictedIssues: string[];
+    recommendations: string[];
+    maintenancePrediction?: {
+      probability: number;
+      estimatedDate: Date;
+      reason: string;
+    };
+  };
+  
+  createdAt: Date;
+}
+
+export interface ProductionScheduleOptimization {
+  id: string;
+  scheduleId: string;
+  
+  period: {
+    startDate: Date;
+    endDate: Date;
+  };
+  
+  orders: Array<{
+    orderId: string;
+    productId: string;
+    quantity: number;
+    priority: number;
+    dueDate: Date;
+  }>;
+  
+  machineAssignments: Array<{
+    machineId: string;
+    orderId: string;
+    startTime: Date;
+    endTime: Date;
+    setupTime: number;
+    productionTime: number;
+  }>;
+  
+  optimization: {
+    algorithm: ScheduleAlgorithm;
+    objectives: Array<{
+      name: string;
+      weight: number;
+      achieved: number;
+    }>;
+    
+    metrics: {
+      totalMakespan: number;
+      machineUtilization: number;
+      setupTimeReduction: number;
+      onTimeDelivery: number;
+    };
+    
+    constraints: {
+      machineCapacity: boolean;
+      operatorAvailability: boolean;
+      materialAvailability: boolean;
+      dueDate: boolean;
+    };
+  };
+  
+  aiRecommendations: Array<{
+    type: OptimizationType;
+    description: string;
+    expectedImprovement: string;
+    confidence: number;
+  }>;
+  
+  status: ScheduleStatus;
+  
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MachineProfitabilityAnalysis {
+  id: string;
+  machineId: string;
+  period: {
+    startDate: Date;
+    endDate: Date;
+  };
+  
+  // Revenue
+  totalRevenue: number;
+  revenueByProduct: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    revenue: number;
+  }>;
+  
+  // Costs
+  costs: {
+    materials: number;
+    labor: number;
+    energy: number;
+    maintenance: number;
+    depreciation: number;
+    overhead: number;
+    total: number;
+  };
+  
+  // Profitability
+  grossProfit: number;
+  netProfit: number;
+  profitMargin: number;
+  roi: number;
+  
+  // Efficiency Metrics
+  utilizationRate: number;
+  productivityRate: number;
+  costPerUnit: number;
+  revenuePerHour: number;
+  
+  // Comparisons
+  previousPeriod: {
+    revenue: number;
+    profit: number;
+    profitMargin: number;
+  };
+  
+  benchmark: {
+    industryAverage: number;
+    companyAverage: number;
+    topPerformer: number;
+  };
+  
+  // AI Analysis
+  aiInsights: {
+    profitabilityTrend: HealthTrend;
+    costDrivers: Array<{
+      category: string;
+      impact: number;
+      recommendation: string;
+    }>;
+    optimizationOpportunities: Array<{
+      area: string;
+      potentialSavings: number;
+      implementation: string;
+    }>;
+  };
+  
+  createdAt: Date;
+}
+
+export interface OperatorPerformanceMetrics {
+  id: string;
+  employeeId: string;
+  machineId: string;
+  date: Date;
+  shift: 'morning' | 'afternoon' | 'night';
+  
+  // Production Metrics
+  unitsProduced: number;
+  targetUnits: number;
+  productivityRate: number;
+  
+  // Quality Metrics
+  defectRate: number;
+  reworkRate: number;
+  qualityScore: number;
+  
+  // Efficiency Metrics
+  setupTime: number;
+  cycleTime: number;
+  downtime: number;
+  utilizationRate: number;
+  
+  // Safety Metrics
+  safetyIncidents: number;
+  safetyScore: number;
+  
+  // Skill Assessment
+  skillLevel: number; // 1-5
+  certifications: string[];
+  trainingCompleted: string[];
+  
+  // Performance Rating
+  overallRating: number; // 1-5
+  performanceCategory: OperatorPerformanceCategory;
+  
+  // AI Insights
+  aiAnalysis: {
+    strengths: string[];
+    improvementAreas: string[];
+    trainingRecommendations: string[];
+    comparisonToPeers: {
+      percentile: number;
+      ranking: number;
+    };
+  };
+  
+  createdAt: Date;
+}
