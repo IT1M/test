@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Settings, LogOut, Shield } from "lucide-react";
+import { User, Settings, LogOut, Shield, Brain, Activity, Zap } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
+import { Permission, hasPermission } from "@/lib/auth/rbac";
 
 export function UserMenu() {
   const [open, setOpen] = useState(false);
@@ -37,6 +38,49 @@ export function UserMenu() {
 
           {/* Menu Items */}
           <div className="space-y-1">
+            {/* AI Control Center Quick Access - Only for AI Admins */}
+            {user && hasPermission(user, Permission.ACCESS_AI_CONTROL_CENTER) && (
+              <>
+                <div className="px-2 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  AI Control Center
+                </div>
+                <Link href="/ai-control-center">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Brain className="h-4 w-4 mr-2 text-blue-600" />
+                    <span className="text-blue-700">AI Dashboard</span>
+                  </Button>
+                </Link>
+                
+                <Link href="/ai-control-center/audit-logs">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Activity className="h-4 w-4 mr-2" />
+                    Activity Logs
+                  </Button>
+                </Link>
+                
+                <Link href="/ai-control-center/diagnostics">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Diagnostics
+                  </Button>
+                </Link>
+                
+                <div className="border-t my-2"></div>
+              </>
+            )}
+            
             <Link href="/settings">
               <Button 
                 variant="ghost" 

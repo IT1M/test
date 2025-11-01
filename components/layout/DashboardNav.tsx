@@ -32,9 +32,14 @@ import {
   Sliders,
   Stethoscope,
   Wallet,
-  Zap
+  Zap,
+  Database,
+  Bell,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useAuthStore } from "@/store/authStore";
+import { Permission, hasPermission } from "@/lib/auth/rbac";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -98,11 +103,15 @@ const navItems = [
     dropdownItems: [
       { href: "/ai-control-center", label: "Dashboard", icon: LayoutDashboard },
       { href: "/ai-control-center/audit-logs", label: "Audit Logs", icon: Activity },
-      { href: "/ai-control-center/settings", label: "AI Settings", icon: Sliders },
       { href: "/ai-control-center/diagnostics", label: "Diagnostics", icon: Stethoscope },
       { href: "/ai-control-center/cost-analytics", label: "Cost Analytics", icon: Wallet },
-      { href: "/ai-control-center/integrations", label: "Integrations", icon: Zap },
-      { href: "/ai-control-center/reports", label: "Reports", icon: FileText },
+      { href: "/ai-control-center/security", label: "Security", icon: Shield },
+      { href: "/ai-control-center/data-retention", label: "Data Retention", icon: Database },
+      { href: "/ai-control-center/alerts", label: "Alerts", icon: Bell },
+      { href: "/ai-control-center/automation", label: "Automation", icon: Zap },
+      { href: "/ai-control-center/integrations", label: "Integrations", icon: Activity },
+      { href: "/ai-control-center/settings", label: "Settings", icon: Sliders },
+      { href: "/ai-control-center/reports", label: "Reports", icon: PieChart },
     ]
   },
 ];
@@ -110,12 +119,23 @@ const navItems = [
 export function DashboardNav() {
   const pathname = usePathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const user = useAuthStore((state) => state.getCurrentUser());
+
+  // Filter navigation items based on user permissions
+  const visibleNavItems = navItems.filter((item) => {
+    // AI Control Center requires special permission
+    if (item.href === '/ai-control-center') {
+      return user && hasPermission(user, Permission.ACCESS_AI_CONTROL_CENTER);
+    }
+    // Add other permission checks as needed
+    return true;
+  });
 
   return (
     <nav className="bg-white border-t border-b sticky top-[73px] z-40 overflow-visible">
       <div className="px-6">
         <div className="flex space-x-8 overflow-x-auto overflow-y-visible">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             

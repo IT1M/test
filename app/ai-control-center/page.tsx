@@ -7,6 +7,7 @@ import { Permission, hasPermission } from '@/lib/auth/rbac';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AIControlBreadcrumb } from '@/components/ai-control';
 import { 
   RefreshCw, 
   Activity, 
@@ -21,8 +22,14 @@ import {
   FileText,
   Shield,
   Moon,
-  Sun
+  Sun,
+  Lock,
+  Sliders,
+  Wallet,
+  Bell,
+  ArrowRight
 } from 'lucide-react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
 
 interface ModelStatus {
@@ -286,6 +293,161 @@ export default function AIControlCenterPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb Navigation */}
+        <AIControlBreadcrumb />
+
+        {/* Feature Overview Section */}
+        <div className="mb-8 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Welcome to AI Control Center
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Monitor, manage, and optimize your AI operations with comprehensive insights and controls.
+          </p>
+          
+          {/* Quick Access Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/ai-control-center/audit-logs">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200 dark:border-blue-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Audit Logs</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Track AI activity</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ai-control-center/diagnostics">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 dark:border-purple-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Diagnostics</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">System health</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ai-control-center/cost-analytics">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-green-200 dark:border-green-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Cost Analytics</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Budget tracking</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ai-control-center/security">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-red-200 dark:border-red-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-lg flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Security</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Access control</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
+          {/* Additional Features Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <Link href="/ai-control-center/data-retention">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 dark:border-orange-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Data Retention</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Log archival</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ai-control-center/alerts">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-yellow-200 dark:border-yellow-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Alerts</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Notifications</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ai-control-center/settings">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-gray-200 dark:border-gray-700">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                      <Sliders className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Settings</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Configuration</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ai-control-center/reports">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-indigo-200 dark:border-indigo-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Reports</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Analytics</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </div>
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>

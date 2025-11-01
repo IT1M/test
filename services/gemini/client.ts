@@ -105,8 +105,8 @@ export class GeminiService {
     };
 
     this.client = new GoogleGenerativeAI(this.config.apiKey);
-    this.model = this.client.getGenerativeModel({ model: 'gemini-pro' });
-    this.visionModel = this.client.getGenerativeModel({ model: 'gemini-pro-vision' });
+    this.model = this.client.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    this.visionModel = this.client.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
     this.cache = new Map();
     this.rateLimiter = new RateLimiter(this.config.rateLimitPerMinute);
   }

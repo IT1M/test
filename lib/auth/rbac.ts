@@ -653,6 +653,14 @@ export function getPermissionName(permission: Permission): string {
     [Permission.VIEW_AI_ALERTS]: 'View AI Alerts',
     [Permission.MANAGE_AI_ALERTS]: 'Manage AI Alerts',
     [Permission.ROLLBACK_AI_CONFIG]: 'Rollback AI Configuration',
+    
+    // AI Control Center Security & Compliance
+    [Permission.VIEW_SECURITY_AUDIT_LOGS]: 'View Security Audit Logs',
+    [Permission.EXPORT_SECURITY_AUDIT_LOGS]: 'Export Security Audit Logs',
+    [Permission.MANAGE_API_KEYS]: 'Manage API Keys',
+    [Permission.VIEW_COMPLIANCE_REPORTS]: 'View Compliance Reports',
+    [Permission.MANAGE_DATA_LINEAGE]: 'Manage Data Lineage',
+    [Permission.CONFIGURE_PHI_SANITIZATION]: 'Configure PHI Sanitization',
   };
   
   return names[permission] || permission.toString();

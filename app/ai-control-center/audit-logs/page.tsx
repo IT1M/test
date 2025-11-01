@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AIControlBreadcrumb } from '@/components/ai-control';
 import { 
   Search, 
   Download, 
@@ -271,6 +272,9 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb Navigation */}
+        <AIControlBreadcrumb />
+
         {/* Analytics Dashboard */}
         {showAnalytics && (
           <div className="mb-6">

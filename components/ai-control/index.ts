@@ -8,6 +8,15 @@ export { LogDetailModal } from './LogDetailModal';
 export { LogAnalyticsDashboard } from './LogAnalyticsDashboard';
 export { AutomationRuleBuilder } from './AutomationRuleBuilder';
 export { AutomationRuleList } from './AutomationRuleList';
+export { AlertRuleBuilder } from './AlertRuleBuilder';
+export { AlertRuleList } from './AlertRuleList';
+export { AIControlBreadcrumb } from './Breadcrumb';
+
+// Security & Compliance Components
+export { default as SecurityAuditLogsViewer } from './SecurityAuditLogsViewer';
+export { default as ComplianceReportingDashboard } from './ComplianceReportingDashboard';
+export { default as DataLineageVisualization } from './DataLineageVisualization';
+export { default as APIKeyManagement } from './APIKeyManagement';
 
 // Export types
 export type { 
