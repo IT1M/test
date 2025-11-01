@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AIControlBreadcrumb } from '@/components/ai-control';
+import { AIControlBreadcrumb, FloatingHelpButton } from '@/components/ai-control';
 import {
   Shield,
   Key,
@@ -70,6 +70,9 @@ export default function SecurityCompliancePage() {
           <APIKeyManagement />
         </TabsContent>
       </Tabs>
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

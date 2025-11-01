@@ -56,12 +56,13 @@ export default function LoginPage() {
       // Create default admin user if logging in as admin and user doesn't exist
       if (!user && sanitizedUsername.toLowerCase() === 'admin') {
         const { hash, salt } = PasswordHasher.hash('admin123');
+        const { Permission } = await import('@/lib/auth/rbac');
         const adminUser = {
           id: 'admin-default',
           username: 'admin',
           email: 'admin@maiscompany.com',
           role: 'admin' as const,
-          permissions: Object.values(await import('@/lib/auth/rbac').then(m => m.Permission)),
+          permissions: Object.values(Permission).map(p => p.toString()),
           isActive: true,
           passwordHash: hash,
           passwordSalt: salt,

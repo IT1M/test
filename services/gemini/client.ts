@@ -1,9 +1,14 @@
 // Gemini AI Service Client
 // Base client for interacting with Google's Gemini API
+// Integrated with AI Control Center for comprehensive monitoring and control
 
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { db } from '@/lib/db/schema';
 import { v4 as uuidv4 } from 'uuid';
+import { AIActivityLogger } from '@/services/ai/activity-logger';
+import { PHIPIIDetector } from '@/services/ai/phi-pii-detector';
+import { AlertManager } from '@/services/ai/alert-manager';
+import { AIControlConfigManager } from '@/services/ai/ai-control-config';
 
 /**
  * Rate limiter for API calls
@@ -81,6 +86,13 @@ interface GeminiServiceConfig {
   cacheDuration?: number; // in milliseconds
   enableRetry?: boolean;
   maxRetries?: number;
+  enableActivityLogging?: boolean;
+  enablePHISanitization?: boolean;
+  enableCostTracking?: boolean;
+  enablePerformanceMetrics?: boolean;
+  enableAutomationTriggers?: boolean;
+  costPerInputToken?: number;
+  costPerOutputToken?: number;
 }
 
 /**
@@ -102,6 +114,13 @@ export class GeminiService {
       cacheDuration: config.cacheDuration || 5 * 60 * 1000, // 5 minutes default
       enableRetry: config.enableRetry !== false,
       maxRetries: config.maxRetries || 3,
+      enableActivityLogging: config.enableActivityLogging !== false,
+      enablePHISanitization: config.enablePHISanitization !== false,
+      enableCostTracking: config.enableCostTracking !== false,
+      enablePerformanceMetrics: config.enablePerformanceMetrics !== false,
+      enableAutomationTriggers: config.enableAutomationTriggers !== false,
+      costPerInputToken: config.costPerInputToken || 0.00001, // $0.01 per 1K tokens
+      costPerOutputToken: config.costPerOutputToken || 0.00003, // $0.03 per 1K tokens
     };
 
     this.client = new GoogleGenerativeAI(this.config.apiKey);
@@ -114,12 +133,42 @@ export class GeminiService {
   /**
    * Generate content using Gemini Pro model
    */
-  async generateContent(prompt: string, useCache: boolean = true): Promise<string> {
+  async generateContent(prompt: string, useCache: boolean = true, userId: string = 'system'): Promise<string> {
+    const startTime = Date.now();
+    
+    // Sanitize PHI/PII from prompt if enabled
+    let sanitizedPrompt = prompt;
+    if (this.config.enablePHISanitization) {
+      const phiCheck = PHIPIIDetector.detectPHI(prompt);
+      if (phiCheck.containsPHI || phiCheck.containsPII) {
+        sanitizedPrompt = phiCheck.sanitizedData;
+        console.warn('PHI/PII detected and sanitized in prompt:', phiCheck.detectedTypes);
+      }
+    }
+
     // Check cache first
     if (useCache) {
-      const cached = this.getFromCache(prompt);
+      const cached = this.getFromCache(sanitizedPrompt);
       if (cached !== null) {
-        await this.logAPICall('generateContent', 'cache_hit', prompt.length, cached.length);
+        await this.logAPICall('generateContent', 'cache_hit', sanitizedPrompt.length, cached.length);
+        
+        // Log to AI Activity Logger
+        if (this.config.enableActivityLogging) {
+          await AIActivityLogger.logAIOperation({
+            userId,
+            modelName: 'gemini-2.0-flash-exp',
+            operationType: 'other',
+            operationDescription: 'Generate content (cached)',
+            inputData: { prompt: sanitizedPrompt.substring(0, 500) },
+            outputData: { result: cached.substring(0, 500) },
+            inputTokens: this.estimateTokens(sanitizedPrompt),
+            outputTokens: this.estimateTokens(cached),
+            executionTime: Date.now() - startTime,
+            status: 'success',
+            metadata: { cached: true },
+          });
+        }
+        
         return cached;
       }
     }
@@ -129,21 +178,88 @@ export class GeminiService {
 
     try {
       const result = await this.retryWithBackoff(async () => {
-        const response = await this.model.generateContent(prompt);
+        const response = await this.model.generateContent(sanitizedPrompt);
         return response.response.text();
       });
 
+      const executionTime = Date.now() - startTime;
+      const inputTokens = this.estimateTokens(sanitizedPrompt);
+      const outputTokens = this.estimateTokens(result);
+
       // Cache the response
       if (useCache) {
-        this.setCache(prompt, result);
+        this.setCache(sanitizedPrompt, result);
       }
 
+      // Calculate cost
+      const estimatedCost = this.config.enableCostTracking
+        ? this.calculateCost(inputTokens, outputTokens)
+        : undefined;
+
       // Log successful API call
-      await this.logAPICall('generateContent', 'success', prompt.length, result.length);
+      await this.logAPICall('generateContent', 'success', sanitizedPrompt.length, result.length);
+
+      // Log to AI Activity Logger
+      if (this.config.enableActivityLogging) {
+        await AIActivityLogger.logAIOperation({
+          userId,
+          modelName: 'gemini-2.0-flash-exp',
+          operationType: 'other',
+          operationDescription: 'Generate content',
+          inputData: { prompt: sanitizedPrompt.substring(0, 500) },
+          outputData: { result: result.substring(0, 500) },
+          inputTokens,
+          outputTokens,
+          executionTime,
+          status: 'success',
+          estimatedCost,
+          metadata: { cached: false, promptLength: prompt.length },
+        });
+      }
+
+      // Trigger automation rules if enabled
+      if (this.config.enableAutomationTriggers) {
+        await this.triggerAutomationRules({
+          modelName: 'gemini-2.0-flash-exp',
+          operationType: 'text-generation',
+          executionTime,
+          cost: estimatedCost,
+          inputTokens,
+          outputTokens,
+        });
+      }
 
       return result;
     } catch (error) {
-      await this.logError('generateContent', error as Error, { prompt: prompt.substring(0, 100) });
+      const executionTime = Date.now() - startTime;
+      
+      await this.logError('generateContent', error as Error, { prompt: sanitizedPrompt.substring(0, 100) });
+
+      // Log error to AI Activity Logger
+      if (this.config.enableActivityLogging) {
+        await AIActivityLogger.logAIOperation({
+          userId,
+          modelName: 'gemini-2.0-flash-exp',
+          operationType: 'other',
+          operationDescription: 'Generate content (failed)',
+          inputData: { prompt: sanitizedPrompt.substring(0, 500) },
+          outputData: { error: (error as Error).message },
+          executionTime,
+          status: 'error',
+          errorMessage: (error as Error).message,
+          errorCode: (error as any).code || 'UNKNOWN',
+        });
+      }
+
+      // Create alert for critical errors
+      if (this.config.enableAutomationTriggers) {
+        await AlertManager.alertModelFailure(
+          'gemini-2.0-flash-exp',
+          (error as Error).message,
+          ['text-generation']
+        );
+      }
+
       throw error;
     }
   }
@@ -151,14 +267,26 @@ export class GeminiService {
   /**
    * Analyze image using Gemini Pro Vision model
    */
-  async analyzeImage(imageData: string, prompt: string, mimeType: string = 'image/jpeg'): Promise<string> {
+  async analyzeImage(imageData: string, prompt: string, mimeType: string = 'image/jpeg', userId: string = 'system'): Promise<string> {
+    const startTime = Date.now();
+
+    // Sanitize PHI/PII from prompt if enabled
+    let sanitizedPrompt = prompt;
+    if (this.config.enablePHISanitization) {
+      const phiCheck = PHIPIIDetector.detectPHI(prompt);
+      if (phiCheck.containsPHI || phiCheck.containsPII) {
+        sanitizedPrompt = phiCheck.sanitizedData;
+        console.warn('PHI/PII detected and sanitized in image analysis prompt:', phiCheck.detectedTypes);
+      }
+    }
+
     // Rate limiting
     await this.rateLimiter.acquire();
 
     try {
       const result = await this.retryWithBackoff(async () => {
         const response = await this.visionModel.generateContent([
-          prompt,
+          sanitizedPrompt,
           {
             inlineData: {
               data: imageData,
@@ -169,12 +297,79 @@ export class GeminiService {
         return response.response.text();
       });
 
+      const executionTime = Date.now() - startTime;
+      const inputTokens = this.estimateTokens(sanitizedPrompt) + Math.floor(imageData.length / 4); // Rough estimate for image
+      const outputTokens = this.estimateTokens(result);
+
+      // Calculate cost
+      const estimatedCost = this.config.enableCostTracking
+        ? this.calculateCost(inputTokens, outputTokens)
+        : undefined;
+
       // Log successful API call
-      await this.logAPICall('analyzeImage', 'success', imageData.length + prompt.length, result.length);
+      await this.logAPICall('analyzeImage', 'success', imageData.length + sanitizedPrompt.length, result.length);
+
+      // Log to AI Activity Logger
+      if (this.config.enableActivityLogging) {
+        await AIActivityLogger.logAIOperation({
+          userId,
+          modelName: 'gemini-2.0-flash-exp-vision',
+          operationType: 'analysis',
+          operationDescription: 'Analyze image',
+          inputData: { prompt: sanitizedPrompt.substring(0, 500), imageSize: imageData.length },
+          outputData: { result: result.substring(0, 500) },
+          inputTokens,
+          outputTokens,
+          executionTime,
+          status: 'success',
+          estimatedCost,
+          metadata: { mimeType, promptLength: prompt.length },
+        });
+      }
+
+      // Trigger automation rules if enabled
+      if (this.config.enableAutomationTriggers) {
+        await this.triggerAutomationRules({
+          modelName: 'gemini-2.0-flash-exp-vision',
+          operationType: 'image-analysis',
+          executionTime,
+          cost: estimatedCost,
+          inputTokens,
+          outputTokens,
+        });
+      }
 
       return result;
     } catch (error) {
-      await this.logError('analyzeImage', error as Error, { promptLength: prompt.length });
+      const executionTime = Date.now() - startTime;
+      
+      await this.logError('analyzeImage', error as Error, { promptLength: sanitizedPrompt.length });
+
+      // Log error to AI Activity Logger
+      if (this.config.enableActivityLogging) {
+        await AIActivityLogger.logAIOperation({
+          userId,
+          modelName: 'gemini-2.0-flash-exp-vision',
+          operationType: 'analysis',
+          operationDescription: 'Analyze image (failed)',
+          inputData: { prompt: sanitizedPrompt.substring(0, 500), imageSize: imageData.length },
+          outputData: { error: (error as Error).message },
+          executionTime,
+          status: 'error',
+          errorMessage: (error as Error).message,
+          errorCode: (error as any).code || 'UNKNOWN',
+        });
+      }
+
+      // Create alert for critical errors
+      if (this.config.enableAutomationTriggers) {
+        await AlertManager.alertModelFailure(
+          'gemini-2.0-flash-exp-vision',
+          (error as Error).message,
+          ['image-analysis']
+        );
+      }
+
       throw error;
     }
   }
@@ -383,6 +578,49 @@ export class GeminiService {
   }
 
   /**
+   * Estimate token count from text (rough approximation)
+   */
+  private estimateTokens(text: string): number {
+    // Rough estimate: 1 token ≈ 4 characters for English text
+    return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Calculate cost based on token usage
+   */
+  private calculateCost(inputTokens: number, outputTokens: number): number {
+    const inputCost = (inputTokens / 1000) * this.config.costPerInputToken;
+    const outputCost = (outputTokens / 1000) * this.config.costPerOutputToken;
+    return inputCost + outputCost;
+  }
+
+  /**
+   * Trigger automation rules based on operation metrics
+   */
+  private async triggerAutomationRules(context: {
+    modelName: string;
+    operationType: string;
+    executionTime: number;
+    cost?: number;
+    inputTokens: number;
+    outputTokens: number;
+  }): Promise<void> {
+    try {
+      // Evaluate alert rules
+      await AlertManager.evaluateAlertRules({
+        modelName: context.modelName,
+        operationType: context.operationType,
+        responseTime: context.executionTime,
+        cost: context.cost,
+        inputTokens: context.inputTokens,
+        outputTokens: context.outputTokens,
+      });
+    } catch (error) {
+      console.error('Failed to trigger automation rules:', error);
+    }
+  }
+
+  /**
    * Test connection to Gemini API
    */
   async testConnection(): Promise<boolean> {
@@ -453,12 +691,23 @@ export function getGeminiService(): GeminiService {
       throw new Error('NEXT_PUBLIC_GEMINI_API_KEY environment variable is not set');
     }
 
+    // Load configuration from AI Control Center
+    const config = AIControlConfigManager.getConfig();
+    const costSettings = AIControlConfigManager.getCostSettings();
+
     geminiServiceInstance = new GeminiService({
       apiKey,
-      rateLimitPerMinute: 60,
-      cacheDuration: 5 * 60 * 1000,
-      enableRetry: true,
-      maxRetries: 3,
+      rateLimitPerMinute: config.rateLimitPerMinute,
+      cacheDuration: config.cacheDuration,
+      enableRetry: config.enableRetry,
+      maxRetries: config.maxRetries,
+      enableActivityLogging: config.enableActivityLogging,
+      enablePHISanitization: config.enablePHISanitization,
+      enableCostTracking: config.enableCostTracking,
+      enablePerformanceMetrics: config.enablePerformanceMetrics,
+      enableAutomationTriggers: config.enableAutomationTriggers,
+      costPerInputToken: costSettings.costPerInputToken,
+      costPerOutputToken: costSettings.costPerOutputToken,
     });
   }
 

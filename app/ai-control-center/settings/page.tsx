@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import toast from 'react-hot-toast';
+import { FloatingHelpButton } from '@/components/ai-control';
 
 interface ModelConfig {
   enabled: boolean;
@@ -937,6 +938,9 @@ export default function AISettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

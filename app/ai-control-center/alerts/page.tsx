@@ -20,6 +20,7 @@ import {
 import { AlertManager } from '@/services/ai/alert-manager';
 import { AIAlert } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
+import { FloatingHelpButton } from '@/components/ai-control';
 
 export default function AlertsPage() {
   const [activeAlerts, setActiveAlerts] = useState<AIAlert[]>([]);
@@ -311,6 +312,9 @@ export default function AlertsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

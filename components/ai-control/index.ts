@@ -11,6 +11,8 @@ export { AutomationRuleList } from './AutomationRuleList';
 export { AlertRuleBuilder } from './AlertRuleBuilder';
 export { AlertRuleList } from './AlertRuleList';
 export { AIControlBreadcrumb } from './Breadcrumb';
+export { FloatingHelpButton } from './FloatingHelpButton';
+export { HelpModal } from './HelpModal';
 
 // Security & Compliance Components
 export { default as SecurityAuditLogsViewer } from './SecurityAuditLogsViewer';

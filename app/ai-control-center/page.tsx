@@ -7,7 +7,7 @@ import { Permission, hasPermission } from '@/lib/auth/rbac';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AIControlBreadcrumb } from '@/components/ai-control';
+import { AIControlBreadcrumb, FloatingHelpButton } from '@/components/ai-control';
 import { 
   RefreshCw, 
   Activity, 
@@ -731,6 +731,9 @@ export default function AIControlCenterPage() {
           </div>
         </div>
       </div>
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

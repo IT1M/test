@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AIControlBreadcrumb } from '@/components/ai-control';
+import { AIControlBreadcrumb, FloatingHelpButton } from '@/components/ai-control';
 import { 
   Activity,
   AlertTriangle,
@@ -1388,6 +1388,9 @@ export default function DiagnosticsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

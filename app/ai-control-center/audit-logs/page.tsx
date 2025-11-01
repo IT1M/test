@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AIControlBreadcrumb } from '@/components/ai-control';
+import { AIControlBreadcrumb, FloatingHelpButton } from '@/components/ai-control';
 import { 
   Search, 
   Download, 
@@ -609,6 +609,9 @@ export default function AuditLogsPage() {
           }}
         />
       )}
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

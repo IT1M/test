@@ -57,3 +57,9 @@ export { RetentionScheduler } from './retention-scheduler';
 export type {
   ScheduledJob,
 } from './retention-scheduler';
+
+// AI Control Center Configuration
+export { AIControlConfigManager } from './ai-control-config';
+export type {
+  AIControlConfig,
+} from './ai-control-config';

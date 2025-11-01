@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  turbopack: {
-    resolveAlias: {
-      // Dexie.js works fine with Turbopack, no special config needed
-    },
+  // Temporarily disable Turbopack due to manifest issues in Next.js 16.0.1
+  // Use standard webpack compiler instead
+  experimental: {
+    turbo: false,
   },
 };
 

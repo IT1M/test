@@ -1582,7 +1582,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Create AI Control Center landing page with feature overview
     - _Requirements: 23.1_
   
-  - [ ] 37.15 Implement data retention and archival
+   [x ] 37.15 Implement data retention and archival
     - Create background job for automatic log cleanup based on retention policies
     - Implement data archival service exporting old logs before deletion
     - Add data compression for stored AI logs to optimize storage
@@ -1590,7 +1590,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Implement manual data export/import for backup and migration
     - _Requirements: 23.90, 23.91, 23.92, 23.93_
   
-  - [ ] 37.16 Add UI enhancements and user experience features
+  - [-] 37.16 Add UI enhancements and user experience features
     - Implement loading states and skeleton screens for all data-fetching operations
     - Add contextual help tooltips for all metrics and settings
     - Create error messages with actionable suggestions and troubleshooting links
@@ -1600,7 +1600,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Implement search functionality across all AI Control Center pages
     - _Requirements: 23.80, 23.81, 23.82, 23.83, 23.84_
   
-  - [ ] 37.16.1 Create Floating Help Button and Modal (دليل الإعداد المنبثق)
+  - [x] 37.16.1 Create Floating Help Button and Modal (دليل الإعداد المنبثق)
     - Create components/ai-control/FloatingHelpButton.tsx with animated floating button
     - Position button fixed at bottom-right (bottom-6 right-6) with z-index 50
     - Add gradient background (blue-600 to purple-600) with hover effects and scale animation
@@ -1624,7 +1624,7 @@ This implementation plan breaks down the Medical Products Company Management Sys
     - Integrate FloatingHelpButton in AI Control Center layout (visible on all sub-pages)
     - _Requirements: 23.80, 23.84, Documentation requirement_
   
-  - [ ] 37.17 Integrate AI Control Center with existing AI services
+  - [x] 37.17 Integrate AI Control Center with existing AI services
     - Update services/gemini/client.ts to log all operations to AIActivityLog
     - Modify all AI service calls to respect AI Control Center configuration settings
     - Implement rate limiting enforcement based on AI Control Center settings

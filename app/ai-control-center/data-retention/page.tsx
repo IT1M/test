@@ -9,6 +9,7 @@ import { RetentionScheduler } from '@/services/ai/retention-scheduler';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { FloatingHelpButton } from '@/components/ai-control';
 
 export default function DataRetentionPage() {
   useEffect(() => {
@@ -75,6 +76,9 @@ export default function DataRetentionPage() {
           </div>
         </div>
       </Card>
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { FloatingHelpButton } from '@/components/ai-control';
 import { Switch } from '@/components/ui/switch';
 
 export default function AIControlReportsPage() {
@@ -1257,5 +1258,8 @@ function CustomReportBuilder({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Floating Help Button */}
+    <FloatingHelpButton />
   );
 }

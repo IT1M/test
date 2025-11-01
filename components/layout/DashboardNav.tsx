@@ -119,6 +119,7 @@ const navItems = [
 export function DashboardNav() {
   const pathname = usePathname();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ left: number } | null>(null);
   const user = useAuthStore((state) => state.getCurrentUser());
 
   // Filter navigation items based on user permissions
@@ -144,8 +145,15 @@ export function DashboardNav() {
                 <div
                   key={item.href}
                   className="relative group"
-                  onMouseEnter={() => setOpenDropdown(item.label)}
-                  onMouseLeave={() => setOpenDropdown(null)}
+                  onMouseEnter={(e) => {
+                    setOpenDropdown(item.label);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setDropdownPosition({ left: rect.left });
+                  }}
+                  onMouseLeave={() => {
+                    setOpenDropdown(null);
+                    setDropdownPosition(null);
+                  }}
                   data-nav-item={item.label}
                 >
                   <Link
@@ -166,12 +174,12 @@ export function DashboardNav() {
                   </Link>
                   
                   {/* Dropdown Menu */}
-                  {openDropdown === item.label && (
+                  {openDropdown === item.label && dropdownPosition && (
                     <div 
                       className="fixed mt-0 w-64 bg-white rounded-b-lg shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                       style={{
                         top: 'calc(73px + 57px)',
-                        left: `${typeof window !== 'undefined' ? document.querySelector(`[data-nav-item="${item.label}"]`)?.getBoundingClientRect().left : 0}px`,
+                        left: `${dropdownPosition.left}px`,
                         zIndex: 9999
                       }}
                     >

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { 
   AutomationRuleBuilder, 
-  AutomationRuleList
+  AutomationRuleList,
+  FloatingHelpButton
 } from '@/components/ai-control';
 import type { AutomationRule } from '@/components/ai-control';
 import { Card } from '@/components/ui/card';
@@ -283,6 +284,9 @@ export default function AutomationPage() {
           />
         </div>
       )}
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }

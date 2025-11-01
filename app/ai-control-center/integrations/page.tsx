@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { APIKeyManager } from '@/services/ai/api-key-manager';
 import { cn } from '@/lib/utils/cn';
+import { FloatingHelpButton } from '@/components/ai-control';
 
 interface APIConnection {
   id: string;
@@ -1221,6 +1222,9 @@ export default function IntegrationsPage() {
           </Card>
         </div>
       )}
+
+      {/* Floating Help Button */}
+      <FloatingHelpButton />
     </div>
   );
 }
