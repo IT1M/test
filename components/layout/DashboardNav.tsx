@@ -26,17 +26,31 @@ import {
   PieChart,
   UserPlus,
   ClipboardList,
-  MessageSquare
+  MessageSquare,
+  Brain,
+  Activity,
+  Sliders,
+  Stethoscope,
+  Wallet,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Products", icon: Package },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/orders", label: "Orders", icon: ShoppingCart },
+  { 
+    href: "/customers", 
+    label: "CRM", 
+    icon: Users,
+    hasDropdown: true,
+    dropdownItems: [
+      { href: "/customers", label: "Customers", icon: Users },
+      { href: "/orders", label: "Orders", icon: ShoppingCart },
+      { href: "/patients", label: "Patients", icon: UserCircle },
+    ]
+  },
   { href: "/inventory", label: "Inventory", icon: Warehouse },
-  { href: "/patients", label: "Patients", icon: UserCircle },
   { 
     href: "/quality", 
     label: "Quality Control", 
@@ -76,7 +90,21 @@ const navItems = [
       { href: "/executive/reports", label: "Reports", icon: FileText },
     ]
   },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { 
+    href: "/ai-control-center", 
+    label: "AI Mais Co.", 
+    icon: Brain,
+    hasDropdown: true,
+    dropdownItems: [
+      { href: "/ai-control-center", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/ai-control-center/audit-logs", label: "Audit Logs", icon: Activity },
+      { href: "/ai-control-center/settings", label: "AI Settings", icon: Sliders },
+      { href: "/ai-control-center/diagnostics", label: "Diagnostics", icon: Stethoscope },
+      { href: "/ai-control-center/cost-analytics", label: "Cost Analytics", icon: Wallet },
+      { href: "/ai-control-center/integrations", label: "Integrations", icon: Zap },
+      { href: "/ai-control-center/reports", label: "Reports", icon: FileText },
+    ]
+  },
 ];
 
 export function DashboardNav() {

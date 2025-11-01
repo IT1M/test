@@ -49,6 +49,15 @@ import type {
   DataBreachIncident,
   DataProcessingActivity,
   PrivacyImpactAssessment,
+  AIActivityLog,
+  AIConfigurationHistory,
+  AIConfigurationSnapshot,
+  AIAutomationRule,
+  AIModelMetrics,
+  SecurityAuditLog,
+  AIAlert,
+  AIAlertRule,
+  AICostBudget,
 } from '@/types/database';
 
 /**
@@ -106,6 +115,17 @@ export class MedicalProductsDB extends Dexie {
   dataBreachIncidents!: Table<DataBreachIncident, string>;
   dataProcessingActivities!: Table<DataProcessingActivity, string>;
   privacyImpactAssessments!: Table<PrivacyImpactAssessment, string>;
+  
+  // AI Control Center tables
+  aiActivityLogs!: Table<AIActivityLog, string>;
+  aiConfigurationHistory!: Table<AIConfigurationHistory, string>;
+  aiConfigurationSnapshots!: Table<AIConfigurationSnapshot, string>;
+  aiAutomationRules!: Table<AIAutomationRule, string>;
+  aiModelMetrics!: Table<AIModelMetrics, string>;
+  securityAuditLogs!: Table<SecurityAuditLog, string>;
+  aiAlerts!: Table<AIAlert, string>;
+  aiAlertRules!: Table<AIAlertRule, string>;
+  aiCostBudgets!: Table<AICostBudget, string>;
 
   constructor() {
     super('MedicalProductsDB');
@@ -256,6 +276,34 @@ export class MedicalProductsDB extends Dexie {
       
       // Privacy impact assessments table with indexes for risk management
       privacyImpactAssessments: 'id, assessmentId, title, assessmentDate, assessorId, overallRiskLevel, residualRiskLevel, status, nextReviewDate, createdAt, [assessorId+assessmentDate], [overallRiskLevel+status], [status+nextReviewDate]',
+      
+      // AI Control Center tables
+      // AI activity logs table with indexes for monitoring and analysis
+      aiActivityLogs: 'id, timestamp, userId, modelName, operationType, status, confidenceScore, executionTime, entityType, entityId, createdAt, [timestamp+modelName], [modelName+operationType], [userId+timestamp], [operationType+status], [status+timestamp], [modelName+status], [entityType+entityId]',
+      
+      // AI configuration history table with indexes for audit trail
+      aiConfigurationHistory: 'id, timestamp, userId, settingName, settingCategory, impactLevel, approvedBy, createdAt, [timestamp+settingName], [userId+timestamp], [settingCategory+timestamp], [settingName+timestamp]',
+      
+      // AI configuration snapshots table with indexes for rollback
+      aiConfigurationSnapshots: 'id, snapshotName, createdAt, createdBy, isAutomatic, restoredAt, [createdAt+isAutomatic], [createdBy+createdAt]',
+      
+      // AI automation rules table with indexes for rule management
+      aiAutomationRules: 'id, ruleName, triggerType, aiOperation, modelName, status, isActive, lastExecution, successRate, createdAt, updatedAt, [status+isActive], [triggerType+isActive], [modelName+isActive], [lastExecution+status], [successRate+isActive]',
+      
+      // AI model metrics table with indexes for performance tracking
+      aiModelMetrics: 'id, modelName, date, totalCalls, successfulCalls, failedCalls, avgResponseTime, avgConfidence, totalCost, createdAt, [modelName+date], [date+modelName], [modelName+totalCalls]',
+      
+      // Security audit logs table with indexes for security monitoring
+      securityAuditLogs: 'id, timestamp, userId, username, userRole, action, actionCategory, resourceType, outcome, isSuspicious, requiresMFA, createdAt, [timestamp+userId], [userId+action], [action+outcome], [actionCategory+timestamp], [resourceType+action], [outcome+timestamp], [isSuspicious+timestamp]',
+      
+      // AI alerts table with indexes for alert management
+      aiAlerts: 'id, alertId, alertType, severity, status, modelName, createdAt, updatedAt, acknowledgedAt, resolvedAt, snoozedUntil, [alertType+status], [severity+status], [status+createdAt], [modelName+alertType], [createdAt+severity]',
+      
+      // AI alert rules table with indexes for rule management
+      aiAlertRules: 'id, ruleName, conditionType, alertType, severity, isActive, lastTriggered, triggerCount, createdAt, updatedAt, [isActive+conditionType], [alertType+isActive], [lastTriggered+isActive]',
+      
+      // AI cost budgets table with indexes for budget tracking
+      aiCostBudgets: 'id, budgetName, periodType, periodStart, periodEnd, scope, status, percentageUsed, createdAt, updatedAt, [periodType+status], [scope+periodStart], [status+percentageUsed], [periodEnd+status]',
     });
 
     // Add hooks for automatic field updates
@@ -649,6 +697,89 @@ export class MedicalProductsDB extends Dexie {
     this.privacyImpactAssessments.hook('updating', (modifications, primKey, obj) => {
       return { ...modifications, updatedAt: new Date() };
     });
+
+    // AI Control Center hooks
+    this.aiActivityLogs.hook('creating', (primKey, obj) => {
+      if (!obj.timestamp) obj.timestamp = new Date();
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (obj.status === undefined) obj.status = 'success';
+    });
+
+    this.aiConfigurationHistory.hook('creating', (primKey, obj) => {
+      if (!obj.timestamp) obj.timestamp = new Date();
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (obj.impactLevel === undefined) obj.impactLevel = 'medium';
+    });
+
+    this.aiConfigurationSnapshots.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (obj.isAutomatic === undefined) obj.isAutomatic = false;
+    });
+
+    this.aiAutomationRules.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+      if (obj.isActive === undefined) obj.isActive = true;
+      if (obj.executionCount === undefined) obj.executionCount = 0;
+      if (obj.successCount === undefined) obj.successCount = 0;
+      if (obj.errorCount === undefined) obj.errorCount = 0;
+      if (obj.successRate === undefined) obj.successRate = 0;
+    });
+
+    this.aiAutomationRules.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.aiModelMetrics.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.date) obj.date = new Date();
+    });
+
+    this.securityAuditLogs.hook('creating', (primKey, obj) => {
+      if (!obj.timestamp) obj.timestamp = new Date();
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (obj.isSuspicious === undefined) obj.isSuspicious = false;
+      if (obj.requiresMFA === undefined) obj.requiresMFA = false;
+      if (obj.mfaCompleted === undefined) obj.mfaCompleted = false;
+      if (obj.outcome === undefined) obj.outcome = 'success';
+    });
+
+    this.aiAlerts.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+      if (obj.notificationsSent === undefined) obj.notificationsSent = 0;
+      if (obj.escalationLevel === undefined) obj.escalationLevel = 0;
+    });
+
+    this.aiAlerts.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.aiAlertRules.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.isActive === undefined) obj.isActive = true;
+      if (obj.triggerCount === undefined) obj.triggerCount = 0;
+      if (obj.escalationEnabled === undefined) obj.escalationEnabled = false;
+    });
+
+    this.aiAlertRules.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
+
+    this.aiCostBudgets.hook('creating', (primKey, obj) => {
+      if (!obj.createdAt) obj.createdAt = new Date();
+      if (!obj.updatedAt) obj.updatedAt = new Date();
+      if (obj.status === undefined) obj.status = 'active';
+      if (obj.currentSpend === undefined) obj.currentSpend = 0;
+      if (obj.percentageUsed === undefined) obj.percentageUsed = 0;
+    });
+
+    this.aiCostBudgets.hook('updating', (modifications, primKey, obj) => {
+      return { ...modifications, updatedAt: new Date() };
+    });
   }
 
   /**
@@ -703,6 +834,15 @@ export class MedicalProductsDB extends Dexie {
       this.dataBreachIncidents,
       this.dataProcessingActivities,
       this.privacyImpactAssessments,
+      this.aiActivityLogs,
+      this.aiConfigurationHistory,
+      this.aiConfigurationSnapshots,
+      this.aiAutomationRules,
+      this.aiModelMetrics,
+      this.securityAuditLogs,
+      this.aiAlerts,
+      this.aiAlertRules,
+      this.aiCostBudgets,
     ], async () => {
       await Promise.all([
         this.products.clear(),
@@ -752,6 +892,15 @@ export class MedicalProductsDB extends Dexie {
         this.dataBreachIncidents.clear(),
         this.dataProcessingActivities.clear(),
         this.privacyImpactAssessments.clear(),
+        this.aiActivityLogs.clear(),
+        this.aiConfigurationHistory.clear(),
+        this.aiConfigurationSnapshots.clear(),
+        this.aiAutomationRules.clear(),
+        this.aiModelMetrics.clear(),
+        this.securityAuditLogs.clear(),
+        this.aiAlerts.clear(),
+        this.aiAlertRules.clear(),
+        this.aiCostBudgets.clear(),
       ]);
     });
   }
@@ -775,6 +924,9 @@ export class MedicalProductsDB extends Dexie {
     complianceRequirements: number;
     auditLogs: number;
     dataSubjectRequests: number;
+    aiActivityLogs: number;
+    aiAutomationRules: number;
+    aiAlerts: number;
     totalSize: number;
   }> {
     const [
@@ -793,6 +945,9 @@ export class MedicalProductsDB extends Dexie {
       complianceRequirementsCount,
       auditLogsCount,
       dataSubjectRequestsCount,
+      aiActivityLogsCount,
+      aiAutomationRulesCount,
+      aiAlertsCount,
     ] = await Promise.all([
       this.products.count(),
       this.customers.count(),
@@ -809,6 +964,9 @@ export class MedicalProductsDB extends Dexie {
       this.complianceRequirements.count(),
       this.auditLogs.count(),
       this.dataSubjectRequests.count(),
+      this.aiActivityLogs.count(),
+      this.aiAutomationRules.count(),
+      this.aiAlerts.count(),
     ]);
 
     // Estimate database size (rough calculation)
@@ -830,6 +988,9 @@ export class MedicalProductsDB extends Dexie {
       complianceRequirements: complianceRequirementsCount,
       auditLogs: auditLogsCount,
       dataSubjectRequests: dataSubjectRequestsCount,
+      aiActivityLogs: aiActivityLogsCount,
+      aiAutomationRules: aiAutomationRulesCount,
+      aiAlerts: aiAlertsCount,
       totalSize,
     };
   }
@@ -899,6 +1060,15 @@ export class MedicalProductsDB extends Dexie {
       dataBreachIncidents,
       dataProcessingActivities,
       privacyImpactAssessments,
+      aiActivityLogs,
+      aiConfigurationHistory,
+      aiConfigurationSnapshots,
+      aiAutomationRules,
+      aiModelMetrics,
+      securityAuditLogs,
+      aiAlerts,
+      aiAlertRules,
+      aiCostBudgets,
     ] = await Promise.all([
       this.products.toArray(),
       this.customers.toArray(),
@@ -947,6 +1117,15 @@ export class MedicalProductsDB extends Dexie {
       this.dataBreachIncidents.toArray(),
       this.dataProcessingActivities.toArray(),
       this.privacyImpactAssessments.toArray(),
+      this.aiActivityLogs.toArray(),
+      this.aiConfigurationHistory.toArray(),
+      this.aiConfigurationSnapshots.toArray(),
+      this.aiAutomationRules.toArray(),
+      this.aiModelMetrics.toArray(),
+      this.securityAuditLogs.toArray(),
+      this.aiAlerts.toArray(),
+      this.aiAlertRules.toArray(),
+      this.aiCostBudgets.toArray(),
     ]);
 
     return {
@@ -1000,6 +1179,15 @@ export class MedicalProductsDB extends Dexie {
         dataBreachIncidents,
         dataProcessingActivities,
         privacyImpactAssessments,
+        aiActivityLogs,
+        aiConfigurationHistory,
+        aiConfigurationSnapshots,
+        aiAutomationRules,
+        aiModelMetrics,
+        securityAuditLogs,
+        aiAlerts,
+        aiAlertRules,
+        aiCostBudgets,
       },
     };
   }
@@ -1056,6 +1244,15 @@ export class MedicalProductsDB extends Dexie {
       this.dataBreachIncidents,
       this.dataProcessingActivities,
       this.privacyImpactAssessments,
+      this.aiActivityLogs,
+      this.aiConfigurationHistory,
+      this.aiConfigurationSnapshots,
+      this.aiAutomationRules,
+      this.aiModelMetrics,
+      this.securityAuditLogs,
+      this.aiAlerts,
+      this.aiAlertRules,
+      this.aiCostBudgets,
     ], async () => {
       const data = backup.data;
 
@@ -1105,8 +1302,16 @@ export class MedicalProductsDB extends Dexie {
       if (data.dataSubjectRequests) await this.dataSubjectRequests.bulkPut(data.dataSubjectRequests);
       if (data.dataBreachIncidents) await this.dataBreachIncidents.bulkPut(data.dataBreachIncidents);
       if (data.dataProcessingActivities) await this.dataProcessingActivities.bulkPut(data.dataProcessingActivities);
-      if (data.privacyImpactAssessments) await this.privacyImpactAssessments.bulkPut(data.privacyImpactAssessments); await this.supplierEvaluations.bulkPut(data.supplierEvaluations);
-      if (data.supplierContracts) await this.supplierContracts.bulkPut(data.supplierContracts);
+      if (data.privacyImpactAssessments) await this.privacyImpactAssessments.bulkPut(data.privacyImpactAssessments);
+      if (data.aiActivityLogs) await this.aiActivityLogs.bulkPut(data.aiActivityLogs);
+      if (data.aiConfigurationHistory) await this.aiConfigurationHistory.bulkPut(data.aiConfigurationHistory);
+      if (data.aiConfigurationSnapshots) await this.aiConfigurationSnapshots.bulkPut(data.aiConfigurationSnapshots);
+      if (data.aiAutomationRules) await this.aiAutomationRules.bulkPut(data.aiAutomationRules);
+      if (data.aiModelMetrics) await this.aiModelMetrics.bulkPut(data.aiModelMetrics);
+      if (data.securityAuditLogs) await this.securityAuditLogs.bulkPut(data.securityAuditLogs);
+      if (data.aiAlerts) await this.aiAlerts.bulkPut(data.aiAlerts);
+      if (data.aiAlertRules) await this.aiAlertRules.bulkPut(data.aiAlertRules);
+      if (data.aiCostBudgets) await this.aiCostBudgets.bulkPut(data.aiCostBudgets);
     });
   }
 }

@@ -16,14 +16,14 @@ export type InvoiceStatus = 'unpaid' | 'partially-paid' | 'paid' | 'overdue';
 export type PurchaseOrderStatus = 'draft' | 'sent' | 'confirmed' | 'received' | 'cancelled';
 export type StockMovementType = 'in' | 'out' | 'adjustment' | 'transfer';
 export type LogStatus = 'success' | 'error' | 'warning';
-export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'medical';
+export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'medical' | 'quality' | 'hr' | 'executive';
 export type DocumentType = 'invoice' | 'purchase_order' | 'medical_report' | 'prescription' | 'lab_result' | 'delivery_note' | 'other';
 export type RejectionType = 'cosmetic' | 'functional' | 'safety' | 'documentation' | 'other';
 export type RejectionStatus = 'pending' | 'under-review' | 'corrective-action' | 'resolved' | 'closed';
 export type RejectionSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type CorrectionActionStatus = 'open' | 'in-progress' | 'completed' | 'verified';
 export type InspectionType = 'incoming' | 'in-process' | 'final' | 'random';
-export type InspectionStatus = 'passed' | 'failed' | 'conditional';
+export type InspectionStatus = 'pending' | 'passed' | 'failed' | 'conditional';
 export type InspectionResult = 'pass' | 'fail';
 export type EmployeeStatus = 'active' | 'on-leave' | 'suspended' | 'archived' | 'terminated';
 export type ContractType = 'permanent' | 'contract' | 'part-time' | 'intern';
@@ -1750,7 +1750,7 @@ export interface DataProcessingActivity {
   
   // Risk Assessment
   riskLevel: 'low' | 'medium' | 'high';
-  dpia Required: boolean; // Data Protection Impact Assessment
+  dpiaRequired: boolean; // Data Protection Impact Assessment
   dpiaDocumentUrl?: string;
   
   // Review
@@ -1816,4 +1816,368 @@ export interface PrivacyRisk {
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
   affectedDataSubjects: string[];
   mitigationMeasures: string[];
+}
+
+// ============================================================================
+// AI CONTROL CENTER TYPES
+// ============================================================================
+
+/**
+ * AIActivityLog - Comprehensive log of all AI operations
+ * Tracks every AI interaction for audit, analysis, and optimization
+ */
+export interface AIActivityLog {
+  id: string;
+  timestamp: Date;
+  userId: string;
+  
+  // Model Information
+  modelName: string; // e.g., 'gemini-pro', 'gemini-pro-vision'
+  modelVersion?: string;
+  
+  // Operation Details
+  operationType: 'search' | 'analysis' | 'forecast' | 'pricing' | 'ocr' | 'medical-analysis' | 'insights' | 'document-generation' | 'chatbot' | 'other';
+  operationDescription?: string;
+  
+  // Input/Output (sanitized for PHI/PII)
+  inputData: string; // JSON string of sanitized input
+  outputData: string; // JSON string of output
+  inputTokens?: number;
+  outputTokens?: number;
+  
+  // Performance Metrics
+  confidenceScore?: number; // 0-100
+  executionTime: number; // milliseconds
+  
+  // Status
+  status: 'success' | 'error' | 'timeout' | 'rate-limited';
+  errorMessage?: string;
+  errorCode?: string;
+  
+  // Additional Context
+  metadata?: Record<string, any>; // Additional context data
+  entityType?: string; // Related entity (product, customer, etc.)
+  entityId?: string;
+  
+  // Cost Tracking
+  estimatedCost?: number; // in USD
+  
+  createdAt: Date;
+}
+
+/**
+ * AIConfigurationHistory - Audit trail of all AI configuration changes
+ * Tracks who changed what and when for compliance and rollback
+ */
+export interface AIConfigurationHistory {
+  id: string;
+  timestamp: Date;
+  userId: string;
+  
+  // Change Details
+  settingName: string; // e.g., 'gemini-pro.enabled', 'rate-limit.requests-per-minute'
+  settingCategory: 'model' | 'performance' | 'security' | 'cost' | 'automation' | 'other';
+  oldValue: string; // JSON string
+  newValue: string; // JSON string
+  
+  // Justification
+  reason?: string;
+  approvedBy?: string;
+  approvalDate?: Date;
+  
+  // Impact
+  impactLevel: 'low' | 'medium' | 'high' | 'critical';
+  affectedFeatures?: string[];
+  
+  createdAt: Date;
+}
+
+/**
+ * AIConfigurationSnapshot - Point-in-time backup of complete AI configuration
+ * Enables quick rollback to known-good configurations
+ */
+export interface AIConfigurationSnapshot {
+  id: string;
+  snapshotName: string;
+  description?: string;
+  
+  // Configuration Data
+  configuration: Record<string, any>; // Complete AI configuration as JSON
+  
+  // Metadata
+  createdAt: Date;
+  createdBy: string;
+  isAutomatic: boolean; // true if created by scheduled backup, false if manual
+  
+  // Restoration
+  restoredAt?: Date;
+  restoredBy?: string;
+}
+
+/**
+ * AIAutomationRule - Defines automated AI-driven workflows
+ * Enables event-driven AI operations without manual intervention
+ */
+export interface AIAutomationRule {
+  id: string;
+  ruleName: string;
+  description?: string;
+  
+  // Trigger Configuration
+  triggerType: 'event' | 'schedule' | 'condition';
+  triggerCondition: string; // JSON string defining trigger logic
+  triggerEvents?: string[]; // e.g., ['order.created', 'inventory.low']
+  scheduleExpression?: string; // Cron expression for scheduled triggers
+  
+  // AI Operation
+  aiOperation: string; // e.g., 'forecast-demand', 'analyze-sentiment', 'generate-report'
+  modelName: string;
+  operationConfig: Record<string, any>; // Configuration for the AI operation
+  
+  // Action Configuration
+  actionType: 'update-database' | 'send-notification' | 'create-task' | 'generate-report' | 'trigger-workflow' | 'custom';
+  actionConfig: Record<string, any>; // Configuration for the action
+  
+  // Conditions
+  confidenceThreshold?: number; // Minimum confidence to execute action
+  fallbackBehavior?: 'skip' | 'notify' | 'use-default';
+  
+  // Status
+  status: 'active' | 'paused' | 'disabled';
+  isActive: boolean;
+  
+  // Execution Tracking
+  lastExecution?: Date;
+  lastExecutionStatus?: 'success' | 'error' | 'skipped';
+  executionCount: number;
+  successCount: number;
+  errorCount: number;
+  successRate: number; // 0-100
+  
+  // Performance
+  avgExecutionTime?: number; // milliseconds
+  avgConfidence?: number; // 0-100
+  totalCost?: number; // USD
+  
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  lastModifiedBy?: string;
+}
+
+/**
+ * AIModelMetrics - Aggregated performance metrics for AI models
+ * Pre-computed metrics for fast dashboard rendering
+ */
+export interface AIModelMetrics {
+  id: string;
+  modelName: string;
+  date: Date; // Date for which metrics are aggregated (daily)
+  
+  // Call Statistics
+  totalCalls: number;
+  successfulCalls: number;
+  failedCalls: number;
+  timeoutCalls: number;
+  rateLimitedCalls: number;
+  
+  // Performance Metrics
+  avgResponseTime: number; // milliseconds
+  p95ResponseTime?: number; // 95th percentile
+  p99ResponseTime?: number; // 99th percentile
+  minResponseTime?: number;
+  maxResponseTime?: number;
+  
+  // Accuracy Metrics
+  avgConfidence: number; // 0-100
+  highConfidenceCalls: number; // confidence >= 80
+  mediumConfidenceCalls: number; // confidence 50-79
+  lowConfidenceCalls: number; // confidence < 50
+  
+  // Token Usage
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  avgInputTokens: number;
+  avgOutputTokens: number;
+  
+  // Cost Metrics
+  totalCost: number; // USD
+  avgCostPerCall: number;
+  
+  // Operation Breakdown
+  operationBreakdown: Record<string, number>; // operationType -> count
+  
+  // Error Analysis
+  errorBreakdown: Record<string, number>; // errorCode -> count
+  
+  createdAt: Date;
+}
+
+/**
+ * SecurityAuditLog - Security-focused audit log for AI Control Center
+ * Tracks all user actions in AI Control Center for security compliance
+ */
+export interface SecurityAuditLog {
+  id: string;
+  timestamp: Date;
+  
+  // User Information
+  userId: string;
+  username: string;
+  userRole: string;
+  
+  // Action Details
+  action: string; // e.g., 'view-logs', 'change-settings', 'export-data', 'disable-model'
+  actionCategory: 'view' | 'create' | 'update' | 'delete' | 'export' | 'configure' | 'admin';
+  resourceAffected: string; // What was accessed/modified
+  resourceType: 'logs' | 'settings' | 'automation-rule' | 'snapshot' | 'model' | 'other';
+  
+  // Security Context
+  ipAddress: string;
+  userAgent?: string;
+  sessionId?: string;
+  
+  // Outcome
+  outcome: 'success' | 'failure' | 'denied';
+  failureReason?: string;
+  
+  // Additional Details
+  details?: Record<string, any>;
+  
+  // Flags
+  isSuspicious: boolean; // Flagged by anomaly detection
+  requiresMFA: boolean; // Action required multi-factor auth
+  mfaCompleted: boolean;
+  
+  createdAt: Date;
+}
+
+/**
+ * AIAlert - Real-time alerts for critical AI events
+ * Manages notification and escalation of AI-related issues
+ */
+export interface AIAlert {
+  id: string;
+  alertId: string;
+  
+  // Alert Details
+  alertType: 'model-failure' | 'high-error-rate' | 'budget-exceeded' | 'security-incident' | 'performance-degradation' | 'rate-limit-warning' | 'anomaly-detected' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  message: string;
+  
+  // Context
+  modelName?: string;
+  affectedOperations?: string[];
+  metadata?: Record<string, any>;
+  
+  // Status
+  status: 'active' | 'acknowledged' | 'resolved' | 'snoozed';
+  acknowledgedBy?: string;
+  acknowledgedAt?: Date;
+  resolvedBy?: string;
+  resolvedAt?: Date;
+  resolutionNotes?: string;
+  
+  // Snoozing
+  snoozedUntil?: Date;
+  snoozedBy?: string;
+  
+  // Notification
+  notificationChannels: ('in-app' | 'email' | 'sms' | 'webhook')[];
+  notificationsSent: number;
+  lastNotificationAt?: Date;
+  
+  // Escalation
+  escalationLevel: number; // 0 = no escalation, 1+ = escalation levels
+  escalatedAt?: Date;
+  escalatedTo?: string[];
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * AIAlertRule - Configuration for automatic alert generation
+ * Defines conditions that trigger alerts
+ */
+export interface AIAlertRule {
+  id: string;
+  ruleName: string;
+  description?: string;
+  
+  // Condition
+  conditionType: 'threshold' | 'pattern' | 'anomaly' | 'custom';
+  condition: Record<string, any>; // JSON defining the condition
+  
+  // Alert Configuration
+  alertType: AIAlert['alertType'];
+  severity: AIAlert['severity'];
+  messageTemplate: string;
+  
+  // Notification
+  notificationChannels: AIAlert['notificationChannels'];
+  notifyUsers?: string[]; // User IDs to notify
+  notifyRoles?: string[]; // Roles to notify
+  
+  // Aggregation (prevent alert fatigue)
+  aggregationWindow?: number; // minutes - group similar alerts
+  maxAlertsPerWindow?: number;
+  
+  // Escalation
+  escalationEnabled: boolean;
+  escalationDelay?: number; // minutes before escalating
+  escalationUsers?: string[];
+  
+  // Status
+  isActive: boolean;
+  
+  // Tracking
+  lastTriggered?: Date;
+  triggerCount: number;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * AICostBudget - Budget tracking and limits for AI operations
+ * Helps control AI spending and prevent cost overruns
+ */
+export interface AICostBudget {
+  id: string;
+  budgetName: string;
+  
+  // Budget Period
+  periodType: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  periodStart: Date;
+  periodEnd: Date;
+  
+  // Budget Limits
+  budgetAmount: number; // USD
+  warningThreshold: number; // percentage (e.g., 80 = warn at 80%)
+  criticalThreshold: number; // percentage (e.g., 95 = critical at 95%)
+  
+  // Current Usage
+  currentSpend: number; // USD
+  percentageUsed: number; // 0-100
+  
+  // Scope
+  scope: 'global' | 'model' | 'operation' | 'user' | 'department';
+  scopeValue?: string; // e.g., model name, user ID, etc.
+  
+  // Actions
+  actionOnWarning: 'notify' | 'throttle' | 'none';
+  actionOnCritical: 'notify' | 'throttle' | 'suspend' | 'none';
+  
+  // Status
+  status: 'active' | 'exceeded' | 'suspended';
+  
+  // Notifications
+  lastWarningAt?: Date;
+  lastCriticalAt?: Date;
+  
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -1,11 +1,12 @@
 'use client';
 
-import { Bell, Menu, Search, User, X } from "lucide-react";
+import { Bell, Menu, Search, User, X, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UniversalSearchSimple } from "@/components/search/UniversalSearchSimple";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { UserMenu } from "@/components/layout/UserMenu";
+import Link from "next/link";
 
 export function DashboardHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,12 +27,19 @@ export function DashboardHeader() {
           </h1>
         </div>
 
-        {/* Right: Search, Notifications, User Menu */}
+        {/* Right: Search, Notifications, Settings, User Menu */}
         <div className="flex items-center space-x-4">
+          <NotificationBell />
+          <Link 
+            href="/settings"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Settings"
+          >
+            <Settings className="h-5 w-5 text-gray-600 hover:text-gray-900" />
+          </Link>
           <div className="hidden md:block">
             <UniversalSearchSimple />
           </div>
-          <NotificationBell />
           <UserMenu />
         </div>
       </div>
