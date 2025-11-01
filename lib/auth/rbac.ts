@@ -128,6 +128,82 @@ export enum Permission {
   VIEW_AI_ALERTS = 'view_ai_alerts',
   MANAGE_AI_ALERTS = 'manage_ai_alerts',
   ROLLBACK_AI_CONFIG = 'rollback_ai_config',
+  
+  // AI Control Center Security & Compliance
+  VIEW_SECURITY_AUDIT_LOGS = 'view_security_audit_logs',
+  EXPORT_SECURITY_AUDIT_LOGS = 'export_security_audit_logs',
+  MANAGE_API_KEYS = 'manage_api_keys',
+  VIEW_COMPLIANCE_REPORTS = 'view_compliance_reports',
+  MANAGE_DATA_LINEAGE = 'manage_data_lineage',
+  CONFIGURE_PHI_SANITIZATION = 'configure_phi_sanitization',
+}
+
+/**
+ * AI Control Center specific roles
+ */
+export type AIControlRole = 'AI_ADMIN' | 'AI_OPERATOR' | 'AI_AUDITOR';
+
+/**
+ * AI Control Center role permissions
+ */
+export const AIControlRolePermissions: Record<AIControlRole, Permission[]> = {
+  AI_ADMIN: [
+    Permission.ACCESS_AI_CONTROL_CENTER,
+    Permission.VIEW_AI_ACTIVITY_LOGS,
+    Permission.EXPORT_AI_LOGS,
+    Permission.MANAGE_AI_SETTINGS,
+    Permission.MANAGE_AI_MODELS,
+    Permission.MANAGE_AI_AUTOMATION,
+    Permission.VIEW_AI_DIAGNOSTICS,
+    Permission.MANAGE_AI_SECURITY,
+    Permission.VIEW_AI_COST_ANALYTICS,
+    Permission.MANAGE_AI_BUDGETS,
+    Permission.VIEW_AI_ALERTS,
+    Permission.MANAGE_AI_ALERTS,
+    Permission.ROLLBACK_AI_CONFIG,
+    Permission.VIEW_SECURITY_AUDIT_LOGS,
+    Permission.EXPORT_SECURITY_AUDIT_LOGS,
+    Permission.MANAGE_API_KEYS,
+    Permission.VIEW_COMPLIANCE_REPORTS,
+    Permission.MANAGE_DATA_LINEAGE,
+    Permission.CONFIGURE_PHI_SANITIZATION,
+  ],
+  AI_OPERATOR: [
+    Permission.ACCESS_AI_CONTROL_CENTER,
+    Permission.VIEW_AI_ACTIVITY_LOGS,
+    Permission.VIEW_AI_DIAGNOSTICS,
+    Permission.VIEW_AI_COST_ANALYTICS,
+    Permission.VIEW_AI_ALERTS,
+    Permission.VIEW_SECURITY_AUDIT_LOGS,
+    Permission.VIEW_COMPLIANCE_REPORTS,
+  ],
+  AI_AUDITOR: [
+    Permission.ACCESS_AI_CONTROL_CENTER,
+    Permission.VIEW_AI_ACTIVITY_LOGS,
+    Permission.EXPORT_AI_LOGS,
+    Permission.VIEW_AI_DIAGNOSTICS,
+    Permission.VIEW_AI_COST_ANALYTICS,
+    Permission.VIEW_AI_ALERTS,
+    Permission.VIEW_SECURITY_AUDIT_LOGS,
+    Permission.EXPORT_SECURITY_AUDIT_LOGS,
+    Permission.VIEW_COMPLIANCE_REPORTS,
+  ],
+};
+
+/**
+ * Check if user has AI Control Center role
+ */
+export function hasAIControlRole(user: User | null, role: AIControlRole): boolean {
+  if (!user) return false;
+  
+  // Admin has all AI Control roles
+  if (user.role === 'admin') return true;
+  
+  // Check if user has the required AI Control permissions
+  const requiredPermissions = AIControlRolePermissions[role];
+  return requiredPermissions.every(permission => 
+    user.permissions.includes(permission.toString())
+  );
 }
 
 /**
@@ -171,6 +247,12 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     // Analytics
     Permission.VIEW_ANALYTICS,
     Permission.VIEW_AI_INSIGHTS,
+    
+    // AI Control Center - Manager access
+    Permission.ACCESS_AI_CONTROL_CENTER,
+    Permission.VIEW_AI_ACTIVITY_LOGS,
+    Permission.VIEW_AI_DIAGNOSTICS,
+    Permission.VIEW_AI_ALERTS,
   ],
   
   sales: [
@@ -324,6 +406,13 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VIEW_QUALITY_ANALYTICS,
     Permission.VIEW_RECRUITMENT_ANALYTICS,
     Permission.VIEW_SUPPLY_CHAIN_ANALYTICS,
+    
+    // AI Control Center - Executive access
+    Permission.ACCESS_AI_CONTROL_CENTER,
+    Permission.VIEW_AI_ACTIVITY_LOGS,
+    Permission.VIEW_AI_DIAGNOSTICS,
+    Permission.VIEW_AI_COST_ANALYTICS,
+    Permission.VIEW_AI_ALERTS,
   ],
 };
 

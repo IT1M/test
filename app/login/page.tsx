@@ -48,10 +48,29 @@ export default function LoginPage() {
       }
 
       // Find user by username
-      const user = await db.users
+      let user = await db.users
         .where('username')
         .equalsIgnoreCase(sanitizedUsername)
         .first();
+
+      // Create default admin user if logging in as admin and user doesn't exist
+      if (!user && sanitizedUsername.toLowerCase() === 'admin') {
+        const { hash, salt } = PasswordHasher.hash('admin123');
+        const adminUser = {
+          id: 'admin-default',
+          username: 'admin',
+          email: 'admin@maiscompany.com',
+          role: 'admin' as const,
+          permissions: Object.values(await import('@/lib/auth/rbac').then(m => m.Permission)),
+          isActive: true,
+          passwordHash: hash,
+          passwordSalt: salt,
+          createdAt: new Date(),
+          lastLogin: new Date(),
+        };
+        await db.users.add(adminUser);
+        user = adminUser;
+      }
 
       if (!user) {
         setError('Invalid username or password');
@@ -186,8 +205,18 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>Session timeout: 30 minutes of inactivity</p>
+          <div className="mt-6 space-y-2">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+              <p>Session timeout: 30 minutes of inactivity</p>
+            </div>
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                Demo Credentials:
+              </p>
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Username: <span className="font-mono font-bold">admin</span> | Password: <span className="font-mono font-bold">admin123</span>
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
